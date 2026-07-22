@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FactoryTrack — Início</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/header.css" />
+  <link rel="stylesheet" href="../css/footer.css" />
+  <link rel="stylesheet" href="../css/home.css" />
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">
+      <a href="Inicio.html">
+        <i class="fas fa-industry"></i>
+        <span>FactoryTrack</span>
+      </a>
+    </div>
+    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+    <nav class="nav" id="mainNav">
+      <ul class="nav-list">
+        <li><a href="Inicio.html" class="nav-link active">início</a></li>
+        <li><a href="painel.html" class="nav-link">Painel de Status</a></li>
+        <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrencia</a></li>
+        <li><a href="checklist.html" class="nav-link">Checklist</a></li>
+        <li><a href="historico.html" class="nav-link">Histórico</a></li>
+        <li><a href="estoque.html" class="nav-link">Estoque</a></li>
+        <li><a href="cadastros.html" class="nav-link">Cadastros</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div>
+          <h1>Monitore sua fábrica <span>em tempo real.</span></h1>
+          <p>FactoryTrack conecta operadores e supervisores. Registre ocorrências, acompanhe o status dos setores e receba alertas direto no WhatsApp.</p>
+          <div class="hero-buttons">
+            <a href="painel.html" class="btn btn-primary btn-large">
+              <i class="fas fa-chart-bar"></i> Ver Painel de Status
+            </a>
+            <a href="ocorrencia.html" class="btn btn-outline btn-large">
+              <i class="fas fa-triangle-exclamation"></i> Registrar Ocorrência
+            </a>
+          </div>
+        </div>
+        <div class="hero-icon">
+          <i class="fas fa-industry"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-number" id="cnt-setores">4</div>
+          <div class="stat-label">Setores Monitorados</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="cnt-maquinas">7</div>
+          <div class="stat-label">Máquinas Cadastradas</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="cnt-ocorrencias">5</div>
+          <div class="stat-label">Ocorrências Registradas</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="cnt-pendentes">3</div>
+          <div class="stat-label">Pendentes</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section class="how">
+    <div class="container">
+      <div class="section-title">
+        <h2>Como funciona</h2>
+        <p>Simples, rápido e eficiente para toda a equipe</p>
+      </div>
+      <div class="how-grid">
+        <div class="how-card">
+          <div class="how-card-num">1</div>
+          <h3>Cadastre sua fábrica</h3>
+          <p>Registre setores, máquinas e operadores. Configure permissões por cargo de forma simples.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-card-num">2</div>
+          <h3>Registre ocorrências</h3>
+          <p>Operadores relatam falhas em tempo real diretamente pelo sistema, com fotos e descrição.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-card-num">3</div>
+          <h3>Acompanhe o painel</h3>
+          <p>Supervisores visualizam o status de cada setor e máquina em um painel centralizado.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="container">
+      <h2>Pronto para começar?</h2>
+      <p>Acesse o sistema e monitore sua fábrica agora mesmo.</p>
+      <div class="cta-buttons">
+        <a href="painel.html" class="btn btn-primary btn-large">
+          <i class="fas fa-gauge-high"></i> Acessar Painel
+        </a>
+        <a href="cadastros.html" class="btn btn-outline btn-large" style="border-color:white;color:white;">
+          <i class="fas fa-gear"></i> Configurar
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>FactoryTrack</h4>
+        <ul>
+          <li><a href="Inicio.html">Início</a></li>
+          <li><a href="painel.html">Painel de Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Módulos</h4>
+        <ul>
+          <li><a href="ocorrencia.html">Ocorrências</a></li>
+          <li><a href="historico.html">Histórico</a></li>
+          <li><a href="cadastros.html">Cadastros</a></li>
+          <li><a href="estoque.html">Estoque</a></li>
+          <li><a href="painel.html">Painel de Status</a></li>
+          <li><a href="checklist.html">Checklist</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>FactoryTrack — Eficiência começa com informação.</p>
+      <p>© 2025 FactoryTrack</p>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/navigation.js"></script>
+<script src="../js/home.js"></script>
+</body>
+</html>

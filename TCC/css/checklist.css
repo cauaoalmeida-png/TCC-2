@@ -1,0 +1,158 @@
+/* ============================================
+   CHECKLIST.CSS — Estilos do Checklist de Manutenção
+   ============================================ */
+
+.checklist-page { padding: 2rem 0 4rem; background: var(--bg); }
+
+/* GRAVIDADE BADGES */
+.grav-baixa  { background: #dcfce7; color: #16a34a; border-left: 4px solid #22c55e; }
+.grav-media  { background: #fef9c3; color: #ca8a04; border-left: 4px solid #f59e0b; }
+.grav-alta   { background: #fee2e2; color: #dc2626; border-left: 4px solid #ef4444; }
+.grav-critica{ background: #fce7f3; color: #9d174d; border-left: 4px solid #ec4899; }
+
+.badge-baixa   { background: #dcfce7; color: #16a34a; }
+.badge-media   { background: #fef9c3; color: #ca8a04; }
+.badge-alta    { background: #fee2e2; color: #dc2626; }
+.badge-critica { background: #fce7f3; color: #9d174d; }
+
+/* CHECKLIST FORM CARD */
+.checklist-card {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.checklist-card-header {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.checklist-card-header:hover { background: #f8fafc; }
+.checklist-card-header h3 { font-size: 1rem; color: var(--primary); display: flex; align-items: center; gap: 0.6rem; }
+.checklist-card-header .toggle-icon { transition: transform 0.2s; color: var(--text-muted); }
+.checklist-card-header.open .toggle-icon { transform: rotate(180deg); }
+
+.checklist-items { display: none; padding: 0 1.5rem 1.5rem; }
+.checklist-items.open { display: block; }
+
+/* SINGLE CHECKLIST ITEM */
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border-left: 4px solid transparent;
+  transition: background 0.15s;
+}
+.check-item:hover { background: #f8fafc; }
+.check-item.grav-baixa  { border-left-color: #22c55e; }
+.check-item.grav-media  { border-left-color: #f59e0b; }
+.check-item.grav-alta   { border-left-color: #ef4444; }
+.check-item.grav-critica{ border-left-color: #ec4899; }
+
+.check-item input[type="checkbox"] {
+  width: 20px; height: 20px;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.check-item-info { flex: 1; }
+.check-item-info label { font-size: 0.95rem; font-weight: 500; cursor: pointer; display: block; margin-bottom: 0.2rem; }
+.check-item-info small { font-size: 0.8rem; color: var(--text-muted); }
+
+.check-item-obs {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  resize: none;
+  min-height: 60px;
+  display: none;
+}
+.check-item-obs.show { display: block; }
+.check-item-obs:focus { outline: none; border-color: var(--accent); }
+
+/* GRAVIDADE LEGEND */
+.grav-legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  background: white;
+  padding: 0.8rem 1.2rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.grav-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.grav-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* SUMMARY CHECKLIST */
+.check-summary {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+.check-summary-item { text-align: center; }
+.check-summary-item .num { font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; }
+.check-summary-item .lbl { font-size: 0.8rem; color: var(--text-muted); }
+
+/* FORM TOPO */
+.checklist-form-top {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+.checklist-form-top .form-group { margin: 0; }
+.checklist-form-top label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.3rem; }
+.checklist-form-top input,
+.checklist-form-top select {
+  width: 100%; padding: 0.6rem 0.9rem;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+}
+.checklist-form-top input:focus,
+.checklist-form-top select:focus { outline: none; border-color: var(--accent); }
+
+.wpp-alert-box { display: none; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: var(--radius); padding: 1.2rem 1.5rem; margin-top: 1.5rem; }
+.wpp-alert-box.show { display: block; }
+.wpp-alert-box h4 { color: #16a34a; margin-bottom: 0.5rem; }
+.wpp-alert-box p { font-size: 0.9rem; color: #15803d; margin-bottom: 0.8rem; }
+
+@media (max-width: 600px) {
+  .grav-legend { gap: 0.6rem; }
+  .check-item { flex-direction: column; gap: 0.5rem; }
+}

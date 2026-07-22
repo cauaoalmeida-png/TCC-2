@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastros - FactoryTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/forms.css">
+  <link rel="stylesheet" href="../css/footer.css">
+  <style>
+    .cad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+    .cad-panel { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .cad-panel-header {
+      background: var(--primary);
+      color: white;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .cad-panel-header h2 { font-size: 1.2rem; color: white; }
+    .cad-panel-form { padding: 1.5rem; border-bottom: 1px solid var(--border); }
+    .cad-panel-form .form-group { margin-bottom: 1rem; }
+    .cad-panel-form .form-group label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.3rem; }
+    .cad-panel-form .form-group input,
+    .cad-panel-form .form-group select {
+      width: 100%; padding: 0.6rem 0.9rem;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+    }
+    .cad-panel-form .form-group input:focus,
+    .cad-panel-form .form-group select:focus { outline: none; border-color: var(--accent); }
+    .cad-list { padding: 1rem 1.5rem; }
+    .cad-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.7rem 0; border-bottom: 1px solid var(--border); gap: 0.5rem;
+    }
+    .cad-item:last-child { border-bottom: none; }
+    .cad-item-info h4 { font-size: 0.95rem; color: var(--text); }
+    .cad-item-info p { font-size: 0.8rem; color: var(--text-muted); }
+    .btn-del { background: #fee2e2; color: #dc2626; border: none; padding: 0.35rem 0.7rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: background 0.2s; }
+    .btn-del:hover { background: #fca5a5; }
+    .empty-cad { color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1.5rem; }
+    @media (max-width: 768px) { .cad-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">
+      <a href="../index.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
+    </div>
+    <nav class="nav">
+      <ul class="nav-list">
+        <li><a href="../index.html" class="nav-link">Início</a></li>
+        <li><a href="painel.html" class="nav-link">Painel de Status</a></li>
+         <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrencia</a></li>
+        <li><a href="checklist.html" class="nav-link">Checklist</a></li>
+        <li><a href="historico.html" class="nav-link">Histórico</a></li>
+        <li><a href="estoque.html" class="nav-link">Estoque</a></li>
+        <li><a href="cadastros.html" class="nav-link active">Cadastros</a></li>
+      </ul>
+    </nav>
+    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<main>
+  <div class="page-header">
+    <div class="container">
+      <h1><i class="fas fa-database"></i> Cadastros</h1>
+      <p>Gerencie os setores e máquinas da fábrica</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="container">
+      <div class="cad-grid">
+
+        <!-- SETORES -->
+        <div class="cad-panel">
+          <div class="cad-panel-header">
+            <i class="fas fa-sitemap"></i>
+            <h2>Setores</h2>
+          </div>
+          <div class="cad-panel-form">
+            <div class="form-group">
+              <label>Nome do Setor *</label>
+              <input type="text" id="setorNome" placeholder="Ex: Pintura">
+            </div>
+            <div class="form-group">
+              <label>Responsável *</label>
+              <input type="text" id="setorResp" placeholder="Nome do responsável">
+            </div>
+            <button class="btn btn-primary" onclick="addSetor()">
+              <i class="fas fa-plus"></i> Adicionar Setor
+            </button>
+          </div>
+          <div class="cad-list" id="setorList"></div>
+        </div>
+
+        <!-- MÁQUINAS -->
+        <div class="cad-panel">
+          <div class="cad-panel-header">
+            <i class="fas fa-cogs"></i>
+            <h2>Máquinas / Etapas</h2>
+          </div>
+          <div class="cad-panel-form">
+            <div class="form-group">
+              <label>Nome da Máquina *</label>
+              <input type="text" id="maqNome" placeholder="Ex: Torno CNC">
+            </div>
+            <div class="form-group">
+              <label>Setor *</label>
+              <select id="maqSetor">
+                <option value="">Selecione o setor</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Número de Série</label>
+              <input type="text" id="maqSerie" placeholder="Ex: TRN-008">
+            </div>
+            <button class="btn btn-primary" onclick="addMaquina()">
+              <i class="fas fa-plus"></i> Adicionar Máquina
+            </button>
+          </div>
+          <div class="cad-list" id="maqList"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>FactoryTrack</h4>
+        <ul>
+          <li><a href="../index.html">Início</a></li>
+          <li><a href="painel.html">Painel de Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Funcionalidades</h4>
+        <ul>
+          <li><a href="ocorrencia.html">Checklist</a></li>
+          <li><a href="historico.html">Histórico</a></li>
+          <li><a href="cadastros.html">Cadastros</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>FactoryTrack — Eficiência começa com informação.</p>
+      <p>© 2025 FactoryTrack</p>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/rbac.js"></script>
+<script src="../js/navigation.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const ok = requireSupervisor();
+    if (!ok) {
+      document.body.innerHTML = '';
+      goBackOrLogin();
+      return;
+    }
+    // Se passou na validação (logado), limpa o destino para não redirecionar novamente.
+    try { clearNextUrl && clearNextUrl(); } catch (e) {}
+  });
+
+  function renderSetores() {
+    const lista = getSetores();
+    const container = document.getElementById('setorList');
+    const maqSel = document.getElementById('maqSetor');
+
+    maqSel.innerHTML = '<option value="">Selecione o setor</option>';
+    lista.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.nome; opt.textContent = s.nome;
+      maqSel.appendChild(opt);
+    });
+
+    if (!lista.length) {
+      container.innerHTML = '<div class="empty-cad">Nenhum setor cadastrado.</div>';
+      return;
+    }
+    container.innerHTML = lista.map(s => `
+      <div class="cad-item">
+        <div class="cad-item-info">
+          <h4>${s.nome}</h4>
+          <p>Resp: ${s.responsavel}</p>
+        </div>
+        <button class="btn-del" onclick="deleteSetor(${s.id})">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function renderMaquinas() {
+    const lista = getMaquinas();
+    const container = document.getElementById('maqList');
+    if (!lista.length) {
+      container.innerHTML = '<div class="empty-cad">Nenhuma máquina cadastrada.</div>';
+      return;
+    }
+    container.innerHTML = lista.map(m => `
+      <div class="cad-item">
+        <div class="cad-item-info">
+          <h4>${m.nome}</h4>
+          <p>${m.setor} ${m.serie ? '| ' + m.serie : ''}</p>
+        </div>
+        <button class="btn-del" onclick="deleteMaquina(${m.id})">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  // --- FUNÇÃO DE SETOR ATUALIZADA ---
+async function addSetor() {
+    const nome = document.getElementById('setorNome').value.trim();
+    const resp = document.getElementById('setorResp').value.trim();
+
+    if (!nome || !resp) { alert('Preencha nome e responsável.'); return; }
+
+    // 1. Empacotando os dados para o seu Servidor Node.js
+    const dadosSetor = {
+        nome_setor: nome,
+        responsavel: resp
+    };
+
+    try {
+        // 2. O Motoboy (fetch) enviando para o Banco de Dados
+        const resposta = await fetch(`${API_BASE_URL}/cadastrar-setor`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosSetor)
+        });
+
+        // 3. Se o banco salvou com sucesso, executa a sua lógica visual
+        if (resposta.status === 201) {
+            const lista = getSetores();
+            lista.push({ id: nextId(lista), nome, responsavel: resp });
+            saveSetores(lista);
+            window.dispatchEvent(new Event('factorytrack:storage'));
+
+            document.getElementById('setorNome').value = '';
+            document.getElementById('setorResp').value = '';
+            renderSetores();
+            renderMaquinas();
+
+            alert('Setor salvo no Banco de Dados com sucesso!');
+        } else {
+            alert('Erro ao salvar setor no banco de dados.');
+        }
+    } catch (erro) {
+        console.error('Erro na comunicação com o servidor:', erro);
+        alert('Erro de conexão. O servidor Node.js está rodando?');
+    }
+}
+
+// --- FUNÇÃO DE MÁQUINA ATUALIZADA ---
+async function addMaquina() {
+    const nome = document.getElementById('maqNome').value.trim();
+    const setor = document.getElementById('maqSetor').value;
+    const serie = document.getElementById('maqSerie').value.trim();
+
+    if (!nome || !setor) { alert('Preencha nome e setor.'); return; }
+
+    // 1. Empacotando os dados para o seu Servidor Node.js
+    const dadosMaquina = {
+        nome_maquina: nome,
+        setor_associado: setor,
+        numero_serie: serie
+    };
+
+    try {
+        // 2. O Motoboy (fetch) enviando para o Banco de Dados
+        const resposta = await fetch(`${API_BASE_URL}/cadastrar-maquina`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosMaquina)
+        });
+
+        // 3. Se o banco salvou com sucesso, executa a sua lógica visual
+        if (resposta.status === 201) {
+            const lista = getMaquinas();
+            lista.push({ id: nextId(lista), nome, setor, serie });
+            saveMaquinas(lista);
+            window.dispatchEvent(new Event('factorytrack:storage'));
+
+            document.getElementById('maqNome').value = '';
+            document.getElementById('maqSetor').value = '';
+            document.getElementById('maqSerie').value = '';
+            renderMaquinas();
+
+            alert('Máquina salva no Banco de Dados com sucesso!');
+        } else {
+            alert('Erro ao salvar máquina no banco de dados.');
+        }
+    } catch (erro) {
+        console.error('Erro na comunicação com o servidor:', erro);
+        alert('Erro de conexão. O servidor Node.js está rodando?');
+    }
+}
+
+  function deleteSetor(id) {
+    if (!confirm('Excluir este setor?')) return;
+    saveSetores(getSetores().filter(s => s.id !== id));
+    window.dispatchEvent(new Event('factorytrack:storage'));
+
+    renderSetores();
+  }
+
+  function deleteMaquina(id) {
+    if (!confirm('Excluir esta máquina?')) return;
+    saveMaquinas(getMaquinas().filter(m => m.id !== id));
+    window.dispatchEvent(new Event('factorytrack:storage'));
+
+    renderMaquinas();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => { renderSetores(); renderMaquinas(); });
+</script>
+</body>
+</html>

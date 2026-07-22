@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Histórico - FactoryTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/footer.css">
+  <style>
+    .hist-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 1rem;
+      overflow: hidden;
+      border-left: 5px solid var(--border);
+      transition: transform 0.15s;
+    }
+    .hist-card:hover { transform: translateX(3px); }
+    .hist-card.pendente { border-left-color: var(--danger); }
+    .hist-card.resolvido { border-left-color: var(--success); }
+
+    .hist-card-header {
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .hist-card-header h3 { font-size: 1rem; color: var(--text); }
+    .hist-card-header p { font-size: 0.85rem; color: var(--text-muted); }
+    .hist-card-meta {
+      padding: 0.7rem 1.5rem;
+      background: #f8fafc;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .hist-card-meta span { display: flex; align-items: center; gap: 0.3rem; }
+    .hist-card-desc {
+      padding: 0.8rem 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text);
+      border-top: 1px solid var(--border);
+    }
+    .hist-card-resolucao {
+      padding: 0.8rem 1.5rem;
+      background: #f0fdf4;
+      border-top: 1px solid #86efac;
+      font-size: 0.85rem;
+      color: #16a34a;
+    }
+    .hist-card-footer {
+      padding: 0.8rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Resolver modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: var(--radius);
+      padding: 2rem;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal h3 { font-size: 1.3rem; margin-bottom: 1rem; color: var(--primary); }
+    .modal textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      min-height: 100px;
+      resize: vertical;
+      margin-bottom: 1rem;
+    }
+    .modal textarea:focus { outline: none; border-color: var(--accent); }
+    .modal-buttons { display: flex; gap: 0.8rem; }
+
+    .summary-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .summary-pill {
+      background: white;
+      border-radius: var(--radius);
+      padding: 0.6rem 1.2rem;
+      box-shadow: var(--shadow);
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .summary-pill .num { font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">
+      <a href="../index.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
+    </div>
+    <nav class="nav">
+      <ul class="nav-list">
+        <li><a href="../index.html" class="nav-link">Início</a></li>
+        <li><a href="painel.html" class="nav-link">Painel de Status</a></li>
+         <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrencia</a></li>
+        <li><a href="checklist.html" class="nav-link">Checklist</a></li>
+        <li><a href="historico.html" class="nav-link active">Histórico</a></li>
+        <li><a href="estoque.html" class="nav-link">Estoque</a></li>
+        <li><a href="cadastros.html" class="nav-link">Cadastros</a></li>
+      </ul>
+    </nav>
+    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<main>
+  <div class="page-header">
+    <div class="container">
+      <h1><i class="fas fa-history"></i> Histórico de Ocorrências</h1>
+      <p>Todas as ocorrências registradas, da mais recente à mais antiga</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="container">
+
+      <div class="summary-bar" id="summaryBar"></div>
+
+      <div class="filters">
+        <label>Filtrar:</label>
+        <select id="filterSetor" onchange="renderHistorico()">
+          <option value="">Todos os Setores</option>
+        </select>
+        <select id="filterTipo" onchange="renderHistorico()">
+          <option value="">Todos os Tipos</option>
+          <option value="Parada de máquina">Parada de máquina</option>
+          <option value="Problema de qualidade">Problema de qualidade</option>
+          <option value="Falta de material">Falta de material</option>
+          <option value="Manutenção preventiva">Manutenção preventiva</option>
+          <option value="Outro">Outro</option>
+        </select>
+        <select id="filterStatus" onchange="renderHistorico()">
+          <option value="">Todos os Status</option>
+          <option value="Pendente">Pendente</option>
+          <option value="Resolvido">Resolvido</option>
+        </select>
+        <select id="filterTurno" onchange="renderHistorico()">
+          <option value="">Todos os Turnos</option>
+          <option value="Manhã">Manhã</option>
+          <option value="Tarde">Tarde</option>
+          <option value="Noite">Noite</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:1rem;text-align:right"><button class="btn btn-success" onclick="abrirExportacao()"><i class="fas fa-file-excel"></i> Exportar para Excel</button></div>
+      <div id="historicoList"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal Resolver -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3><i class="fas fa-check-circle" style="color:var(--success)"></i> Marcar como Resolvido</h3>
+    <p style="margin-bottom:1rem;color:var(--text-muted);font-size:0.9rem">Descreva o que foi feito para resolver o problema:</p>
+    <textarea id="resolucaoInput" placeholder="Ex: Correia reposicionada e tensionada. Máquina retornou ao normal."></textarea>
+    <div class="modal-buttons">
+      <button class="btn btn-success" onclick="confirmarResolucao()">
+        <i class="fas fa-check"></i> Confirmar Resolução
+      </button>
+      <button class="btn btn-cancel" onclick="fecharModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>FactoryTrack</h4>
+        <ul>
+          <li><a href="../index.html">Início</a></li>
+          <li><a href="painel.html">Painel de Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Funcionalidades</h4>
+        <ul>
+          <li><a href="ocorrencia.html">Checklist</a></li>
+          <li><a href="historico.html">Histórico</a></li>
+          <li><a href="cadastros.html">Cadastros</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>FactoryTrack — Eficiência começa com informação.</p>
+      <p>© 2025 FactoryTrack</p>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/rbac.js"></script>
+<script src="../js/navigation.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!requireAuth()) return;
+    try { clearNextUrl && clearNextUrl(); } catch (e) {}
+
+    const sess = getSessao();
+    if (sess && sess.cargo === 'operador') {
+      document.querySelectorAll('button[onclick^="abrirModal"], a[href*="checklist.html?"]').forEach(el => {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.6';
+        el.setAttribute('title','Somente supervisor pode resolver ou abrir checklist');
+        el.addEventListener('click', (e) => e.preventDefault());
+      });
+
+      const expBtn = document.querySelector('button[onclick="abrirExportacao()"]');
+      if (expBtn) {
+        expBtn.style.pointerEvents = 'none';
+        expBtn.style.opacity = '0.6';
+        expBtn.setAttribute('title','Somente supervisor pode exportar');
+        expBtn.addEventListener('click', (e) => e.preventDefault());
+      }
+    }
+  });
+
+  let resolvendoId = null;
+  let historicoAtual = []; // Variável global para armazenar dados do banco
+
+  function tipoIcon(tipo) {
+    const map = {
+      'Parada de máquina': 'fa-stop-circle',
+      'Problema de qualidade': 'fa-exclamation-triangle',
+      'Falta de material': 'fa-box-open',
+      'Manutenção preventiva': 'fa-tools',
+      'Outro': 'fa-question-circle'
+    };
+    return map[tipo] || 'fa-circle';
+  }
+
+  const TEMPO_OCULTAR_MS = 10 * 60 * 1000;
+  let mostrarResolvidos = false;
+  let timerInterval = null;
+
+  function tempoRestante(dataResolucao) {
+    const diff = TEMPO_OCULTAR_MS - (Date.now() - new Date(dataResolucao).getTime());
+    return diff > 0 ? diff : 0;
+  }
+
+  function formatarTimer(ms) {
+    const min = Math.floor(ms / 60000);
+    const seg = Math.floor((ms % 60000) / 1000);
+    return `${min}:${seg.toString().padStart(2,'0')}`;
+  }
+
+  // BUSCAR do Banco de Dados e Renderizar
+  async function renderHistorico() {
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/ocorrencias`);
+        historicoAtual = await resposta.json();
+    } catch (erro) {
+        console.error('Erro ao buscar do servidor:', erro);
+        document.getElementById('historicoList').innerHTML = `<div class="empty-state">Erro ao carregar dados do servidor.</div>`;
+        return;
+    }
+
+    let todas = [...historicoAtual];
+    const fSetor  = document.getElementById('filterSetor').value;
+    const fTipo   = document.getElementById('filterTipo').value;
+    const fStatus = document.getElementById('filterStatus').value;
+    const fTurno  = document.getElementById('filterTurno').value;
+
+    let pendentes  = todas.filter(o => o.status === 'Pendente');
+    let resolvidos = todas.filter(o => o.status === 'Resolvido');
+
+    const resolvidosVisiveis   = resolvidos.filter(o => tempoRestante(o.dataResolucao || o.data) > 0);
+    const resolvidosOcultos    = resolvidos.filter(o => tempoRestante(o.dataResolucao || o.data) === 0);
+
+    if (fSetor)  { pendentes = pendentes.filter(o => o.setor === fSetor); resolvidos = resolvidos.filter(o => o.setor === fSetor); }
+    if (fTipo)   { pendentes = pendentes.filter(o => o.tipo  === fTipo);  resolvidos = resolvidos.filter(o => o.tipo  === fTipo);  }
+    if (fTurno)  { pendentes = pendentes.filter(o => o.turno === fTurno); resolvidos = resolvidos.filter(o => o.turno === fTurno); }
+
+    let listaVisivel = [
+      ...pendentes,
+      ...resolvidosVisiveis.filter(o =>
+        (!fSetor  || o.setor  === fSetor)  &&
+        (!fTipo   || o.tipo   === fTipo)   &&
+        (!fTurno  || o.turno  === fTurno)
+      )
+    ].sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    if (fStatus === 'Resolvido') listaVisivel = resolvidos.sort((a,b) => new Date(b.data)-new Date(a.data));
+    if (fStatus === 'Pendente')  listaVisivel = pendentes.sort((a,b) => new Date(b.data)-new Date(a.data));
+
+    document.getElementById('summaryBar').innerHTML = `
+      <div class="summary-pill"><span class="num" style="color:var(--danger)">${todas.filter(o=>o.status==='Pendente').length}</span> Pendentes</div>
+      <div class="summary-pill"><span class="num" style="color:var(--success)">${todas.filter(o=>o.status==='Resolvido').length}</span> Resolvidas</div>
+      <div class="summary-pill"><span class="num" style="color:var(--primary)">${todas.length}</span> Total</div>
+      ${resolvidosOcultos.length > 0 ? `
+        <button class="summary-pill" onclick="toggleResolvidos()" style="cursor:pointer;border:1.5px solid var(--border);background:${mostrarResolvidos?'var(--primary)':'white'};color:${mostrarResolvidos?'white':'var(--text-muted)'}">
+          <i class="fas fa-eye${mostrarResolvidos?'-slash':''}"></i>
+          ${mostrarResolvidos ? 'Ocultar' : 'Ver'} resolvidos (${resolvidosOcultos.length})
+        </button>` : ''}
+    `;
+
+    const container = document.getElementById('historicoList');
+    let html = '';
+
+    if (!listaVisivel.length && !(mostrarResolvidos && resolvidosOcultos.length)) {
+      html = `<div class="empty-state"><i class="fas fa-clipboard-list"></i><p>Nenhuma ocorrência encontrada.</p></div>`;
+    } else {
+      html = listaVisivel.map(o => renderCard(o)).join('');
+    }
+
+    if (mostrarResolvidos && resolvidosOcultos.length) {
+      const resolvidosFiltrados = resolvidosOcultos.filter(o =>
+        (!fSetor  || o.setor  === fSetor)  &&
+        (!fTipo   || o.tipo   === fTipo)   &&
+        (!fTurno  || o.turno  === fTurno)
+      );
+      if (resolvidosFiltrados.length) {
+        html += `
+          <div style="margin:1.5rem 0 0.5rem;padding:0.8rem 1.2rem;background:#f0fdf4;border-radius:var(--radius);border:1.5px solid #86efac;display:flex;align-items:center;gap:0.5rem">
+            <i class="fas fa-check-circle" style="color:#16a34a"></i>
+            <span style="font-weight:600;color:#16a34a">Ocorrências já concluídas (ocultas automaticamente após 10 min)</span>
+          </div>
+          ${resolvidosFiltrados.map(o => renderCard(o)).join('')}
+        `;
+      }
+    }
+
+    container.innerHTML = html;
+
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      resolvidosVisiveis.forEach(o => {
+        const el = document.getElementById(`timer-${o.id}`);
+        if (el) {
+          const rest = tempoRestante(o.dataResolucao || o.data);
+          if (rest <= 0) { renderHistorico(); return; }
+          el.textContent = `Sumindo em ${formatarTimer(rest)}`;
+        }
+      });
+    }, 1000);
+  }
+
+  function renderCard(o) {
+    const isPendente = o.status === 'Pendente';
+    const resto = tempoRestante(o.dataResolucao || o.data);
+    const mostrandoTimer = !isPendente && resto > 0;
+
+    // Para evitar erro na formatação de data caso ela não passe pela função local
+    const dataFormatada = o.data ? new Date(o.data).toLocaleString('pt-BR') : '-';
+
+    return `
+      <div class="hist-card ${isPendente ? 'pendente' : 'resolvido'}">
+        <div class="hist-card-header">
+          <div>
+            <h3><i class="fas ${tipoIcon(o.tipo)}"></i> ${o.tipo} — ${o.maquina}</h3>
+            <p>${o.setor}</p>
+          </div>
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+            ${isPendente
+              ? '<span class="badge badge-danger"><i class="fas fa-clock"></i> Pendente</span>'
+              : '<span class="badge badge-success"><i class="fas fa-check"></i> Resolvido</span>'}
+            ${mostrandoTimer ? `<span id="timer-${o.id}" style="font-size:0.78rem;color:#ca8a04;background:#fef9c3;padding:2px 8px;border-radius:10px;font-weight:600"><i class="fas fa-hourglass-half"></i> Sumindo em ${formatarTimer(resto)}</span>` : ''}
+          </div>
+        </div>
+        <div class="hist-card-meta">
+          <span><i class="fas fa-calendar"></i> ${dataFormatada}</span>
+          <span><i class="fas fa-user"></i> ${o.operador}</span>
+          <span><i class="fas fa-clock"></i> Turno: ${o.turno}</span>
+        </div>
+        <div class="hist-card-desc">${o.descricao}</div>
+        ${o.resolucao ? `<div class="hist-card-resolucao"><i class="fas fa-check-circle"></i> <strong>Resolução:</strong> ${o.resolucao}</div>` : ''}
+        ${isPendente ? `
+        <div class="hist-card-footer">
+          <button class="btn btn-success btn-sm" onclick="abrirModal(${o.id})">
+            <i class="fas fa-check"></i> Marcar como Resolvido
+          </button>
+          <a href="checklist.html?setor=${encodeURIComponent(o.setor)}&maquina=${encodeURIComponent(o.maquina)}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Novo Checklist
+          </a>
+        </div>` : ''}
+      </div>`;
+  }
+
+  function toggleResolvidos() {
+    mostrarResolvidos = !mostrarResolvidos;
+    renderHistorico();
+  }
+
+  function abrirModal(id) {
+    resolvendoId = id;
+    document.getElementById('resolucaoInput').value = '';
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function fecharModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    resolvendoId = null;
+  }
+
+  // ATUALIZAR STATUS NO BANCO
+  async function confirmarResolucao() {
+    const texto = document.getElementById('resolucaoInput').value.trim();
+    if (!texto) { alert('Por favor, descreva o que foi feito.'); return; }
+    
+    const dataAtual = new Date().toISOString();
+
+    try {
+        await fetch(`${API_BASE_URL}/resolver-ocorrencia/${resolvendoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolucao: texto, dataResolucao: dataAtual })
+        });
+        fecharModal();
+        renderHistorico(); // Recarrega da base de dados
+    } catch (erro) {
+        alert('Erro ao comunicar com o servidor.');
+    }
+  }
+
+  // ALIMENTAR O FILTRO COM OS SETORES DO BANCO
+  async function initFiltros() {
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/setores`);
+        const setores = await resposta.json();
+        const sel = document.getElementById('filterSetor');
+        setores.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.nome_setor; opt.textContent = s.nome_setor;
+            sel.appendChild(opt);
+        });
+    } catch (erro) {
+        console.error("Erro ao carregar os filtros de setor.");
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => { initFiltros(); renderHistorico(); });
+
+// ==========================================
+// EXPORTAÇÃO AVANÇADA (BUSCANDO DO BANCO)
+// ==========================================
+function abrirExportacao() {
+  const modal = document.createElement('div');
+  modal.id = 'exportModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:10px;padding:2rem;width:90%;max-width:480px;box-shadow:0 8px 30px rgba(0,0,0,0.2)">
+      <h3 style="font-family:'Rajdhani',sans-serif;font-size:1.4rem;color:#1a2f4e;margin-bottom:0.5rem">
+        <i class="fas fa-file-excel" style="color:#16a34a"></i> Exportar para Excel
+      </h3>
+      <p style="color:#64748b;font-size:0.9rem;margin-bottom:1.5rem">Selecione o que deseja exportar:</p>
+      <div style="display:flex;flex-direction:column;gap:0.8rem;margin-bottom:1.5rem">
+        <label style="display:flex;align-items:center;gap:0.8rem;padding:0.8rem;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer">
+          <input type="checkbox" id="expOcorrencias" checked style="width:18px;height:18px;accent-color:#FF8C42">
+          <span><strong>Histórico de Ocorrências</strong><br><small style="color:#64748b">Todas as ocorrências e checklists registrados</small></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:0.8rem;padding:0.8rem;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer">
+          <input type="checkbox" id="expEstoque" checked style="width:18px;height:18px;accent-color:#FF8C42">
+          <span><strong>Estoque de Peças</strong><br><small style="color:#64748b">Lista completa de peças e quantidades</small></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:0.8rem;padding:0.8rem;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer">
+          <input type="checkbox" id="expCadastros" checked style="width:18px;height:18px;accent-color:#FF8C42">
+          <span><strong>Cadastros (Setores e Máquinas)</strong><br><small style="color:#64748b">Lista de setores e máquinas cadastradas</small></span>
+        </label>
+      </div>
+      <div style="display:flex;gap:0.8rem">
+        <button onclick="confirmarExportacao()" class="btn btn-success" id="btnExportar" style="flex:1;justify-content:center">
+          <i class="fas fa-download"></i> Exportar
+        </button>
+        <button onclick="document.getElementById('exportModal').remove()" class="btn btn-cancel">
+          Cancelar
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function confirmarExportacao() {
+  const expOc  = document.getElementById('expOcorrencias').checked;
+  const expEst = document.getElementById('expEstoque').checked;
+  const expCad = document.getElementById('expCadastros').checked;
+
+  if (!expOc && !expEst && !expCad) { alert('Selecione pelo menos uma opção.'); return; }
+
+  const btn = document.getElementById('btnExportar');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
+  btn.style.pointerEvents = 'none';
+
+  try {
+      const wb = XLSX.utils.book_new();
+
+      if (expOc) {
+        const resOc = await fetch(`${API_BASE_URL}/ocorrencias`);
+        const ocorrencias = await resOc.json();
+        const ocPlanilha = ocorrencias.map(o => ({
+          'ID': o.id,
+          'Data': o.data ? new Date(o.data).toLocaleString('pt-BR') : '-',
+          'Setor': o.setor,
+          'Máquina': o.maquina,
+          'Tipo': o.tipo,
+          'Operador': o.operador,
+          'Turno': o.turno,
+          'Descrição': o.descricao,
+          'Status': o.status,
+          'Resolução': o.resolucao || '-'
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ocPlanilha), 'Ocorrências');
+      }
+
+      if (expEst) {
+        const resPecas = await fetch(`${API_BASE_URL}/pecas`);
+        const pecas = await resPecas.json();
+        const pecasPlanilha = pecas.map(p => ({
+          'ID': p.id,
+          'Peça': p.nome,
+          'Categoria': p.categoria,
+          'Quantidade Atual': p.qtd,
+          'Estoque Mínimo': p.min,
+          'Unidade': p.unidade,
+          'Status': p.qtd <= p.min ? 'ABAIXO DO MÍNIMO' : 'OK'
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pecasPlanilha), 'Estoque');
+      }
+
+      if (expCad) {
+        const resSetores = await fetch(`${API_BASE_URL}/setores`);
+        const setores = await resSetores.json();
+        const resMaquinas = await fetch(`${API_BASE_URL}/maquinas`);
+        const maquinas = await resMaquinas.json();
+
+        const setoresPlanilha = setores.map(s => ({ 'ID': s.id, 'Setor': s.nome_setor, 'Responsável': s.responsavel }));
+        const maquinasPlanilha = maquinas.map(m => ({ 'ID': m.id, 'Máquina': m.nome_maquina, 'Setor': m.setor_associado, 'Série': m.numero_serie || '-' }));
+        
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(setoresPlanilha), 'Setores');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(maquinasPlanilha), 'Máquinas');
+      }
+
+      const dataStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+      XLSX.writeFile(wb, `FactoryTrack_${dataStr}.xlsx`);
+      document.getElementById('exportModal').remove();
+
+  } catch (error) {
+      alert("Erro ao buscar dados do servidor para a exportação!");
+      btn.innerHTML = '<i class="fas fa-download"></i> Exportar';
+      btn.style.pointerEvents = 'auto';
+  }
+}
+</script>

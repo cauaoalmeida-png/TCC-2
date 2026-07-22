@@ -1,0 +1,189 @@
+/* ============================================
+   ESTOQUE.CSS — Estilos da Área de Estoque
+   ============================================ */
+
+.estoque-page { padding: 2rem 0 4rem; background: var(--bg); }
+
+/* LOGIN MODAL */
+.login-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+}
+.login-overlay.open { display: flex; }
+.login-box {
+  background: white;
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.login-box i { font-size: 2.5rem; color: var(--accent); margin-bottom: 1rem; }
+.login-box h3 { font-size: 1.4rem; color: var(--primary); margin-bottom: 0.3rem; }
+.login-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+.login-box input {
+  width: 100%; padding: 0.7rem 1rem;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+  margin-bottom: 0.8rem; text-align: center; letter-spacing: 3px;
+}
+.login-box input:focus { outline: none; border-color: var(--accent); }
+.login-error { color: #dc2626; font-size: 0.85rem; margin-bottom: 0.8rem; display: none; }
+.login-error.show { display: block; }
+
+/* ROLE BANNER */
+.role-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.role-banner.operador { background: #dbeafe; color: #1d4ed8; }
+.role-banner.gerente  { background: #fce7f3; color: #9d174d; }
+
+/* ESTOQUE CARDS */
+.estoque-card {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+.estoque-card:hover { transform: translateY(-3px); }
+
+.estoque-card-header {
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.estoque-card-header h3 { font-size: 1rem; color: var(--text); margin-bottom: 0.2rem; }
+.estoque-card-header p  { font-size: 0.82rem; color: var(--text-muted); }
+
+.estoque-card-body { padding: 1rem 1.5rem; }
+
+.estoque-qty {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+}
+.estoque-qty-label { font-size: 0.8rem; color: var(--text-muted); }
+
+/* PROGRESS BAR */
+.estoque-bar-wrap { margin: 0.8rem 0; }
+.estoque-bar-bg {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.estoque-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s;
+}
+.bar-ok      { background: var(--success); }
+.bar-warning { background: var(--warning); }
+.bar-danger  { background: var(--danger); }
+
+/* ALERTA GERENTE */
+.alerta-gerente {
+  display: none;
+  background: #fee2e2;
+  border: 1.5px solid #fca5a5;
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.82rem;
+  color: #dc2626;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  align-items: center;
+  gap: 0.4rem;
+}
+.alerta-gerente.show { display: flex; }
+
+.estoque-card-footer {
+  padding: 0.8rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* FORM NOVA PEÇA */
+.nova-peca-panel {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+.nova-peca-header {
+  background: var(--primary);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.nova-peca-header h2 { font-size: 1.1rem; color: white; }
+.nova-peca-form {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+.nova-peca-form .form-group { margin: 0; }
+.nova-peca-form label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.3rem; }
+.nova-peca-form input, .nova-peca-form select {
+  width: 100%; padding: 0.6rem 0.9rem;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+}
+.nova-peca-form input:focus, .nova-peca-form select:focus { outline: none; border-color: var(--accent); }
+
+/* MODAL USAR PEÇA */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  padding: 2rem;
+  width: 90%; max-width: 450px;
+  box-shadow: var(--shadow-lg);
+}
+.modal h3 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary); }
+.modal input {
+  width: 100%; padding: 0.7rem 1rem;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+.modal input:focus { outline: none; border-color: var(--accent); }
+.modal-buttons { display: flex; gap: 0.8rem; }
+
+@media (max-width: 600px) {
+  .nova-peca-form { grid-template-columns: 1fr; }
+}

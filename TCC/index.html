@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - FactoryTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/header.css">
+  <link rel="stylesheet" href="css/footer.css">
+  <!-- index.html (Novos estilos na tag <style>) -->
+
+  <style>
+    /* Estilos Globais para Uniformidade */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    main { flex: 1; }
+
+    /* LAYOUT DA PÁGINA DE LOGIN */
+    .login-page {
+      display: flex;
+      justify-content: center;
+      align-items: center; /* Centralização Vertical Completa */
+      background: var(--bg);
+      padding: 0 1rem; /* Padding lateral */
+    }
+
+    /* Container para centralização vertical do card */
+    .login-container {
+      width: 100%;
+      max-width: 480px; /* Levemente maior que o original */
+      display: flex;
+      justify-content: center;
+      margin-top: -50px; /* Puxa um pouco para cima para equilibrar com o footer */
+    }
+
+    /* CARD DE LOGIN MELHORADO */
+    .login-card {
+      width: 100%;
+      background: var(--card);
+      border-radius: var(--radius); /* Usa o radius global */
+      box-shadow: var(--shadow-lg); /* Usa uma sombra mais profunda */
+      padding: 2.5rem; /* Padding interno melhorado */
+      border: none; /* Remove a borda simples */
+      position: relative;
+    }
+
+    /* Detalhe estético no topo do card (Manutenção do padrão) */
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: var(--accent); /* Cor laranja padrão */
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .login-card h1 {
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--primary);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    
+    .login-card h1 i { font-size: 1.8rem; opacity: 0.9; }
+
+    .login-card p { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem; }
+
+    /* ESTILIZAÇÃO COMPLETA DOS CAMPOS DE ENTRADA (MUDANÇA PRINCIPAL) */
+    .form-group { margin-bottom: 1.5rem; } /* Mais espaçamento entre grupos */
+    
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 0.4rem;
+      color: var(--text);
+    }
+
+    /* Novo wrapper para ícone dentro do input */
+    .input-icon-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon-wrapper i {
+      position: absolute;
+      left: 1rem;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .login-page .form-group input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      padding-left: 2.8rem; /* Espaço para o ícone */
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius); /* Usa o radius global */
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      transition: all 0.2s ease;
+      background: white;
+    }
+
+    /* Estado de Foco do Input (Igual ao forms.css) */
+    .login-page .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(255,140,66,0.1);
+      background: #fff;
+    }
+
+    /* ESTILIZAÇÃO DOS BOTÕES (Manutenção das cores e ícones) */
+    .login-actions { display:flex; gap:1rem; flex-wrap:wrap; margin-top:1.5rem; }
+    
+    .login-page .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.8rem 1.5rem; /* Padding ligeiramente maior */
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .login-page .btn-primary { background: var(--accent); color: white; flex: 1; justify-content: center; }
+    .login-page .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+    .login-page .btn-cancel {
+      background: #f1f5f9;
+      color: var(--text-muted);
+      border: 1.5px solid var(--border);
+    }
+    .login-page .btn-cancel:hover { background: #e2e8f0; color: var(--text); }
+
+    /* MENSAGENS DE ERRO E SESSÃO */
+    .error {
+      display:none;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background: #fee2e2;
+      color: #dc2626;
+      font-size: 0.9rem;
+      border: 1.5px solid #fecaca;
+      font-weight: 600;
+    }
+    
+    .user-badge {
+      margin-top: 1.5rem;
+      padding: 0.8rem;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #f8fafc;
+      font-size:0.9rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* RESPONSIVIDADE ADICIONAL */
+    @media (max-width: 480px) {
+      .login-card { padding: 1.5rem; }
+      .login-actions { flex-direction: column; }
+      .login-page .btn-cancel { flex: 1; width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">
+      <a href="pages/Inicio.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
+    </div>
+    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- index.html (Trecho atualizado) -->
+
+<main class="login-page">
+  <div class="login-container"> <!-- Novo container para centralização total -->
+    <div class="login-card">
+      <h1><i class="fas fa-lock"></i> Login</h1>
+      <p>Acesse o FactoryTrack com seu usuário e senha.</p>
+
+      <form id="form-login">
+        <div class="form-group">
+          <label for="nomeInput">Nome</label>
+          <div class="input-icon-wrapper"> <!-- Novo wrapper para ícone + input -->
+            <i class="fas fa-user"></i> <!-- Ícone de Usuário -->
+            <input id="nomeInput" type="text" placeholder="Seu nome" required />
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="senhaInput">Senha</label>
+          <div class="input-icon-wrapper"> <!-- Novo wrapper para ícone + input -->
+            <i class="fas fa-key"></i> <!-- Ícone de Chave/Senha -->
+            <input id="senhaInput" type="password" placeholder="Sua senha" required />
+          </div>
+        </div>
+
+        <div class="login-actions">
+          <button type="button" class="btn btn-primary" onclick="fazerLogin()">
+            <i class="fas fa-right-to-bracket"></i> Entrar
+          </button>
+          <button type="button" class="btn btn-cancel" onclick="irParaRegistro()">
+            <i class="fas fa-user-plus"></i> Criar demo
+          </button>
+        </div>
+      </form>
+
+      <div class="error" id="errorBox"></div>
+      <div class="user-badge" id="sessionInfo" style="display:none"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>FactoryTrack</h4>
+        <ul>
+          <li><a href="pages/Inicio.html">Início</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>FactoryTrack — Eficiência começa com informação.</p>
+      <p>© 2025 FactoryTrack</p>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  function redirecionar(path) {
+    window.location.href = path;
+  }
+
+  function setError(msg) {
+    const el = document.getElementById('errorBox');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function fazerLogin() {
+    const nome = document.getElementById('nomeInput').value.trim();
+    const senha = document.getElementById('senhaInput').value;
+    if (!nome || !senha) {
+      setError('Informe nome e senha.');
+      return;
+    }
+    const res = loginUsuario(nome, senha);
+    if (!res.ok) {
+      setError(res.msg || 'Login inválido.');
+      return;
+    }
+
+    const sess = getSessao();
+    document.getElementById('sessionInfo').style.display = 'block';
+    document.getElementById('sessionInfo').textContent = `Sessão ativa: ${sess.nome} (${cargoLabel(sess.cargo)})`;
+
+    // Redireciona para a página que a pessoa tentou acessar antes do login.
+    // (ft_next_url é setado no rbac.js quando não há sessão).
+    let next = null;
+    try { next = sessionStorage.getItem('ft_next_url'); } catch (e) {}
+    try { sessionStorage.removeItem('ft_next_url'); } catch (e) {}
+
+    if (next) {
+      window.location.href = next;
+      return;
+    }
+
+    redirecionar('PAGES/Inicio.html');
+  }
+
+
+  // Cria usuários demo no localStorage, para você testar (opcional)
+  function irParaRegistro() {
+    // Se já tem usuários, não sobrescreve.
+    if (temUsuarios()) {
+      if (confirm('Já existem usuários cadastrados. Deseja ir ao login mesmo assim?')) { /* já estamos na tela de login */ }
+      return;
+    }
+
+    registrarUsuario('operador', '123', 'operador');
+    registrarUsuario('gerente', '123', 'gerente');
+    registrarUsuario('chefe', '123', 'chefe_geral');
+    alert('Usuários demo criados no localStorage. Use: operador/123 ou gerente/123 ou chefe/123');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const sess = getSessao();
+    if (sess) {
+      document.getElementById('sessionInfo').style.display = 'block';
+      document.getElementById('sessionInfo').textContent = `Sessão ativa: ${sess.nome} (${cargoLabel(sess.cargo)})`;
+      redirecionar('PAGES/Inicio.html');
+    }
+  });
+</script>
+</body>
+</html>
+

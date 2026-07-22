@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checklist de Manutenção - FactoryTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/forms.css">
+  <link rel="stylesheet" href="../css/checklist.css">
+  <link rel="stylesheet" href="../css/footer.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">
+      <a href="../index.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
+    </div>
+    <nav class="nav">
+      <ul class="nav-list">
+        <li><a href="../index.html" class="nav-link">Início</a></li>
+        <li><a href="painel.html" class="nav-link">Painel de Status</a></li>
+         <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrencia</a></li>
+        <li><a href="checklist.html" class="nav-link active">Checklist</a></li>
+        <li><a href="historico.html" class="nav-link">Histórico</a></li>
+        <li><a href="estoque.html" class="nav-link">Estoque</a></li>
+        <li><a href="cadastros.html" class="nav-link">Cadastros</a></li>
+      </ul>
+    </nav>
+    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<main class="checklist-page">
+  <div class="container">
+
+    <div class="page-header" style="margin: -2rem -1.5rem 2rem; border-radius:0;">
+      <div style="padding: 2rem 1.5rem">
+        <h1><i class="fas fa-clipboard-check"></i> Checklist de Manutenção</h1>
+        <p>Preencha os itens inspecionados. O sistema calcula a gravidade automaticamente.</p>
+      </div>
+    </div>
+
+    <!-- LEGENDA DE GRAVIDADE -->
+    <div class="grav-legend">
+      <strong style="font-size:0.82rem;color:var(--text-muted);margin-right:0.3rem">Gravidade:</strong>
+      <div class="grav-legend-item"><div class="grav-dot" style="background:#22c55e"></div> Baixa — estético/visual</div>
+      <div class="grav-legend-item"><div class="grav-dot" style="background:#f59e0b"></div> Média — afeta rendimento</div>
+      <div class="grav-legend-item"><div class="grav-dot" style="background:#ef4444"></div> Alta — risco operacional</div>
+      <div class="grav-legend-item"><div class="grav-dot" style="background:#ec4899"></div> Crítica — parar imediatamente</div>
+    </div>
+
+    <!-- DADOS DO INSPETOR -->
+    <div class="checklist-form-top">
+      <div class="form-group">
+        <label>Inspetor Responsável *</label>
+        <input type="text" id="inspetorNome" placeholder="Seu nome completo">
+      </div>
+      <div class="form-group">
+        <label>Setor *</label>
+        <select id="setorSelect">
+          <option value="">Selecione</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Máquina / Equipamento *</label>
+        <select id="maquinaSelect">
+          <option value="">Selecione primeiro o setor</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Turno *</label>
+        <select id="turnoSelect">
+          <option value="">Selecione</option>
+          <option value="Manhã">Manhã</option>
+          <option value="Tarde">Tarde</option>
+          <option value="Noite">Noite</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- RESUMO DINÂMICO -->
+    <div class="check-summary" id="checkSummary">
+      <div class="check-summary-item">
+        <div class="num" id="sumTotal" style="color:var(--primary)">0</div>
+        <div class="lbl">Itens verificados</div>
+      </div>
+      <div class="check-summary-item">
+        <div class="num" id="sumBaixa" style="color:#16a34a">0</div>
+        <div class="lbl">Gravidade Baixa</div>
+      </div>
+      <div class="check-summary-item">
+        <div class="num" id="sumMedia" style="color:#ca8a04">0</div>
+        <div class="lbl">Gravidade Média</div>
+      </div>
+      <div class="check-summary-item">
+        <div class="num" id="sumAlta" style="color:#dc2626">0</div>
+        <div class="lbl">Gravidade Alta</div>
+      </div>
+      <div class="check-summary-item">
+        <div class="num" id="sumCritica" style="color:#9d174d">0</div>
+        <div class="lbl">Gravidade Crítica</div>
+      </div>
+    </div>
+
+    <!-- CATEGORIAS DO CHECKLIST -->
+    <div id="checklistContainer"></div>
+
+    <!-- BOTÕES FINAIS -->
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.5rem">
+      <button class="btn btn-primary btn-large" onclick="enviarChecklist()">
+        <i class="fas fa-paper-plane"></i> Registrar Checklist
+      </button>
+      <button class="btn btn-outline btn-large" onclick="limparChecklist()">
+        <i class="fas fa-redo"></i> Limpar
+      </button>
+    </div>
+
+    <!-- ALERTA WHATSAPP -->
+    <div class="wpp-alert-box" id="wppBox">
+      <h4><i class="fab fa-whatsapp"></i> Checklist registrado! Itens críticos detectados.</h4>
+      <p>Clique abaixo para avisar o supervisor imediatamente:</p>
+      <a id="wppLink" href="#" target="_blank" class="btn btn-success btn-large">
+        <i class="fab fa-whatsapp"></i> Alertar Supervisor no WhatsApp
+      </a>
+    </div>
+
+    <div class="success-msg" id="successMsg" style="margin-top:1rem">
+      <i class="fas fa-check-circle"></i> Checklist registrado com sucesso no histórico!
+    </div>
+
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>FactoryTrack</h4>
+        <ul>
+          <li><a href="../index.html">Início</a></li>
+          <li><a href="painel.html">Painel de Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Funcionalidades</h4>
+        <ul>
+          <li><a href="checklist.html">Checklist</a></li>
+          <li><a href="historico.html">Histórico</a></li>
+          <li><a href="estoque.html">Estoque</a></li>
+          <li><a href="cadastros.html">Cadastros</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>FactoryTrack — Eficiência começa com informação.</p>
+      <p>© 2025 FactoryTrack</p>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/rbac.js"></script>
+<script src="../js/navigation.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const ok = requireSupervisor();
+    if (!ok) {
+      document.body.innerHTML = '';
+      goBackOrLogin();
+      return;
+    }
+    try { clearNextUrl && clearNextUrl(); } catch (e) {}
+    
+    renderChecklist(); 
+    loadSetores(); // Agora carrega direto do MySQL!
+});
+
+const CHECKLIST_ITENS = [
+  {
+    categoria: 'Estrutura e Pintura', icone: 'fa-paint-roller',
+    itens: [
+      { id: 'c01', label: 'Riscos ou arranhões na pintura', grav: 'baixa', desc: 'Danos superficiais que não afetam o funcionamento' },
+      { id: 'c02', label: 'Corrosão superficial (ferrugem leve)', grav: 'media', desc: 'Pode evoluir e afetar estrutura se não tratada' },
+      { id: 'c03', label: 'Deformação na estrutura metálica', grav: 'alta', desc: 'Compromete integridade e pode causar falha estrutural' },
+      { id: 'c04', label: 'Rachaduras ou fissuras no chassi', grav: 'critica', desc: 'Parar a máquina imediatamente para inspeção' },
+    ]
+  },
+  {
+    categoria: 'Sistema Elétrico', icone: 'fa-bolt',
+    itens: [
+      { id: 'c05', label: 'Lâmpadas indicadoras queimadas', grav: 'baixa', desc: 'Não afeta operação, apenas sinalização visual' },
+      { id: 'c06', label: 'Cabo com isolamento desgastado', grav: 'alta', desc: 'Risco de curto-circuito e choque elétrico' },
+      { id: 'c07', label: 'Disjuntor disparando com frequência', grav: 'alta', desc: 'Indica sobrecarga ou problema no circuito' },
+      { id: 'c08', label: 'Faísca ou cheiro de queimado', grav: 'critica', desc: 'Parar imediatamente — risco de incêndio' },
+    ]
+  },
+  {
+    categoria: 'Sistema Mecânico', icone: 'fa-cogs',
+    itens: [
+      { id: 'c09', label: 'Ruído incomum durante operação', grav: 'media', desc: 'Pode indicar desgaste em rolamentos ou engrenagens' },
+      { id: 'c10', label: 'Vibração excessiva', grav: 'media', desc: 'Verificar fixação e balanceamento' },
+      { id: 'c11', label: 'Folga excessiva em componentes móveis', grav: 'alta', desc: 'Compromete precisão e pode causar falha' },
+      { id: 'c12', label: 'Trava de segurança danificada ou ausente', grav: 'critica', desc: 'Risco imediato ao operador — parar a máquina' },
+    ]
+  },
+  {
+    categoria: 'Sinalização e Segurança', icone: 'fa-shield-alt',
+    itens: [
+      { id: 'c13', label: 'Etiquetas de identificação apagadas', grav: 'baixa', desc: 'Requer reimpressão e recolocação' },
+      { id: 'c14', label: 'Botão de emergência com funcionamento lento', grav: 'alta', desc: 'Deve responder imediatamente quando acionado' },
+      { id: 'c15', label: 'Buzina ou alarme com defeito', grav: 'alta', desc: 'Compromete alertas de segurança para operadores' },
+      { id: 'c16', label: 'Proteção ou grade de segurança removida', grav: 'critica', desc: 'Risco imediato de acidente — não operar' },
+    ]
+  },
+  {
+    categoria: 'Lubrificação e Fluidos', icone: 'fa-oil-can',
+    itens: [
+      { id: 'c17', label: 'Nível de óleo abaixo do recomendado', grav: 'media', desc: 'Repor antes do próximo turno' },
+      { id: 'c18', label: 'Vazamento de óleo ou graxa', grav: 'media', desc: 'Risco de contaminação e escorregamento no piso' },
+      { id: 'c19', label: 'Vazamento de fluido hidráulico', grav: 'alta', desc: 'Pode causar falha abrupta no sistema hidráulico' },
+      { id: 'c20', label: 'Vazamento de fluido refrigerante', grav: 'alta', desc: 'Risco de superaquecimento da máquina' },
+    ]
+  }
+];
+
+const SUPERVISOR_WPP = '71 98182-8080'; // Substitua pelo número real do supervisor
+
+function renderChecklist() {
+  const container = document.getElementById('checklistContainer');
+  container.innerHTML = CHECKLIST_ITENS.map((cat, ci) => `
+    <div class="checklist-card">
+      <div class="checklist-card-header" onclick="toggleCategoria(${ci})">
+        <h3><i class="fas ${cat.icone}"></i> ${cat.categoria}</h3>
+        <i class="fas fa-chevron-down toggle-icon" id="icon-${ci}"></i>
+      </div>
+      <div class="checklist-items open" id="cat-${ci}">
+        ${cat.itens.map(item => `
+          <div class="check-item grav-${item.grav}" id="wrap-${item.id}">
+            <input type="checkbox" id="${item.id}" onchange="updateSummary(); toggleObs('${item.id}')">
+            <div class="check-item-info">
+              <label for="${item.id}">
+                ${item.label}
+                <span class="badge badge-${item.grav}" style="font-size:0.72rem;padding:2px 8px;margin-left:0.5rem;border-radius:12px;font-weight:700">
+                  ${item.grav.toUpperCase()}
+                </span>
+              </label>
+              <small>${item.desc}</small>
+              <textarea class="check-item-obs" id="obs-${item.id}" placeholder="Observação sobre este item..."></textarea>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleCategoria(ci) {
+  const items = document.getElementById(`cat-${ci}`);
+  const icon = document.getElementById(`icon-${ci}`);
+  const header = items.previousElementSibling;
+  items.classList.toggle('open');
+  header.classList.toggle('open');
+}
+
+function toggleObs(id) {
+  const cb = document.getElementById(id);
+  const obs = document.getElementById(`obs-${id}`);
+  obs.classList.toggle('show', cb.checked);
+}
+
+function updateSummary() {
+  let total = 0, baixa = 0, media = 0, alta = 0, critica = 0;
+  CHECKLIST_ITENS.forEach(cat => {
+    cat.itens.forEach(item => {
+      if (document.getElementById(item.id)?.checked) {
+        total++;
+        if (item.grav === 'baixa') baixa++;
+        else if (item.grav === 'media') media++;
+        else if (item.grav === 'alta') alta++;
+        else if (item.grav === 'critica') critica++;
+      }
+    });
+  });
+  document.getElementById('sumTotal').textContent = total;
+  document.getElementById('sumBaixa').textContent = baixa;
+  document.getElementById('sumMedia').textContent = media;
+  document.getElementById('sumAlta').textContent = alta;
+  document.getElementById('sumCritica').textContent = critica;
+}
+
+// BUSCAR SETORES E MÁQUINAS DO BANCO DE DADOS
+async function loadSetores() {
+  try {
+      const resSetores = await fetch(`${API_BASE_URL}/setores`);
+      const setores = await resSetores.json();
+      
+      const resMaquinas = await fetch(`${API_BASE_URL}/maquinas`);
+      const maquinas = await resMaquinas.json();
+
+      const sel = document.getElementById('setorSelect');
+      setores.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.nome_setor; opt.textContent = s.nome_setor;
+        sel.appendChild(opt);
+      });
+
+      sel.onchange = () => {
+        const msel = document.getElementById('maquinaSelect');
+        const maquinasFiltradas = maquinas.filter(m => m.setor_associado === sel.value);
+        msel.innerHTML = '<option value="">Selecione a máquina</option>';
+        maquinasFiltradas.forEach(m => {
+          const o = document.createElement('option');
+          o.value = m.nome_maquina; o.textContent = m.nome_maquina;
+          msel.appendChild(o);
+        });
+      };
+  } catch (erro) {
+      console.error("Erro ao carregar dados do banco:", erro);
+  }
+}
+
+// ENVIAR O CHECKLIST PARA O BANCO DE DADOS
+async function enviarChecklist() {
+  const inspetor = document.getElementById('inspetorNome').value.trim();
+  const setor = document.getElementById('setorSelect').value;
+  const maquina = document.getElementById('maquinaSelect').value;
+  const turno = document.getElementById('turnoSelect').value;
+
+  if (!inspetor || !setor || !maquina || !turno) {
+    alert('Preencha todos os dados do inspetor antes de registrar.'); return;
+  }
+
+  const itensMarcados = [];
+  CHECKLIST_ITENS.forEach(cat => {
+    cat.itens.forEach(item => {
+      const cb = document.getElementById(item.id);
+      if (cb?.checked) {
+        itensMarcados.push({
+          categoria: cat.categoria,
+          item: item.label,
+          gravidade: item.grav,
+          obs: document.getElementById(`obs-${item.id}`)?.value || ''
+        });
+      }
+    });
+  });
+
+  const criticos = itensMarcados.filter(i => i.gravidade === 'critica' || i.gravidade === 'alta');
+
+  const registro = {
+    setor, maquina,
+    tipo: 'Checklist de Manutenção',
+    turno, operador: inspetor,
+    descricao: `Checklist com ${itensMarcados.length} item(s) marcado(s). Críticos: ${criticos.length}`,
+    itensChecklist: itensMarcados,
+    data: new Date().toISOString(),
+    status: criticos.length > 0 ? 'Pendente' : 'Resolvido',
+    resolucao: criticos.length === 0 ? 'Checklist sem itens críticos.' : ''
+  };
+
+  try {
+      const resposta = await fetch(`${API_BASE_URL}/cadastrar-ocorrencia`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(registro)
+      });
+
+      if (resposta.status === 201) {
+          document.getElementById('successMsg').classList.add('show');
+
+          if (criticos.length > 0) {
+            const linhas = criticos.map(i => `• ${i.item} [${i.gravidade.toUpperCase()}]`).join('\n');
+            const msg = encodeURIComponent(
+              `⚠️ *CHECKLIST - FactoryTrack*\n\n` +
+              `📍 Setor: ${setor} | Máquina: ${maquina}\n` +
+              `👷 Inspetor: ${inspetor} (${turno})\n\n` +
+              `🔴 *Itens críticos detectados:*\n${linhas}\n\n` +
+              `Acesse o FactoryTrack para mais detalhes.`
+            );
+            document.getElementById('wppLink').href = `https://wa.me/${SUPERVISOR_WPP}?text=${msg}`;
+            document.getElementById('wppBox').classList.add('show');
+          }
+
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+          alert("Erro ao salvar checklist no servidor.");
+      }
+  } catch (erro) {
+      alert("Erro de conexão com o banco de dados.");
+  }
+}
+
+function limparChecklist() {
+  if (!confirm('Limpar todos os itens marcados?')) return;
+  CHECKLIST_ITENS.forEach(cat => {
+    cat.itens.forEach(item => {
+      const cb = document.getElementById(item.id);
+      if (cb) cb.checked = false;
+      const obs = document.getElementById(`obs-${item.id}`);
+      if (obs) { obs.value = ''; obs.classList.remove('show'); }
+    });
+  });
+  updateSummary();
+}
+</script>
+</body>
+</html>

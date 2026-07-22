@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estoque de Peças - FactoryTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/estoque.css">
+  <link rel="stylesheet" href="../css/footer.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">
+      <a href="../index.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
+    </div>
+    <nav class="nav">
+      <ul class="nav-list">
+        <li><a href="../index.html" class="nav-link">Início</a></li>
+        <li><a href="painel.html" class="nav-link">Painel de Status</a></li>
+         <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrencia</a></li>
+        <li><a href="checklist.html" class="nav-link">Checklist</a></li>
+        <li><a href="historico.html" class="nav-link ">Histórico</a></li>
+        <li><a href="estoque.html" class="nav-link active">Estoque</a></li>
+        <li><a href="cadastros.html" class="nav-link">Cadastros</a></li>
+      </ul>
+    </nav>
+    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- MODAL USAR PEÇA -->
+<div class="modal-overlay" id="modalUsar">
+  <div class="modal">
+    <h3><i class="fas fa-minus-circle" style="color:var(--accent)"></i> Usar Peça do Estoque</h3>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem">Informe a quantidade que vai retirar:</p>
+    <input type="number" id="qtdUsar" placeholder="Quantidade" min="1">
+    <div id="erroUsar" style="color:#dc2626;font-size:0.85rem;margin-bottom:0.8rem;display:none"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-primary" onclick="confirmarUso()"><i class="fas fa-check"></i> Confirmar</button>
+      <button class="btn btn-cancel" onclick="document.getElementById('modalUsar').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REPOR PEÇA -->
+<div class="modal-overlay" id="modalRepor">
+  <div class="modal">
+    <h3><i class="fas fa-plus-circle" style="color:var(--success)"></i> Repor Estoque</h3>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem">Informe a quantidade a adicionar:</p>
+    <input type="number" id="qtdRepor" placeholder="Quantidade" min="1">
+    <div class="modal-buttons">
+      <button class="btn btn-success" onclick="confirmarReposicao()"><i class="fas fa-check"></i> Confirmar</button>
+      <button class="btn btn-cancel" onclick="document.getElementById('modalRepor').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<main class="estoque-page">
+  <div class="container">
+
+    <div class="page-header" style="margin:-2rem -1.5rem 2rem;border-radius:0">
+      <div style="padding:2rem 1.5rem">
+        <h1><i class="fas fa-boxes"></i> Estoque de Peças</h1>
+        <p>Controle de peças disponíveis para manutenção</p>
+      </div>
+    </div>
+
+    <!-- CADASTRO NOVA PEÇA -->
+    <div class="nova-peca-panel">
+      <div class="nova-peca-header">
+        <i class="fas fa-plus-circle"></i>
+        <h2>Cadastrar Nova Peça</h2>
+      </div>
+      <div class="nova-peca-form">
+        <div class="form-group">
+          <label>Nome da Peça *</label>
+          <input type="text" id="pecaNome" placeholder="Ex: Parafuso M6">
+        </div>
+        <div class="form-group">
+          <label>Categoria</label>
+          <select id="pecaCategoria">
+            <option value="Fixação">Fixação</option>
+            <option value="Elétrico">Elétrico</option>
+            <option value="Mecânico">Mecânico</option>
+            <option value="Hidráulico">Hidráulico</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quantidade Atual *</label>
+          <input type="number" id="pecaQtd" placeholder="Ex: 100" min="0">
+        </div>
+        <div class="form-group">
+          <label>Estoque Mínimo *</label>
+          <input type="number" id="pecaMin" placeholder="Ex: 20" min="0">
+          <small style="font-size:0.75rem;color:var(--text-muted)">Alerta abaixo deste valor</small>
+        </div>
+        <div class="form-group">
+          <label>Unidade</label>
+          <select id="pecaUnidade">
+            <option value="un">Unidade (un)</option>
+            <option value="kg">Quilograma (kg)</option>
+            <option value="m">Metro (m)</option>
+            <option value="L">Litro (L)</option>
+            <option value="cx">Caixa (cx)</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary" onclick="addPeca()" style="width:100%;justify-content:center">
+            <i class="fas fa-plus"></i> Adicionar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters">
+      <label>Filtrar:</label>
+      <select id="filterCategoria" onchange="renderEstoque()">
+        <option value="">Todas as Categorias</option>
+        <option value="Fixação">Fixação</option>
+        <option value="Elétrico">Elétrico</option>
+        <option value="Mecânico">Mecânico</option>
+        <option value="Hidráulico">Hidráulico</option>
+        <option value="Outro">Outro</option>
+      </select>
+      <select id="filterStatus" onchange="renderEstoque()">
+        <option value="">Todos os Status</option>
+        <option value="ok">Estoque OK</option>
+        <option value="baixo">Estoque Baixo</option>
+        <option value="critico">Estoque Crítico</option>
+      </select>
+      <input type="text" id="filterBusca" placeholder="Buscar peça..." oninput="renderEstoque()" style="padding:0.5rem 0.8rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem">
+    </div>
+
+    <div class="grid-3" id="estoqueGrid"></div>
+
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>FactoryTrack</h4>
+        <ul>
+          <li><a href="../index.html">Início</a></li>
+          <li><a href="painel.html">Painel de Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Funcionalidades</h4>
+        <ul>
+          <li><a href="checklist.html">Checklist</a></li>
+          <li><a href="historico.html">Histórico</a></li>
+          <li><a href="estoque.html">Estoque</a></li>
+          <li><a href="cadastros.html">Cadastros</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>FactoryTrack — Eficiência começa com informação.</p>
+      <p>© 2025 FactoryTrack</p>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/rbac.js"></script>
+<script src="../js/navigation.js"></script>
+<script>
+// Variável global para guardar os dados que vieram do banco
+let estoqueAtual = [];
+let pecaSelecionada = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (!requireAuth()) return;
+    try { clearNextUrl && clearNextUrl(); } catch (e) {}
+
+    const sess = getSessao();
+    if (sess && sess.cargo === 'operador') {
+        document.querySelectorAll('button[onclick^="abrirUsar"],button[onclick^="abrirRepor"],button[onclick^="addPeca"],button[onclick^="deletePeca"],button[onclick^="confirmarUso"],button[onclick^="confirmarReposicao"]').forEach(el => {
+            el.style.pointerEvents = 'none';
+            el.style.opacity = '0.6';
+            el.setAttribute('title','Somente supervisor pode editar o estoque');
+        });
+    }
+
+    // Carrega o estoque ao abrir a página
+    renderEstoque();
+});
+
+function getStatusEstoque(p) {
+    if (p.qtd <= 0) return { label:'Sem estoque', cls:'bar-danger', status:'critico' };
+    if (p.qtd <= p.min) return { label:'Estoque crítico', cls:'bar-danger', status:'critico' };
+    if (p.qtd <= p.min * 1.5) return { label:'Estoque baixo', cls:'bar-warning', status:'baixo' };
+    return { label:'Estoque OK', cls:'bar-ok', status:'ok' };
+}
+
+// BUSCAR do Banco de Dados e Renderizar
+async function renderEstoque() {
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/pecas`);
+        estoqueAtual = await resposta.json();
+    } catch (erro) {
+        console.error('Erro ao buscar do servidor:', erro);
+        return;
+    }
+
+    let pecas = [...estoqueAtual];
+    const fCat = document.getElementById('filterCategoria').value;
+    const fStatus = document.getElementById('filterStatus').value;
+    const fBusca = document.getElementById('filterBusca').value.toLowerCase();
+
+    if (fCat) pecas = pecas.filter(p => p.categoria === fCat);
+    if (fStatus) pecas = pecas.filter(p => getStatusEstoque(p).status === fStatus);
+    if (fBusca) pecas = pecas.filter(p => p.nome.toLowerCase().includes(fBusca));
+
+    const grid = document.getElementById('estoqueGrid');
+
+    if (!pecas.length) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-boxes"></i><p>Nenhuma peça encontrada.</p></div>`;
+        return;
+    }
+
+    const pct = p => Math.min(100, Math.round((p.qtd / (p.min * 2)) * 100));
+
+    grid.innerHTML = pecas.map(p => {
+        const st = getStatusEstoque(p);
+        const alertaBaixa = p.qtd <= p.min;
+        return `
+        <div class="estoque-card">
+            <div class="estoque-card-header">
+                <div><h3>${p.nome}</h3><p>${p.categoria} · ${p.unidade}</p></div>
+                <span class="badge ${st.status==='ok'?'badge-success':st.status==='baixo'?'badge-warning':'badge-danger'}">${st.label}</span>
+            </div>
+            <div class="estoque-card-body">
+                <div class="estoque-qty">${p.qtd}</div>
+                <div class="estoque-qty-label">unidades disponíveis</div>
+                <div class="estoque-bar-wrap">
+                    <div class="estoque-bar-bg"><div class="estoque-bar-fill ${st.cls}" style="width:${pct(p)}%"></div></div>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem">Mínimo: <strong>${p.min} ${p.unidade}</strong></div>
+                <div class="alerta-gerente ${alertaBaixa?'show':''}">
+                    <i class="fas fa-exclamation-triangle"></i> Estoque abaixo do mínimo! Repor urgente.
+                </div>
+            </div>
+            <div class="estoque-card-footer">
+                <button class="btn btn-primary btn-sm" onclick="abrirUsar(${p.id})"><i class="fas fa-minus"></i> Usar Peça</button>
+                <button class="btn btn-success btn-sm" onclick="abrirRepor(${p.id})"><i class="fas fa-plus"></i> Repor</button>
+                <button class="btn-del" onclick="deletePeca(${p.id})"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ADICIONAR NOVO ITEM
+async function addPeca() {
+    const nome = document.getElementById('pecaNome').value.trim();
+    const qtd = parseInt(document.getElementById('pecaQtd').value);
+    const min = parseInt(document.getElementById('pecaMin').value);
+    const categoria = document.getElementById('pecaCategoria').value;
+    const unidade = document.getElementById('pecaUnidade').value;
+
+    if (!nome || isNaN(qtd) || isNaN(min)) { alert('Preencha todos os campos obrigatórios.'); return; }
+
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/cadastrar-peca`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, categoria, qtd, min, unidade })
+        });
+
+        if (resposta.status === 201) {
+            document.getElementById('pecaNome').value = '';
+            document.getElementById('pecaQtd').value = '';
+            document.getElementById('pecaMin').value = '';
+            renderEstoque(); // Recarrega a lista do banco
+        }
+    } catch (erro) {
+        alert('Erro ao comunicar com o servidor.');
+    }
+}
+
+// MODAIS
+function abrirUsar(id) {
+    pecaSelecionada = id;
+    document.getElementById('qtdUsar').value = '';
+    document.getElementById('erroUsar').style.display = 'none';
+    document.getElementById('modalUsar').classList.add('open');
+}
+
+function abrirRepor(id) {
+    pecaSelecionada = id;
+    document.getElementById('qtdRepor').value = '';
+    document.getElementById('modalRepor').classList.add('open');
+}
+
+// USAR PEÇA (ATUALIZAR BANCO)
+async function confirmarUso() {
+    const qtdUsada = parseInt(document.getElementById('qtdUsar').value);
+    const peca = estoqueAtual.find(p => p.id === pecaSelecionada);
+    const erroEl = document.getElementById('erroUsar');
+
+    if (!qtdUsada || qtdUsada <= 0) { erroEl.textContent='Quantidade inválida.'; erroEl.style.display='block'; return; }
+    if (qtdUsada > peca.qtd) { erroEl.textContent=`Insuficiente. Disponível: ${peca.qtd}`; erroEl.style.display='block'; return; }
+
+    const novaQtd = peca.qtd - qtdUsada;
+
+    try {
+        await fetch(`${API_BASE_URL}/atualizar-peca/${pecaSelecionada}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ qtd: novaQtd })
+        });
+        document.getElementById('modalUsar').classList.remove('open');
+        renderEstoque();
+    } catch (erro) {
+        alert('Erro ao atualizar banco.');
+    }
+}
+
+// REPOR PEÇA (ATUALIZAR BANCO)
+async function confirmarReposicao() {
+    const qtdAdicionada = parseInt(document.getElementById('qtdRepor').value);
+    if (!qtdAdicionada || qtdAdicionada <= 0) { alert('Quantidade inválida.'); return; }
+    
+    const peca = estoqueAtual.find(p => p.id === pecaSelecionada);
+    const novaQtd = peca.qtd + qtdAdicionada;
+
+    try {
+        await fetch(`${API_BASE_URL}/atualizar-peca/${pecaSelecionada}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ qtd: novaQtd })
+        });
+        document.getElementById('modalRepor').classList.remove('open');
+        renderEstoque();
+    } catch (erro) {
+        alert('Erro ao atualizar banco.');
+    }
+}
+
+// DELETAR PEÇA
+async function deletePeca(id) {
+    if (!confirm('Excluir esta peça do estoque?')) return;
+
+    try {
+        await fetch(`${API_BASE_URL}/deletar-peca/${id}`, { method: 'DELETE' });
+        renderEstoque();
+    } catch (erro) {
+        alert('Erro ao deletar do servidor.');
+    }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel de Status - FactoryTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/footer.css">
+  <style>
+    .painel-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .painel-card:hover { transform: translateY(-3px); }
+    .painel-card-top {
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .painel-card-top h3 { font-size: 1.05rem; color: var(--text); margin-bottom: 0.2rem; }
+    .painel-card-top p { font-size: 0.85rem; color: var(--text-muted); }
+    .painel-card-status {
+      padding: 0.8rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .painel-card-status.green { color: #16a34a; background: #f0fdf4; }
+    .painel-card-status.yellow { color: #ca8a04; background: #fefce8; }
+    .painel-card-status.red { color: #dc2626; background: #fff1f2; }
+    .painel-card-footer {
+      padding: 0.8rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .setor-title {
+      grid-column: 1/-1;
+      margin-top: 1rem;
+      margin-bottom: 0.3rem;
+    }
+    .setor-title h2 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      color: var(--primary);
+      border-left: 4px solid var(--accent);
+      padding-left: 0.7rem;
+    }
+    .last-update { font-size: 0.78rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">
+      <a href="../index.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
+    </div>
+    <nav class="nav">
+      <ul class="nav-list">
+        <li><a href="../index.html" class="nav-link">Início</a></li>
+        <li><a href="painel.html" class="nav-link active">Painel de Status</a></li>
+        <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrencia</a></li>
+        <li><a href="checklist.html" class="nav-link">Checklist</a></li>
+        <li><a href="historico.html" class="nav-link">Histórico</a></li>
+        <li><a href="estoque.html" class="nav-link">Estoque</a></li>
+        <li><a href="cadastros.html" class="nav-link">Cadastros</a></li>
+      </ul>
+    </nav>
+    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<main>
+  <div class="page-header">
+    <div class="container">
+      <h1><i class="fas fa-th-large"></i> Painel de Status</h1>
+      <p>Status atual de todas as máquinas e setores da fábrica</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="container">
+      <div class="filters">
+        <label>Filtrar:</label>
+        <select id="filterSetor" onchange="renderPainel()">
+          <option value="">Todos os Setores</option>
+        </select>
+        <select id="filterStatus" onchange="renderPainel()">
+          <option value="">Todos os Status</option>
+          <option value="Funcionando">Funcionando</option>
+          <option value="Atenção">Atenção</option>
+          <option value="Parado">Parado</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="renderPainel()">
+          <i class="fas fa-sync"></i> Atualizar
+        </button>
+      </div>
+
+      <div class="grid-3" id="painelGrid"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>FactoryTrack</h4>
+        <ul>
+          <li><a href="../index.html">Início</a></li>
+          <li><a href="painel.html">Painel de Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Funcionalidades</h4>
+        <ul>
+          <li><a href="ocorrencia.html">Checklist</a></li>
+          <li><a href="historico.html">Histórico</a></li>
+          <li><a href="cadastros.html">Cadastros</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>FactoryTrack — Eficiência começa com informação.</p>
+      <p>© 2025 FactoryTrack</p>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/rbac.js"></script>
+<script src="../js/navigation.js"></script>
+<script>
+  // Acesso: operador visualiza, supervisor gerencia
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!requireAuth()) return;
+    // Depois que validar sessão, limpa o destino salvo para evitar redirecionar novamente.
+    try { clearNextUrl && clearNextUrl(); } catch (e) {}
+  });
+
+  function getStatusMaquina(maquina) {
+    const ocorrencias = getOcorrencias();
+    const pendentes = ocorrencias.filter(o => o.maquina === maquina.nome && o.status === 'Pendente');
+    if (pendentes.length === 0) return { status: 'Funcionando', cor: 'green', icone: 'fa-check-circle' };
+    const tipos = pendentes.map(o => o.tipo);
+    if (tipos.includes('Parada de máquina')) return { status: 'Parado', cor: 'red', icone: 'fa-times-circle' };
+    return { status: 'Atenção', cor: 'yellow', icone: 'fa-exclamation-circle' };
+  }
+
+  function getUltimaOcorrencia(maquina) {
+    const todas = getOcorrencias().filter(o => o.maquina === maquina.nome);
+    if (!todas.length) return null;
+    return todas.sort((a, b) => new Date(b.data) - new Date(a.data))[0];
+  }
+
+  // Substitua a sua função renderPainel atual por esta versão atualizada:
+async function renderPainel() {
+    let setores = [];
+    let maquinas = [];
+
+    try {
+        // 1. Buscando os dados oficiais do MySQL (Servidor) via rotas GET
+        const respostaSetores = await fetch(`${API_BASE_URL}/setores`);
+        const dadosSetores = await respostaSetores.json();
+
+        const respostaMaquinas = await fetch(`${API_BASE_URL}/maquinas`);
+        const dadosMaquinas = await respostaMaquinas.json();
+
+        // 2. Traduzindo os nomes do banco (ex: nome_setor) para o que o seu visual já espera (nome)
+        setores = dadosSetores.map(s => ({
+            id: s.id,
+            nome: s.nome_setor,
+            responsavel: s.responsavel
+        }));
+
+        maquinas = dadosMaquinas.map(m => ({
+            id: m.id,
+            nome: m.nome_maquina,
+            setor: m.setor_associado,
+            serie: m.numero_serie
+        }));
+
+    } catch (erro) {
+        console.error('Erro ao buscar dados do servidor:', erro);
+        document.getElementById('painelGrid').innerHTML = '<div class="empty-state">Erro ao carregar dados do servidor. O node server.js está rodando?</div>';
+        return;
+    }
+
+    // --- DAQUI PARA BAIXO O SEU LÓGICA VISUAL CONTINUA EXATAMENTE IGUAL ---
+    const filterSetor = document.getElementById('filterSetor').value;
+    const filterStatus = document.getElementById('filterStatus').value;
+
+    // Sempre recarrega o filtro de setor com dados atualizados do banco
+    const sel = document.getElementById('filterSetor');
+    const valorAtual = sel.value;
+    sel.innerHTML = '<option value="">Todos os Setores</option>';
+    setores.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.nome; opt.textContent = s.nome;
+        sel.appendChild(opt);
+    });
+    sel.value = valorAtual;
+
+    const grid = document.getElementById('painelGrid');
+    let html = '';
+
+    const setoresFiltrados = filterSetor ? setores.filter(s => s.nome === filterSetor) : setores;
+
+    setoresFiltrados.forEach(setor => {
+        let maquinasSetor = maquinas.filter(m => m.setor === setor.nome);
+
+        if (filterStatus) {
+            maquinasSetor = maquinasSetor.filter(m => getStatusMaquina(m).status === filterStatus);
+        }
+
+        if (!maquinasSetor.length) return;
+
+        html += `<div class="setor-title"><h2><i class="fas fa-cogs"></i> ${setor.nome} <span style="font-size:0.9rem; color:#64748b; font-weight:normal; margin-left:10px;">Resp: ${setor.responsavel}</span></h2></div>`;
+
+        maquinasSetor.forEach(maq => {
+            const st = getStatusMaquina(maq);
+            const ultima = getUltimaOcorrencia(maq); // Assume que esta função ainda vai ler do localStorage ou será adaptada depois
+            html += `
+            <div class="painel-card">
+                <div class="painel-card-top">
+                    <div>
+                        <h3>${maq.nome}</h3>
+                        <p>Série: ${maq.serie || 'N/A'} | Setor: ${maq.setor}</p>
+                        ${ultima ? `<p class="last-update">Última ocorrência: ${formatDate(ultima.data)}</p>` : `<p class="last-update">Sem ocorrências registradas</p>`}
+                    </div>
+                    <i class="fas ${st.icone}" style="font-size:1.8rem;color:${st.cor === 'green' ? '#22c55e' : st.cor === 'yellow' ? '#f59e0b' : '#ef4444'}"></i>
+                </div>
+                <div class="painel-card-status ${st.cor}">
+                    <span class="status-dot ${st.cor}"></span>
+                    ${st.status}
+                </div>
+                <div class="painel-card-footer">
+                    <a href="ocorrencia.html?setor=${encodeURIComponent(maq.setor)}&maquina=${encodeURIComponent(maq.nome)}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Registrar Ocorrência
+                    </a>
+                    <a href="historico.html?maquina=${encodeURIComponent(maq.nome)}" class="btn btn-sm" style="background:#f1f5f9;color:#475569">
+                        <i class="fas fa-history"></i> Histórico
+                    </a>
+                </div>
+            </div>
+            `;
+        });
+    });
+
+    if (!html) {
+        html = `<div class="empty-state"><i class="fas fa-search"></i><p>Nenhum resultado para os filtros selecionados.</p></div>`;
+    }
+
+    grid.innerHTML = html;
+}
+
+  document.addEventListener('DOMContentLoaded', renderPainel);
+
+    // Recarrega quando o usuário volta para esta aba (ex: vindo da página de cadastros)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') renderPainel();
+  });
+
+  // Recarrega quando o localStorage é alterado em outra aba
+  window.addEventListener('storage', () => renderPainel());
+
+  // Atualiza também quando a página disparar um evento custom (mesma aba)
+  window.addEventListener('factorytrack:storage', () => renderPainel());
+</script>
+</body>
+</html>

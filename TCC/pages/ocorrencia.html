@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar Ocorrência - FactoryTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/forms.css">
+  <link rel="stylesheet" href="../css/footer.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">
+      <a href="../index.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
+    </div>
+    <nav class="nav">
+      <ul class="nav-list">
+        <li><a href="../index.html" class="nav-link">Início</a></li>
+        <li><a href="painel.html" class="nav-link">Painel de Status</a></li>
+        <li><a href="ocorrencia.html" class="nav-link active">Registrar Ocorrencia</a></li>
+        <li><a href="checklist.html" class="nav-link ">Checklist</a></li>
+        <li><a href="historico.html" class="nav-link">Histórico</a></li>
+        <li><a href="estoque.html" class="nav-link">Estoque</a></li>
+        <li><a href="cadastros.html" class="nav-link">Cadastros</a></li>
+      </ul>
+    </nav>
+    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<main class="form-page">
+  <div class="container">
+    <div class="form-container">
+      <div class="form-header">
+        <h1><i class="fas fa-exclamation-triangle"></i> Registrar Ocorrência</h1>
+        <p>Preencha os dados da ocorrência. O supervisor será avisado automaticamente pelo WhatsApp.</p>
+      </div>
+
+      <div class="form-body">
+        <div class="success-msg" id="successMsg">
+          <i class="fas fa-check-circle"></i> Ocorrência registrada com sucesso! Avisando supervisor...
+        </div>
+
+        <form id="ocorrenciaForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Setor *</label>
+              <select id="setorSelect" required onchange="loadMaquinas()">
+                <option value="">Selecione o setor</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Máquina / Etapa *</label>
+              <select id="maquinaSelect" required>
+                <option value="">Selecione primeiro o setor</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo de Ocorrência *</label>
+              <select id="tipoSelect" required>
+                <option value="">Selecione</option>
+                <option value="Parada de máquina">Parada de máquina</option>
+                <option value="Problema de qualidade">Problema de qualidade</option>
+                <option value="Falta de material">Falta de material</option>
+                <option value="Manutenção preventiva">Manutenção preventiva</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Turno *</label>
+              <select id="turnoSelect" required>
+                <option value="">Selecione</option>
+                <option value="Manhã">Manhã</option>
+                <option value="Tarde">Tarde</option>
+                <option value="Noite">Noite</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Nome do Operador *</label>
+            <input type="text" id="operadorInput" required placeholder="Seu nome completo">
+          </div>
+
+          <div class="form-group">
+            <label>Descrição da Ocorrência *</label>
+            <textarea id="descricaoInput" required placeholder="Descreva o que aconteceu, sintomas observados, impacto na produção..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Foto do Problema (Obrigatorio)</label>
+            <div class="file-upload">
+              <input type="file" id="fotoInput" accept="image/*">
+              <label for="fotoInput" class="file-upload-label">
+                <i class="fas fa-camera"></i>
+                <span>Clique para adicionar foto</span>
+              </label>
+              <div class="file-preview" id="fotoPreview"></div>
+            </div>
+          </div>
+
+          <div class="form-buttons">
+            <button type="submit" class="btn btn-primary btn-large">
+              <i class="fas fa-paper-plane"></i> Registrar Ocorrência
+            </button>
+            <button type="button" class="btn btn-cancel btn-large" onclick="window.location.href='painel.html'">
+              Cancelar
+            </button>
+          </div>
+        </form>
+
+        <div class="wpp-alert-box" id="wppBox">
+          <h4><i class="fab fa-whatsapp"></i> Avisar Supervisor pelo WhatsApp</h4>
+          <p>Clique no botão abaixo para enviar o alerta direto para o supervisor do setor:</p>
+          <a id="wppLink" href="#" target="_blank" class="btn btn-success btn-large">
+            <i class="fab fa-whatsapp"></i> Enviar Alerta no WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>FactoryTrack</h4>
+        <ul>
+          <li><a href="../index.html">Início</a></li>
+          <li><a href="painel.html">Painel de Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Funcionalidades</h4>
+        <ul>
+          <li><a href="ocorrencia.html">Checklist</a></li>
+          <li><a href="historico.html">Histórico</a></li>
+          <li><a href="cadastros.html">Cadastros</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>FactoryTrack — Eficiência começa com informação.</p>
+      <p>© 2025 FactoryTrack</p>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/rbac.js"></script>
+<script src="../js/navigation.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!requireAuth()) return;
+    try { clearNextUrl && clearNextUrl(); } catch (e) {}
+    carregarFiltros(); // Inicia puxando os setores e máquinas oficiais do banco
+  });
+
+  // Número do supervisor (WhatsApp geral para demo)
+  const SUPERVISOR_WPP = '5571981828080';
+  
+  let todosSetores = [];
+  let todasMaquinas = [];
+
+  // ==========================================
+  // BUSCAR DADOS DO BANCO PARA OS DROPDOWNS
+  // ==========================================
+  async function carregarFiltros() {
+    try {
+      // 1. Puxa os setores
+      const resSetores = await fetch(`${API_BASE_URL}/setores`);
+      todosSetores = await resSetores.json();
+
+      // 2. Puxa as máquinas
+      const resMaquinas = await fetch(`${API_BASE_URL}/maquinas`);
+      todasMaquinas = await resMaquinas.json();
+
+      // 3. Preenche a caixinha de setores
+      const selSetor = document.getElementById('setorSelect');
+      selSetor.innerHTML = '<option value="">Selecione o setor</option>';
+      todosSetores.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.nome_setor; opt.textContent = s.nome_setor;
+        selSetor.appendChild(opt);
+      });
+
+      // Lógica para pré-selecionar se vier de um link
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('setor')) {
+        selSetor.value = params.get('setor');
+        loadMaquinas(); 
+        if (params.get('maquina')) {
+          setTimeout(() => {
+            document.getElementById('maquinaSelect').value = params.get('maquina');
+          }, 50);
+        }
+      }
+    } catch (erro) {
+      console.error("Erro ao buscar filtros do banco:", erro);
+    }
+  }
+
+  // ==========================================
+  // FILTRAR AS MÁQUINAS PELO SETOR ESCOLHIDO
+  // ==========================================
+  function loadMaquinas() {
+    const setor = document.getElementById('setorSelect').value;
+    const sel = document.getElementById('maquinaSelect');
+    
+    // Filtra apenas as máquinas do setor escolhido
+    const maquinasFiltradas = todasMaquinas.filter(m => m.setor_associado === setor);
+    
+    sel.innerHTML = '<option value="">Selecione a máquina</option>';
+    maquinasFiltradas.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.nome_maquina; opt.textContent = m.nome_maquina;
+      sel.appendChild(opt);
+    });
+  }
+
+  // Se o usuário trocar o setor, atualiza a lista de máquinas
+  document.getElementById('setorSelect').addEventListener('change', loadMaquinas);
+
+  // ==========================================
+  // PREVIEW DA FOTO (Visual)
+  // ==========================================
+  document.getElementById('fotoInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        document.getElementById('fotoPreview').innerHTML = `<img src="${ev.target.result}" alt="Preview">`;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // ==========================================
+  // O GRANDE MOMENTO: SALVAR NO BANCO DE DADOS
+  // ==========================================
+  document.getElementById('ocorrenciaForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const setor = document.getElementById('setorSelect').value;
+    const maquina = document.getElementById('maquinaSelect').value;
+    const tipo = document.getElementById('tipoSelect').value;
+    const turno = document.getElementById('turnoSelect').value;
+    const operador = document.getElementById('operadorInput').value;
+    const descricao = document.getElementById('descricaoInput').value;
+
+    const novaOcorrencia = {
+      setor: setor,
+      maquina: maquina,
+      tipo: tipo,
+      turno: turno,
+      operador: operador,
+      descricao: descricao,
+      data: new Date().toISOString(),
+      status: 'Pendente',
+      resolucao: '',
+      itensChecklist: null // Para ocorrências comuns, não há checklist anexado
+    };
+
+    // Altera o botão para mostrar que está carregando
+    const btn = this.querySelector('button[type="submit"]');
+    const txtOriginal = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+    btn.style.pointerEvents = 'none';
+
+    try {
+      // O MOTOBOY VAI ENTREGAR O PACOTE NO SERVIDOR
+      const resposta = await fetch(`${API_BASE_URL}/cadastrar-ocorrencia`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novaOcorrencia)
+      });
+
+      if (resposta.status === 201) {
+        // Deu certo! Vamos gerar a mensagem do WhatsApp...
+        const msg = encodeURIComponent(
+          `⚠️ *Nova Ocorrência - FactoryTrack*\n\n` +
+          `📍 *Setor:* ${setor}\n` +
+          `⚙️ *Máquina:* ${maquina}\n` +
+          `🔴 *Tipo:* ${tipo}\n` +
+          `👷 *Operador:* ${operador} (${turno})\n` +
+          `📝 *Descrição:* ${descricao}\n\n` +
+          `Acesse o FactoryTrack para mais detalhes.`
+        );
+
+        // ...e mostrar as telas de sucesso!
+        document.getElementById('wppLink').href = `https://wa.me/${SUPERVISOR_WPP}?text=${msg}`;
+        document.getElementById('successMsg').classList.add('show');
+        document.getElementById('wppBox').classList.add('show');
+        document.getElementById('ocorrenciaForm').style.display = 'none';
+      } else {
+        alert("Erro ao salvar ocorrência no banco.");
+        btn.innerHTML = txtOriginal;
+        btn.style.pointerEvents = 'auto';
+      }
+    } catch (erro) {
+      console.error("Falha ao comunicar com o servidor:", erro);
+      alert("Erro na conexão com o servidor. O XAMPP e o Node.js estão ligados?");
+      btn.innerHTML = txtOriginal;
+      btn.style.pointerEvents = 'auto';
+    }
+  });
+</script>
