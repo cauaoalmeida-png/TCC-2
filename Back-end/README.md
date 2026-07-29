@@ -27,8 +27,8 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
    ```
    Você verá:
    ```
-   ✅ Conectado ao banco de dados MySQL (factorytrack_db) com sucesso!
-   🚀 Servidor rodando em http://localhost:3000
+    Conectado ao banco de dados MySQL (factorytrack_db) com sucesso!
+    Servidor rodando em http://localhost:3000
    ```
 
 5. Abra o front-end normalmente com o **Live Server** (a URL base usada nas

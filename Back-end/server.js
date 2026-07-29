@@ -295,6 +295,18 @@ app.delete('/deletar-peca/:id', async (req, res) => {
     }
 });
 
+// 🟢 ROTA PARA EXCLUIR OCORRÊNCIA DO BANCO DE DADOS
+app.delete('/ocorrencias/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query('DELETE FROM ocorrencias WHERE id = ?', [id]);
+        res.json({ message: 'Ocorrência excluída com sucesso!' });
+    } catch (err) {
+        console.error('Erro ao excluir ocorrência:', err);
+        res.status(500).json({ error: 'Erro ao excluir no banco de dados' });
+    }
+});
+
 // ==========================================
 // Rota "coringa" — qualquer caminho não mapeado cai aqui
 // ==========================================

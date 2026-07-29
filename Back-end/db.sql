@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS setores (
   nome_setor VARCHAR(100) NOT NULL,
   responsavel VARCHAR(100) NOT NULL,
   criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+);a
 
 -- ---------- MÁQUINAS ----------
 CREATE TABLE IF NOT EXISTS maquinas (
