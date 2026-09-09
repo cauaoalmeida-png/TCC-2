@@ -9,27 +9,55 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
 1. **Banco de dados** (XAMPP/MySQL precisa estar ligado)
    - Abra o phpMyAdmin (ou o cliente MySQL de sua preferência) e execute o
      arquivo `db.sql` — ele cria o banco `factorytrack_db`, todas as tabelas
-     e alguns dados iniciais de exemplo.
+     (incluindo `usuarios`, usada no login) e alguns dados iniciais de
+     exemplo.
 
 2. **Variáveis de ambiente**
    - Copie `.env.example` para `.env` e ajuste usuário/senha se o seu MySQL
      não for o padrão do XAMPP (`root` sem senha).
+   - Confira também a variável `DATABASE_URL`, usada pelo **Prisma**. Ela
+     precisa refletir os mesmos dados de `DB_HOST`/`DB_USER`/`DB_PASSWORD`/
+     `DB_NAME`/`DB_PORT`, só que no formato de URL:
+     ```
+     DATABASE_URL="mysql://USUARIO:SENHA@HOST:PORTA/NOME_DO_BANCO"
+     ```
 
 3. **Instalar dependências**
    ```bash
    cd Back-end
    npm install
    ```
+   O `npm install` já roda o `prisma generate` automaticamente no final
+   (script `postinstall`), gerando o Prisma Client a partir de
+   `prisma/schema.prisma`.
 
-4. **Iniciar o servidor**
+4. **Sincronizar o schema do Prisma com o banco** (só na primeira vez, ou
+   sempre que `prisma/schema.prisma` mudar)
+   ```bash
+   npx prisma migrate dev --name init
+   ```
+   Isso cria (ou atualiza) as tabelas no banco a partir do schema do Prisma.
+   Se você já rodou o `db.sql` manualmente e as tabelas já existem, pode
+   pular esse passo — o Prisma só precisa que a `DATABASE_URL` esteja
+   correta para funcionar.
+
+5. **Iniciar o servidor**
    ```bash
    npm start
    ```
    Você verá:
    ```
-    Conectado ao banco de dados MySQL (factorytrack_db) com sucesso!
+    conectado ao banco de dados
     Servidor rodando em http://localhost:3000
    ```
+
+### Comandos úteis do Prisma
+
+| Comando                     | O que faz                                              |
+|------------------------------|--------------------------------------------------------|
+| `npx prisma generate`       | Gera o Prisma Client (já roda sozinho no `npm install`) |
+| `npx prisma migrate dev`    | Cria/aplica migrations e atualiza o banco               |
+| `npx prisma studio`         | Abre uma interface visual no navegador para ver os dados |
 
 5. Abra o front-end normalmente com o **Live Server** (a URL base usada nas
    chamadas `fetch` já é `http://localhost:3000`, então não precisa mudar
@@ -76,6 +104,37 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
 
 > Dica: o plano gratuito do Render "dorme" após um tempo sem uso. A primeira
 > requisição depois disso demora uns 30s para acordar o servidor — é normal.
+
+## O que foi feito para adicionar o Prisma
+
+- **`prisma/schema.prisma` criado**, mapeando as tabelas `setores`,
+  `maquinas`, `ocorrencias`, `pecas` (já existentes em `db.sql`) e também
+  `usuarios` (usada pela rota `/login`, mas que não existia no `db.sql`
+  original — agora existe nos dois lugares).
+- **`server.js` reescrito** para usar `PrismaClient` em vez de `mysql2`
+  puro. Todas as rotas continuam com o mesmo caminho, método e formato de
+  resposta — só a forma de consultar o banco mudou por dentro.
+- **`mysql2` removido do `package.json`**: o Prisma já tem seu próprio
+  driver de conexão com o MySQL, então essa dependência não é mais
+  necessária.
+- **Bug corrigido no `package.json`**: o script `postinstall` estava
+  `"prisma skills sync || exit 0"`, que não é um comando válido do Prisma.
+  Troquei para `"prisma generate"`, que é o comando correto para gerar o
+  Prisma Client automaticamente após o `npm install`.
+- **Bug corrigido no `db.sql`**: havia um `a` sobrando logo após o
+  `CREATE TABLE setores` (`);a`), o que quebraria a execução do script SQL.
+- **Bug corrigido no `.env`**: havia um `x` sobrando no final da linha do
+  `DATABASE_URL`.
+- Adicionei um usuário de exemplo (`admin` / `admin123`) no `db.sql` para
+  vocês conseguirem testar a rota `/login` sem precisar cadastrar ninguém
+  na mão.
+
+> Como o `node_modules/` não foi enviado, não consegui rodar
+> `npm install` nem testar a execução real por aqui. Depois de baixar os
+> arquivos, rode `npm install` (que já vai gerar o Prisma Client sozinho)
+> e depois `npx prisma migrate dev --name init` — ou, se preferir manter o
+> fluxo do `db.sql` manual no phpMyAdmin, só garanta que a `DATABASE_URL`
+> do `.env` está apontando pro banco certo.
 
 ## Observações importantes (leia antes de apresentar)
 

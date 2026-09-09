@@ -16,7 +16,17 @@ CREATE TABLE IF NOT EXISTS setores (
   nome_setor VARCHAR(100) NOT NULL,
   responsavel VARCHAR(100) NOT NULL,
   criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);a
+);
+
+-- ---------- USUÁRIOS (login) ----------
+CREATE TABLE IF NOT EXISTS usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100),
+  usuario VARCHAR(100),
+  senha VARCHAR(255) NOT NULL,
+  cargo VARCHAR(50),
+  tipo VARCHAR(50)
+);
 
 -- ---------- MÁQUINAS ----------
 CREATE TABLE IF NOT EXISTS maquinas (
@@ -78,3 +88,8 @@ INSERT INTO pecas (nome, categoria, qtd, min, unidade) VALUES
   ('Correia Esteira A', 'Peça de máquina', 3, 2, 'un'),
   ('Óleo Lubrificante', 'Insumo', 12, 5, 'l'),
   ('Filtro de Ar Compressor', 'Manutenção', 1, 2, 'un');
+
+-- Usuário de exemplo para testar a rota /login
+-- (senha em texto puro, só para fins de demonstração do TCC)
+INSERT INTO usuarios (nome, usuario, senha, cargo) VALUES
+  ('Administrador', 'admin', 'admin123', 'administrador');

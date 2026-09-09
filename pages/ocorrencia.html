@@ -52,7 +52,7 @@
           <div class="form-row">
             <div class="form-group">
               <label>Setor *</label>
-              <select id="setorSelect" required onchange="loadMaquinas()">
+              <select id="setor" name="setor" required onchange="carregarMaquinasDoSetor()">
                 <option value="">Selecione o setor</option>
               </select>
             </div>
@@ -175,43 +175,69 @@
   let todosSetores = [];
   let todasMaquinas = [];
 
-  // ==========================================
-  // BUSCAR DADOS DO BANCO PARA OS DROPDOWNS
-  // ==========================================
-  async function carregarFiltros() {
-    try {
-      // 1. Puxa os setores
-      const resSetores = await fetch(`${API_BASE_URL}/setores`);
-      todosSetores = await resSetores.json();
 
-      // 2. Puxa as máquinas
-      const resMaquinas = await fetch(`${API_BASE_URL}/maquinas`);
-      todasMaquinas = await resMaquinas.json();
+ async function carregarFiltros() {
+  try {
+    // 1. Puxa os setores e máquinas do backend
+    const resSetores = await fetch(`${API_BASE_URL}/setores`);
+    todosSetores = await resSetores.json();
 
-      // 3. Preenche a caixinha de setores
-      const selSetor = document.getElementById('setorSelect');
-      selSetor.innerHTML = '<option value="">Selecione o setor</option>';
-      todosSetores.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.nome_setor; opt.textContent = s.nome_setor;
-        selSetor.appendChild(opt);
-      });
+    console.log("Setores recebidos do Banco:", todosSetores); // Para conferir no F12
 
-      // Lógica para pré-selecionar se vier de um link
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('setor')) {
-        selSetor.value = params.get('setor');
-        loadMaquinas(); 
-        if (params.get('maquina')) {
-          setTimeout(() => {
-            document.getElementById('maquinaSelect').value = params.get('maquina');
-          }, 50);
-        }
-      }
-    } catch (erro) {
-      console.error("Erro ao buscar filtros do banco:", erro);
+    const resMaquinas = await fetch(`${API_BASE_URL}/maquinas`);
+    todasMaquinas = await resMaquinas.json();
+
+    // 💡 Tenta encontrar o elemento pelo ID 'setorSelect' ou pelo ID 'setor'
+    const selSetor = document.getElementById('setorSelect') || document.getElementById('setor');
+
+    if (!selSetor) {
+      console.error("Atenção: Não foi encontrado o elemento <select> na tela. Verifique os IDs!");
+      return;
     }
+
+    // 2. Limpa o select mantendo apenas a opção padrão
+    selSetor.innerHTML = '<option value="">Selecione o setor</option>';
+
+    if (!Array.isArray(todosSetores)) {
+      console.error("O servidor não retornou uma lista válida de setores:", todosSetores);
+      return;
+    }
+
+    // 3. ILTRO ANTI-DUPLICADOS (Registra apenas nomes únicos)
+    const setoresRegistrados = new Set();
+
+    todosSetores.forEach(s => {
+      // Pega o nome, seja objeto (s.nome_setor) ou string direta
+      const nomeSetor = typeof s === 'object' ? (s.nome_setor || s.nome) : s;
+
+      // Se o setor tiver nome e ainda não tiver sido adicionado:
+      if (nomeSetor && !setoresRegistrados.has(nomeSetor)) {
+        setoresRegistrados.add(nomeSetor);
+
+        const opt = document.createElement('option');
+        opt.value = nomeSetor;
+        opt.textContent = nomeSetor;
+        selSetor.appendChild(opt);
+      }
+    });
+
+    // 4. Lógica para pré-selecionar se vier parâmetro na URL
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('setor')) {
+      selSetor.value = params.get('setor');
+      if (typeof loadMaquinas === 'function') loadMaquinas(); 
+      
+      if (params.get('maquina')) {
+        setTimeout(() => {
+          const selMaq = document.getElementById('maquinaSelect') || document.getElementById('maquina');
+          if (selMaq) selMaq.value = params.get('maquina');
+        }, 50);
+      }
+    }
+  } catch (erro) {
+    console.error("Erro ao carregar filtros do banco de dados:", erro);
   }
+}
 
   // ==========================================
   // FILTRAR AS MÁQUINAS PELO SETOR ESCOLHIDO
@@ -291,12 +317,12 @@
       if (resposta.status === 201) {
         // Deu certo! Vamos gerar a mensagem do WhatsApp...
         const msg = encodeURIComponent(
-          `⚠️ *Nova Ocorrência - FactoryTrack*\n\n` +
-          `📍 *Setor:* ${setor}\n` +
-          `⚙️ *Máquina:* ${maquina}\n` +
-          `🔴 *Tipo:* ${tipo}\n` +
-          `👷 *Operador:* ${operador} (${turno})\n` +
-          `📝 *Descrição:* ${descricao}\n\n` +
+          ` *Nova Ocorrência - FactoryTrack*\n\n` +
+          ` *Setor:* ${setor}\n` +
+          ` *Máquina:* ${maquina}\n` +
+          ` *Tipo:* ${tipo}\n` +
+          ` *Operador:* ${operador} (${turno})\n` +
+          ` *Descrição:* ${descricao}\n\n` +
           `Acesse o FactoryTrack para mais detalhes.`
         );
 

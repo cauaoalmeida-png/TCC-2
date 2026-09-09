@@ -1,0 +1,75 @@
+// Schema do Prisma — FactoryTrack
+// Mapeia exatamente as tabelas já existentes em db.sql (mysql/XAMPP).
+// Depois de configurar o .env, rode:
+//   npx prisma migrate dev --name init
+// (ou, se o banco já existir com os dados do db.sql, use:
+//   npx prisma db pull   -> para conferir se bate com este schema)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Setor {
+  id          Int      @id @default(autoincrement())
+  nomeSetor   String   @map("nome_setor") @db.VarChar(100)
+  responsavel String   @db.VarChar(100)
+  criadoEm    DateTime @default(now()) @map("criado_em")
+
+  @@map("setores")
+}
+
+model Maquina {
+  id             Int      @id @default(autoincrement())
+  nomeMaquina    String   @map("nome_maquina") @db.VarChar(100)
+  setorAssociado String   @map("setor_associado") @db.VarChar(100)
+  numeroSerie    String?  @map("numero_serie") @db.VarChar(50)
+  criadoEm       DateTime @default(now()) @map("criado_em")
+
+  @@map("maquinas")
+}
+
+model Ocorrencia {
+  id             Int       @id @default(autoincrement())
+  data           DateTime
+  setor          String    @db.VarChar(100)
+  maquina        String    @db.VarChar(100)
+  tipo           String    @db.VarChar(100)
+  operador       String    @db.VarChar(100)
+  turno          String    @db.VarChar(50)
+  descricao      String?   @db.Text
+  status         String    @default("Pendente") @db.VarChar(20)
+  resolucao      String?   @db.Text
+  itensChecklist String?   @db.Text
+  dataResolucao  DateTime?
+
+  @@map("ocorrencias")
+}
+
+model Peca {
+  id        Int     @id @default(autoincrement())
+  nome      String  @db.VarChar(100)
+  categoria String? @db.VarChar(50)
+  qtd       Int     @default(0)
+  min       Int     @default(0)
+  unidade   String? @db.VarChar(20)
+
+  @@map("pecas")
+}
+
+// Tabela usada pela rota /login no server.js, mas que ainda não existia
+// no db.sql original. Campos como String? porque o código aceita tanto
+// "usuario" quanto "nome", e tanto "cargo" quanto "tipo".
+model Usuario {
+  id      Int     @id @default(autoincrement())
+  nome    String? @db.VarChar(100)
+  usuario String? @db.VarChar(100)
+  senha   String  @db.VarChar(255)
+  cargo   String? @db.VarChar(50)
+  tipo    String? @db.VarChar(50)
+
+  @@map("usuarios")
+}

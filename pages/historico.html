@@ -344,7 +344,7 @@
     if (!listaVisivel.length && !(mostrarResolvidos && resolvidosOcultos.length)) {
       html = `<div class="empty-state"><i class="fas fa-clipboard-list"></i><p>Nenhuma ocorrência encontrada.</p></div>`;
     } else {
-      html = listaVisivel.map(o => renderCard(o)).join('');
+      html = listaVisivel.map(o => renderCard(o)).join(''); 
     }
 
     if (mostrarResolvidos && resolvidosOcultos.length) {
@@ -408,22 +408,63 @@
         </div>
         <div class="hist-card-desc">${o.descricao}</div>
         ${o.resolucao ? `<div class="hist-card-resolucao"><i class="fas fa-check-circle"></i> <strong>Resolução:</strong> ${o.resolucao}</div>` : ''}
-        ${isPendente ? `
-        <div class="hist-card-footer">
-          <button class="btn btn-success btn-sm" onclick="abrirModal(${o.id})">
-            <i class="fas fa-check"></i> Marcar como Resolvido
-          </button>
-          <a href="checklist.html?setor=${encodeURIComponent(o.setor)}&maquina=${encodeURIComponent(o.maquina)}" class="btn btn-primary btn-sm">
-            <i class="fas fa-plus"></i> Novo Checklist
-          </a>
-        </div>` : ''}
-      </div>`;
-  }
+       <div class="hist-card-footer">
+            ${isPendente ? `
+                <button class="btn btn-success btn-sm" onclick="abrirModal(${o.id})">
+                    <i class="fas fa-check"></i> Marcar como Resolvido
+                </button>
+                <a href="checklist.html?setor=${encodeURIComponent(o.setor)}&maquina=${encodeURIComponent(o.maquina)}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Novo Checklist
+                </a>
+            ` : ''}
+
+            <button onclick="excluirRegistro(${o.id})" class="btn btn-danger btn-sm" style="background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 500; margin-left: auto;">
+                <i class="fas fa-trash"></i> Excluir
+            </button>
+        </div>
+    `;
+}
 
   function toggleResolvidos() {
     mostrarResolvidos = !mostrarResolvidos;
     renderHistorico();
-  }
+      }
+
+// 🟢 Função de exclusão aprimorada com diagnóstico
+async function excluirRegistro(id) {
+    if (!id) {
+        alert("Erro: ID do registro não foi encontrado.");
+        return;
+    }
+
+    if (confirm(`Tem certeza que deseja excluir a ocorrência #${id}?`)) {
+        try {
+            // Garante o endereço correto do backend
+            const baseUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:3000';
+            const url = `${baseUrl}/ocorrencias/${id}`;
+
+            console.log("Tentando excluir na URL:", url); // Para conferir no F12
+
+            const resposta = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (resposta.ok) {
+                alert("Ocorrência excluída com sucesso!");
+                renderHistorico(); // Recarrega a tela do histórico
+            } else {
+                const erroDados = await resposta.json().catch(() => ({}));
+                alert(`Erro (${resposta.status}): ${erroDados.error || 'Servidor recusou a exclusão.'}`);
+            }
+        } catch (erro) {
+            console.error("Erro de conexão:", erro);
+            alert("Erro de conexão! Verifique se o servidor Node.js está rodando.");
+        }
+    }
+}
 
   function abrirModal(id) {
     resolvendoId = id;
@@ -582,5 +623,28 @@ async function confirmarExportacao() {
       btn.innerHTML = '<i class="fas fa-download"></i> Exportar';
       btn.style.pointerEvents = 'auto';
   }
+  // 🟢 ADICIONADO [Motivo: Pede confirmação e exclui o registro do histórico]
+function excluirRegistro(id) {
+    // Se você usa rbac.js para validar o papel do usuário:
+    /*
+    const usuario = getUsuarioAtual(); // ou função equivalente do seu rbac.js
+    if (usuario?.role !== 'gerente' && usuario?.role !== 'chefe') {
+        alert("Apenas supervisores e chefes podem excluir registros!");
+        return;
+    }
+    */
+
+    if (confirm("Tem certeza que deseja excluir esta ocorrência do histórico? Esta ação não poderá ser desfeita.")) {
+        deleteOcorrencia(id);
+        alert("Ocorrência excluída com sucesso!");
+        
+        // Recarrega a lista na tela sem precisar dar F5 na página
+        if (typeof renderHistorico === 'function') {
+            renderHistorico();
+        } else {
+            window.location.reload();
+        }
+    }
+}
 }
 </script>

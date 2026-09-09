@@ -1,24 +1,15 @@
-/* ============================================
-   FactoryTrack — Back-end (Node.js + Express + MySQL)
-   Todas as rotas usadas pelo front-end (JS/ e PAGES/) estão
-   implementadas aqui: setores, máquinas, ocorrências e estoque.
-   ============================================ */
+// FactoryTrack - Back-end (Node.js + Express + Prisma + MySQL)
 
 require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2/promise'); // versão com Promises (permite async/await)
+const { PrismaMariaDb } = require('@prisma/adapter-mariadb');
+const { PrismaClient } = require('@prisma/client');
 
 const app = express();
 app.use(express.json());
 
-// ------------------------------------------------------------
-// CORS: em produção, restrinja ao domínio do seu front-end
-// hospedado (defina FRONTEND_URL no .env, ex: https://factorytrack.vercel.app).
-// Se FRONTEND_URL não for definida (ex: rodando local), libera geral —
-// bom para desenvolvimento, mas troque antes de apresentar o projeto no ar.
-// ------------------------------------------------------------
 const FRONTEND_URL = process.env.FRONTEND_URL;
 app.use(cors({
     origin: FRONTEND_URL || '*'
@@ -26,36 +17,69 @@ app.use(cors({
 
 const PORT = process.env.PORT || 3000;
 
-// ------------------------------------------------------------
-// Conexão com o banco (pool: reconecta sozinho, aguenta várias
-// requisições ao mesmo tempo — mais robusto que uma conexão única)
-// ------------------------------------------------------------
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '', // No XAMPP a senha padrão é vazia
-    database: process.env.DB_NAME || 'factorytrack_db',
-    port: process.env.DB_PORT || 3306,
-    waitForConnections: true,
-    connectionLimit: 10
-});
+// conexão com Banco de Dados (MySQL) via Prisma
+const adapter = new PrismaMariaDb(process.env.DATABASE_URL);
+const prisma = new PrismaClient({ adapter });
 
-// Testa a conexão assim que o servidor sobe
 (async () => {
     try {
-        const conn = await pool.getConnection();
-        console.log('✅ Conectado ao banco de dados MySQL (factorytrack_db) com sucesso!');
-        conn.release();
+        await prisma.$connect();
+        console.log('conectado ao banco de dados');
     } catch (err) {
-        console.error('❌ Erro ao conectar ao banco de dados:', err.message);
-        console.error('   Verifique se o MySQL/XAMPP está rodando e se o banco foi criado (veja db.sql).');
+        console.error('error ao conectar no Banco de Dados', err.message);
     }
 })();
 
-// Rota simples para checar se a API está de pé
+// rota de teste
 app.get('/', (req, res) => {
-    res.json({ status: 'ok', mensagem: 'API FactoryTrack rodando 🚀' });
+    res.json({ status: 'ok', mensagem: 'API rodando' });
 });
+
+// rota de login
+app.post('/login', async (req, res) => {
+    const loginInput = req.body.usuario || req.body.nome || req.body.email;
+    const senhaInput = req.body.senha;
+
+    console.log(` Tentativa de login recebida para: "${loginInput}"`);
+
+    if (!loginInput || !senhaInput) {
+        return res.status(400).json({ erro: 'Usuário e senha são obrigatórios.' });
+    }
+
+    try {
+        // Busca na tabela 'usuarios' por nome ou usuario com a senha digitada
+        const user = await prisma.usuario.findFirst({
+            where: {
+                senha: senhaInput,
+                OR: [
+                    { usuario: loginInput },
+                    { nome: loginInput }
+                ]
+            }
+        });
+
+        if (user) {
+            console.log(`✅ Login APROVADO para o usuário: ${user.nome || user.usuario}`);
+
+            return res.json({
+                sucesso: true,
+                mensagem: 'Login efetuado com sucesso!',
+                usuario: {
+                    id: user.id,
+                    nome: user.nome || user.usuario,
+                    cargo: user.cargo || user.tipo || 'operador'
+                }
+            });
+        } else {
+            console.log(` Login RECUSADO para: "${loginInput}" (Credenciais inválidas)`);
+            return res.status(401).json({ erro: 'Nome ou senha incorretos.' });
+        }
+    } catch (err) {
+        console.error(' Erro no banco durante o login:', err.message);
+        return res.status(500).json({ erro: 'Erro interno no servidor de banco de dados.' });
+    }
+});
+
 
 // ==========================================
 // ROTAS DE SETORES
@@ -70,11 +94,12 @@ app.post('/cadastrar-setor', async (req, res) => {
     }
 
     try {
-        const sql = 'INSERT INTO setores (nome_setor, responsavel) VALUES (?, ?)';
-        const [result] = await pool.query(sql, [nome_setor, responsavel]);
-        res.status(201).json({ id: result.insertId, nome_setor, responsavel });
+        const novoSetor = await prisma.setor.create({
+            data: { nomeSetor: nome_setor, responsavel }
+        });
+        res.status(201).json({ id: novoSetor.id, nome_setor, responsavel });
     } catch (err) {
-        console.error('❌ Erro ao cadastrar setor:', err.message);
+        console.error(' Erro ao cadastrar setor:', err.message);
         res.status(500).json({ erro: 'Erro ao cadastrar setor.' });
     }
 });
@@ -82,10 +107,16 @@ app.post('/cadastrar-setor', async (req, res) => {
 // Buscar todos os setores
 app.get('/setores', async (req, res) => {
     try {
-        const [results] = await pool.query('SELECT * FROM setores ORDER BY id');
+        const setores = await prisma.setor.findMany({ orderBy: { id: 'asc' } });
+        const results = setores.map(s => ({
+            id: s.id,
+            nome_setor: s.nomeSetor,
+            responsavel: s.responsavel,
+            criado_em: s.criadoEm
+        }));
         res.status(200).json(results);
     } catch (err) {
-        console.error('❌ Erro ao buscar setores:', err.message);
+        console.error(' Erro ao buscar setores:', err.message);
         res.status(500).json({ erro: 'Erro ao buscar setores.' });
     }
 });
@@ -93,16 +124,17 @@ app.get('/setores', async (req, res) => {
 // Deletar setor
 app.delete('/deletar-setor/:id', async (req, res) => {
     try {
-        const [result] = await pool.query('DELETE FROM setores WHERE id = ?', [req.params.id]);
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ erro: 'Setor não encontrado.' });
-        }
+        await prisma.setor.delete({ where: { id: Number(req.params.id) } });
         res.status(200).json({ mensagem: 'Setor deletado com sucesso!' });
     } catch (err) {
-        console.error('❌ Erro ao deletar setor:', err.message);
-        res.status(500).json({ erro: 'Erro ao deletar setor.' });
+        if (err.code === 'P2025') {
+            return res.status(404).json({ erro: 'Setor não encontrado.' });
+        }
+        console.error(' Erro ao deletar setor:', err.message);
+        res.status(500).json({ erro: 'Erro ao deletar setor no banco de dados.' });
     }
 });
+
 
 // ==========================================
 // ROTAS DE MÁQUINAS
@@ -117,11 +149,16 @@ app.post('/cadastrar-maquina', async (req, res) => {
     }
 
     try {
-        const sql = 'INSERT INTO maquinas (nome_maquina, setor_associado, numero_serie) VALUES (?, ?, ?)';
-        const [result] = await pool.query(sql, [nome_maquina, setor_associado, numero_serie || null]);
-        res.status(201).json({ id: result.insertId, nome_maquina, setor_associado, numero_serie });
+        const novaMaquina = await prisma.maquina.create({
+            data: {
+                nomeMaquina: nome_maquina,
+                setorAssociado: setor_associado,
+                numeroSerie: numero_serie || null
+            }
+        });
+        res.status(201).json({ id: novaMaquina.id, nome_maquina, setor_associado, numero_serie });
     } catch (err) {
-        console.error('❌ Erro ao cadastrar máquina:', err.message);
+        console.error(' Erro ao cadastrar máquina:', err.message);
         res.status(500).json({ erro: 'Erro ao cadastrar máquina.' });
     }
 });
@@ -129,10 +166,17 @@ app.post('/cadastrar-maquina', async (req, res) => {
 // Buscar todas as máquinas
 app.get('/maquinas', async (req, res) => {
     try {
-        const [results] = await pool.query('SELECT * FROM maquinas ORDER BY id');
+        const maquinas = await prisma.maquina.findMany({ orderBy: { id: 'asc' } });
+        const results = maquinas.map(m => ({
+            id: m.id,
+            nome_maquina: m.nomeMaquina,
+            setor_associado: m.setorAssociado,
+            numero_serie: m.numeroSerie,
+            criado_em: m.criadoEm
+        }));
         res.status(200).json(results);
     } catch (err) {
-        console.error('❌ Erro ao buscar máquinas:', err.message);
+        console.error(' Erro ao buscar máquinas:', err.message);
         res.status(500).json({ erro: 'Erro ao buscar máquinas.' });
     }
 });
@@ -140,22 +184,23 @@ app.get('/maquinas', async (req, res) => {
 // Deletar máquina
 app.delete('/deletar-maquina/:id', async (req, res) => {
     try {
-        const [result] = await pool.query('DELETE FROM maquinas WHERE id = ?', [req.params.id]);
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ erro: 'Máquina não encontrada.' });
-        }
+        await prisma.maquina.delete({ where: { id: Number(req.params.id) } });
         res.status(200).json({ mensagem: 'Máquina deletada com sucesso!' });
     } catch (err) {
-        console.error('❌ Erro ao deletar máquina:', err.message);
+        if (err.code === 'P2025') {
+            return res.status(404).json({ erro: 'Máquina não encontrada.' });
+        }
+        console.error(' Erro ao deletar máquina:', err.message);
         res.status(500).json({ erro: 'Erro ao deletar máquina.' });
     }
 });
 
+
 // ==========================================
-// ROTAS DE OCORRÊNCIAS (registro + checklist)
+// ROTAS DE OCORRÊNCIAS
 // ==========================================
 
-// Cadastrar nova ocorrência (usada em ocorrencia.html e checklist.html)
+// Cadastrar nova ocorrência
 app.post('/cadastrar-ocorrencia', async (req, res) => {
     const { data, setor, maquina, tipo, operador, turno, descricao, status, resolucao, itensChecklist } = req.body;
 
@@ -163,33 +208,36 @@ app.post('/cadastrar-ocorrencia', async (req, res) => {
         return res.status(400).json({ erro: 'setor, maquina, tipo, operador e turno são obrigatórios.' });
     }
 
-    // Transforma a lista de itens do checklist em texto para salvar no MySQL
     const itensString = itensChecklist ? JSON.stringify(itensChecklist) : null;
-    const dataOcorrencia = data || new Date().toISOString();
+    const dataOcorrencia = data ? new Date(data) : new Date();
 
     try {
-        const sql = `INSERT INTO ocorrencias
-            (data, setor, maquina, tipo, operador, turno, descricao, status, resolucao, itensChecklist)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-        const [result] = await pool.query(sql, [
-            dataOcorrencia, setor, maquina, tipo, operador, turno,
-            descricao || '', status || 'Pendente', resolucao || '', itensString
-        ]);
-
-        res.status(201).json({ id: result.insertId, mensagem: 'Registrado com sucesso!' });
+        const nova = await prisma.ocorrencia.create({
+            data: {
+                data: dataOcorrencia,
+                setor,
+                maquina,
+                tipo,
+                operador,
+                turno,
+                descricao: descricao || '',
+                status: status || 'Pendente',
+                resolucao: resolucao || '',
+                itensChecklist: itensString
+            }
+        });
+        res.status(201).json({ id: nova.id, mensagem: 'Registrado com sucesso!' });
     } catch (err) {
-        console.error('❌ Erro ao registrar ocorrência/checklist:', err.message);
-        res.status(500).json({ erro: 'Erro ao registrar ocorrência/checklist.' });
+        console.error(' Erro ao registrar ocorrência:', err.message);
+        res.status(500).json({ erro: 'Erro ao registrar ocorrência.' });
     }
 });
 
-// Buscar todas as ocorrências (usada em historico.html, painel.html e exportação)
+// Buscar todas as ocorrências
 app.get('/ocorrencias', async (req, res) => {
     try {
-        const [results] = await pool.query('SELECT * FROM ocorrencias ORDER BY data DESC');
+        const results = await prisma.ocorrencia.findMany({ orderBy: { data: 'desc' } });
 
-        // Converte itensChecklist de volta para array/objeto antes de responder
         const ocorrencias = results.map(o => ({
             ...o,
             itensChecklist: o.itensChecklist ? JSON.parse(o.itensChecklist) : null
@@ -197,12 +245,12 @@ app.get('/ocorrencias', async (req, res) => {
 
         res.status(200).json(ocorrencias);
     } catch (err) {
-        console.error('❌ Erro ao buscar ocorrências:', err.message);
+        console.error(' Erro ao buscar ocorrências:', err.message);
         res.status(500).json({ erro: 'Erro ao buscar ocorrências.' });
     }
 });
 
-// Marcar ocorrência como resolvida (usada em historico.html)
+// Marcar ocorrência como resolvida
 app.put('/resolver-ocorrencia/:id', async (req, res) => {
     const { id } = req.params;
     const { resolucao, dataResolucao } = req.body;
@@ -212,37 +260,56 @@ app.put('/resolver-ocorrencia/:id', async (req, res) => {
     }
 
     try {
-        const sql = `UPDATE ocorrencias
-            SET status = 'Resolvido', resolucao = ?, dataResolucao = ?
-            WHERE id = ?`;
-        const [result] = await pool.query(sql, [resolucao, dataResolucao || new Date().toISOString(), id]);
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ erro: 'Ocorrência não encontrada.' });
-        }
+        await prisma.ocorrencia.update({
+            where: { id: Number(id) },
+            data: {
+                status: 'Resolvido',
+                resolucao,
+                dataResolucao: dataResolucao ? new Date(dataResolucao) : new Date()
+            }
+        });
         res.status(200).json({ mensagem: 'Ocorrência marcada como resolvida!' });
     } catch (err) {
-        console.error('❌ Erro ao resolver ocorrência:', err.message);
+        if (err.code === 'P2025') {
+            return res.status(404).json({ erro: 'Ocorrência não encontrada.' });
+        }
+        console.error(' Erro ao resolver ocorrência:', err.message);
         res.status(500).json({ erro: 'Erro ao resolver ocorrência.' });
     }
 });
 
+// Deletar ocorrência
+app.delete('/ocorrencias/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await prisma.ocorrencia.delete({ where: { id: Number(id) } });
+        res.json({ mensagem: 'Ocorrência excluída com sucesso!' });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            return res.status(404).json({ erro: 'Ocorrência não encontrada.' });
+        }
+        console.error(' Erro ao excluir ocorrência:', err.message);
+        res.status(500).json({ erro: 'Erro ao excluir no banco de dados.' });
+    }
+});
+
+
 // ==========================================
-// ROTAS DE ESTOQUE (peças)
+// ROTAS DE ESTOQUE (Peças)
 // ==========================================
 
-// Buscar todas as peças
+// Buscar peças
 app.get('/pecas', async (req, res) => {
     try {
-        const [results] = await pool.query('SELECT * FROM pecas ORDER BY id');
+        const results = await prisma.peca.findMany({ orderBy: { id: 'asc' } });
         res.status(200).json(results);
     } catch (err) {
-        console.error('❌ Erro ao buscar estoque:', err.message);
+        console.error(' Erro ao buscar estoque:', err.message);
         res.status(500).json({ erro: 'Erro ao buscar estoque.' });
     }
 });
 
-// Cadastrar nova peça (usada em estoque.html)
+// Cadastrar peça
 app.post('/cadastrar-peca', async (req, res) => {
     const { nome, categoria, qtd, min, unidade } = req.body;
 
@@ -251,16 +318,17 @@ app.post('/cadastrar-peca', async (req, res) => {
     }
 
     try {
-        const sql = 'INSERT INTO pecas (nome, categoria, qtd, min, unidade) VALUES (?, ?, ?, ?, ?)';
-        const [result] = await pool.query(sql, [nome, categoria || null, qtd, min, unidade || null]);
-        res.status(201).json({ id: result.insertId, nome, categoria, qtd, min, unidade });
+        const nova = await prisma.peca.create({
+            data: { nome, categoria: categoria || null, qtd, min, unidade: unidade || null }
+        });
+        res.status(201).json({ id: nova.id, nome, categoria, qtd, min, unidade });
     } catch (err) {
-        console.error('❌ Erro ao cadastrar peça:', err.message);
+        console.error(' Erro ao cadastrar peça:', err.message);
         res.status(500).json({ erro: 'Erro ao cadastrar peça.' });
     }
 });
 
-// Atualizar a quantidade de uma peça (usar ou repor — estoque.html envia o valor final)
+// Atualizar peça
 app.put('/atualizar-peca/:id', async (req, res) => {
     const { id } = req.params;
     const { qtd } = req.body;
@@ -270,50 +338,42 @@ app.put('/atualizar-peca/:id', async (req, res) => {
     }
 
     try {
-        const [result] = await pool.query('UPDATE pecas SET qtd = ? WHERE id = ?', [qtd, id]);
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ erro: 'Peça não encontrada.' });
-        }
+        await prisma.peca.update({
+            where: { id: Number(id) },
+            data: { qtd: Number(qtd) }
+        });
         res.status(200).json({ mensagem: 'Estoque atualizado!' });
     } catch (err) {
-        console.error('❌ Erro ao atualizar quantidade:', err.message);
+        if (err.code === 'P2025') {
+            return res.status(404).json({ erro: 'Peça não encontrada.' });
+        }
+        console.error(' Erro ao atualizar quantidade:', err.message);
         res.status(500).json({ erro: 'Erro ao atualizar quantidade.' });
     }
 });
 
-// Deletar uma peça
+// Deletar peça
 app.delete('/deletar-peca/:id', async (req, res) => {
     try {
-        const [result] = await pool.query('DELETE FROM pecas WHERE id = ?', [req.params.id]);
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ erro: 'Peça não encontrada.' });
-        }
+        await prisma.peca.delete({ where: { id: Number(req.params.id) } });
         res.status(200).json({ mensagem: 'Peça deletada!' });
     } catch (err) {
-        console.error('❌ Erro ao deletar peça:', err.message);
+        if (err.code === 'P2025') {
+            return res.status(404).json({ erro: 'Peça não encontrada.' });
+        }
+        console.error(' Erro ao deletar peça:', err.message);
         res.status(500).json({ erro: 'Erro ao deletar peça.' });
     }
 });
 
-// 🟢 ROTA PARA EXCLUIR OCORRÊNCIA DO BANCO DE DADOS
-app.delete('/ocorrencias/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        await db.query('DELETE FROM ocorrencias WHERE id = ?', [id]);
-        res.json({ message: 'Ocorrência excluída com sucesso!' });
-    } catch (err) {
-        console.error('Erro ao excluir ocorrência:', err);
-        res.status(500).json({ error: 'Erro ao excluir no banco de dados' });
-    }
-});
 
 // ==========================================
-// Rota "coringa" — qualquer caminho não mapeado cai aqui
+// ROTA 404 (Coringa)
 // ==========================================
 app.use((req, res) => {
     res.status(404).json({ erro: `Rota não encontrada: ${req.method} ${req.originalUrl}` });
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+    console.log(` Servidor rodando em http://localhost:${PORT}`);
 });

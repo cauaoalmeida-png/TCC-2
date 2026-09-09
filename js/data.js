@@ -109,3 +109,11 @@ function formatDate(dateStr) {
 }
 
 initData();
+
+//  ADICIONADO [Motivo: Remove uma ocorrência do histórico pelo ID]
+function deleteOcorrencia(id) {
+    let ocorrencias = getOcorrencias();
+    // Filtra mantendo apenas as ocorrências com ID diferente do selecionado
+    ocorrencias = ocorrencias.filter(o => Number(o.id) !== Number(id));
+    saveOcorrencias(ocorrencias);
+}

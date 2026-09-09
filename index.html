@@ -193,7 +193,7 @@
 <header class="header">
   <div class="container">
     <div class="logo">
-      <a href="pages/Inicio.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
+      <a href="pages/Inicio.html"><i class="fas fa-industry"></i><span>Fact</span></a>
     </div>
     <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
   </div>
@@ -227,9 +227,6 @@
         <div class="login-actions">
           <button type="button" class="btn btn-primary" onclick="fazerLogin()">
             <i class="fas fa-right-to-bracket"></i> Entrar
-          </button>
-          <button type="button" class="btn btn-cancel" onclick="irParaRegistro()">
-            <i class="fas fa-user-plus"></i> Criar demo
           </button>
         </div>
       </form>
@@ -277,6 +274,8 @@
       setError('Informe nome e senha.');
       return;
     }
+
+    // Tenta autenticar no localStorage
     const res = loginUsuario(nome, senha);
     if (!res.ok) {
       setError(res.msg || 'Login inválido.');
@@ -287,8 +286,6 @@
     document.getElementById('sessionInfo').style.display = 'block';
     document.getElementById('sessionInfo').textContent = `Sessão ativa: ${sess.nome} (${cargoLabel(sess.cargo)})`;
 
-    // Redireciona para a página que a pessoa tentou acessar antes do login.
-    // (ft_next_url é setado no rbac.js quando não há sessão).
     let next = null;
     try { next = sessionStorage.getItem('ft_next_url'); } catch (e) {}
     try { sessionStorage.removeItem('ft_next_url'); } catch (e) {}
@@ -301,22 +298,19 @@
     redirecionar('PAGES/Inicio.html');
   }
 
-
-  // Cria usuários demo no localStorage, para você testar (opcional)
-  function irParaRegistro() {
-    // Se já tem usuários, não sobrescreve.
-    if (temUsuarios()) {
-      if (confirm('Já existem usuários cadastrados. Deseja ir ao login mesmo assim?')) { /* já estamos na tela de login */ }
-      return;
+  // Garante que os usuários padrão existam na memória sem precisar do botão Demo
+  function garantirUsuariosDemo() {
+    if (!temUsuarios()) {
+      registrarUsuario('operador', '123', 'operador');
+      registrarUsuario('gerente', '123', 'gerente');
+      registrarUsuario('chefe', '123', 'chefe_geral');
     }
-
-    registrarUsuario('operador', '123', 'operador');
-    registrarUsuario('gerente', '123', 'gerente');
-    registrarUsuario('chefe', '123', 'chefe_geral');
-    alert('Usuários demo criados no localStorage. Use: operador/123 ou gerente/123 ou chefe/123');
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Executa automaticamente ao abrir a página
+    garantirUsuariosDemo();
+
     const sess = getSessao();
     if (sess) {
       document.getElementById('sessionInfo').style.display = 'block';

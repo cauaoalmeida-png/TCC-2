@@ -169,50 +169,28 @@
     return todas.sort((a, b) => new Date(b.data) - new Date(a.data))[0];
   }
 
-  // Substitua a sua função renderPainel atual por esta versão atualizada:
-async function renderPainel() {
-    let setores = [];
-    let maquinas = [];
+  
+function renderPainel() {
+    
+    // 🟢 Busca os dados cadastrados na memória
+    const setores = getSetores();
+    const maquinas = getMaquinas();
 
-    try {
-        // 1. Buscando os dados oficiais do MySQL (Servidor) via rotas GET
-        const respostaSetores = await fetch(`${API_BASE_URL}/setores`);
-        const dadosSetores = await respostaSetores.json();
-
-        const respostaMaquinas = await fetch(`${API_BASE_URL}/maquinas`);
-        const dadosMaquinas = await respostaMaquinas.json();
-
-        // 2. Traduzindo os nomes do banco (ex: nome_setor) para o que o seu visual já espera (nome)
-        setores = dadosSetores.map(s => ({
-            id: s.id,
-            nome: s.nome_setor,
-            responsavel: s.responsavel
-        }));
-
-        maquinas = dadosMaquinas.map(m => ({
-            id: m.id,
-            nome: m.nome_maquina,
-            setor: m.setor_associado,
-            serie: m.numero_serie
-        }));
-
-    } catch (erro) {
-        console.error('Erro ao buscar dados do servidor:', erro);
-        document.getElementById('painelGrid').innerHTML = '<div class="empty-state">Erro ao carregar dados do servidor. O node server.js está rodando?</div>';
-        return;
-    }
-
-    // --- DAQUI PARA BAIXO O SEU LÓGICA VISUAL CONTINUA EXATAMENTE IGUAL ---
+    // --- DAQUI PARA BAIXO O SEU CÓDIGO CONTINUA EXATAMENTE IGUAL ---
     const filterSetor = document.getElementById('filterSetor').value;
     const filterStatus = document.getElementById('filterStatus').value;
 
-    // Sempre recarrega o filtro de setor com dados atualizados do banco
+    // (O bloco catch que estava aqui foi apagado!)
+
+    // 🟡 Atualiza o filtro de Setores dinamicamente no menu dropdown <select>
     const sel = document.getElementById('filterSetor');
     const valorAtual = sel.value;
     sel.innerHTML = '<option value="">Todos os Setores</option>';
+    
     setores.forEach(s => {
         const opt = document.createElement('option');
-        opt.value = s.nome; opt.textContent = s.nome;
+        opt.value = s.nome;
+        opt.textContent = s.nome;
         sel.appendChild(opt);
     });
     sel.value = valorAtual;
