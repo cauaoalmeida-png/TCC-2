@@ -25,9 +25,10 @@
         <li><a href="../index.html" class="nav-link">Início</a></li>
         <li><a href="painel.html" class="nav-link">Painel de Status</a></li>
         <li><a href="ocorrencia.html" class="nav-link active">Registrar Ocorrencia</a></li>
-        <li><a href="checklist.html" class="nav-link ">Checklist</a></li>
+        <li><a href="checklist.html" class="nav-link">Checklist</a></li>
         <li><a href="historico.html" class="nav-link">Histórico</a></li>
         <li><a href="estoque.html" class="nav-link">Estoque</a></li>
+        <li><a href="guindastes.html" class="nav-link">Guindastes</a></li>
         <li><a href="cadastros.html" class="nav-link">Cadastros</a></li>
       </ul>
     </nav>
@@ -52,7 +53,7 @@
           <div class="form-row">
             <div class="form-group">
               <label>Setor *</label>
-              <select id="setor" name="setor" required onchange="carregarMaquinasDoSetor()">
+              <select id="setorSelect" name="setor" required>
                 <option value="">Selecione o setor</option>
               </select>
             </div>
@@ -144,8 +145,9 @@
       <div class="footer-section">
         <h4>Funcionalidades</h4>
         <ul>
-          <li><a href="ocorrencia.html">Checklist</a></li>
+          <li><a href="checklist.html">Checklist</a></li>
           <li><a href="historico.html">Histórico</a></li>
+          <li><a href="guindastes.html">Guindastes</a></li>
           <li><a href="cadastros.html">Cadastros</a></li>
         </ul>
       </div>
@@ -163,81 +165,59 @@
 <script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (!requireAuth()) return;
-    try { clearNextUrl && clearNextUrl(); } catch (e) {}
-    carregarFiltros(); // Inicia puxando os setores e máquinas oficiais do banco
-  });
-
   // Número do supervisor (WhatsApp geral para demo)
   const SUPERVISOR_WPP = '5571981828080';
-  
+
   let todosSetores = [];
   let todasMaquinas = [];
 
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!requireAuth()) return;
+    try { clearNextUrl && clearNextUrl(); } catch (e) {}
+    carregarFiltros();
+  });
 
- async function carregarFiltros() {
-  try {
-    // 1. Puxa os setores e máquinas do backend
-    const resSetores = await fetch(`${API_BASE_URL}/setores`);
-    todosSetores = await resSetores.json();
+  // ==========================================
+  // CARREGA SETORES DO BANCO E PREENCHE O SELECT
+  // ==========================================
+  async function carregarFiltros() {
+    try {
+      const [resSetores, resMaquinas] = await Promise.all([
+        fetch(`${API_BASE_URL}/setores`),
+        fetch(`${API_BASE_URL}/maquinas`)
+      ]);
+      todosSetores = await resSetores.json();
+      todasMaquinas = await resMaquinas.json();
 
-    console.log("Setores recebidos do Banco:", todosSetores); // Para conferir no F12
+      const selSetor = document.getElementById('setorSelect');
+      selSetor.innerHTML = '<option value="">Selecione o setor</option>';
 
-    const resMaquinas = await fetch(`${API_BASE_URL}/maquinas`);
-    todasMaquinas = await resMaquinas.json();
+      const nomesVistos = new Set();
+      todosSetores.forEach(s => {
+        if (!nomesVistos.has(s.nome_setor)) {
+          nomesVistos.add(s.nome_setor);
+          const opt = document.createElement('option');
+          opt.value = s.nome_setor;
+          opt.textContent = s.nome_setor;
+          selSetor.appendChild(opt);
+        }
+      });
 
-    // 💡 Tenta encontrar o elemento pelo ID 'setorSelect' ou pelo ID 'setor'
-    const selSetor = document.getElementById('setorSelect') || document.getElementById('setor');
-
-    if (!selSetor) {
-      console.error("Atenção: Não foi encontrado o elemento <select> na tela. Verifique os IDs!");
-      return;
-    }
-
-    // 2. Limpa o select mantendo apenas a opção padrão
-    selSetor.innerHTML = '<option value="">Selecione o setor</option>';
-
-    if (!Array.isArray(todosSetores)) {
-      console.error("O servidor não retornou uma lista válida de setores:", todosSetores);
-      return;
-    }
-
-    // 3. ILTRO ANTI-DUPLICADOS (Registra apenas nomes únicos)
-    const setoresRegistrados = new Set();
-
-    todosSetores.forEach(s => {
-      // Pega o nome, seja objeto (s.nome_setor) ou string direta
-      const nomeSetor = typeof s === 'object' ? (s.nome_setor || s.nome) : s;
-
-      // Se o setor tiver nome e ainda não tiver sido adicionado:
-      if (nomeSetor && !setoresRegistrados.has(nomeSetor)) {
-        setoresRegistrados.add(nomeSetor);
-
-        const opt = document.createElement('option');
-        opt.value = nomeSetor;
-        opt.textContent = nomeSetor;
-        selSetor.appendChild(opt);
+      // Pré-seleciona setor/máquina se vierem pela URL (ex: clicando a partir do Painel de Status)
+      const params = new URLSearchParams(window.location.search);
+      const setorParam = params.get('setor');
+      const maquinaParam = params.get('maquina');
+      if (setorParam) {
+        selSetor.value = setorParam;
+        loadMaquinas();
+        if (maquinaParam) {
+          document.getElementById('maquinaSelect').value = maquinaParam;
+        }
       }
-    });
-
-    // 4. Lógica para pré-selecionar se vier parâmetro na URL
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('setor')) {
-      selSetor.value = params.get('setor');
-      if (typeof loadMaquinas === 'function') loadMaquinas(); 
-      
-      if (params.get('maquina')) {
-        setTimeout(() => {
-          const selMaq = document.getElementById('maquinaSelect') || document.getElementById('maquina');
-          if (selMaq) selMaq.value = params.get('maquina');
-        }, 50);
-      }
+    } catch (erro) {
+      console.error('Erro ao carregar setores/máquinas do banco de dados:', erro);
     }
-  } catch (erro) {
-    console.error("Erro ao carregar filtros do banco de dados:", erro);
   }
-}
 
   // ==========================================
   // FILTRAR AS MÁQUINAS PELO SETOR ESCOLHIDO
@@ -245,10 +225,9 @@
   function loadMaquinas() {
     const setor = document.getElementById('setorSelect').value;
     const sel = document.getElementById('maquinaSelect');
-    
-    // Filtra apenas as máquinas do setor escolhido
+
     const maquinasFiltradas = todasMaquinas.filter(m => m.setor_associado === setor);
-    
+
     sel.innerHTML = '<option value="">Selecione a máquina</option>';
     maquinasFiltradas.forEach(m => {
       const opt = document.createElement('option');
@@ -257,7 +236,6 @@
     });
   }
 
-  // Se o usuário trocar o setor, atualiza a lista de máquinas
   document.getElementById('setorSelect').addEventListener('change', loadMaquinas);
 
   // ==========================================
@@ -275,7 +253,7 @@
   });
 
   // ==========================================
-  // O GRANDE MOMENTO: SALVAR NO BANCO DE DADOS
+  // SALVAR NO BANCO DE DADOS
   // ==========================================
   document.getElementById('ocorrenciaForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -288,26 +266,19 @@
     const descricao = document.getElementById('descricaoInput').value;
 
     const novaOcorrencia = {
-      setor: setor,
-      maquina: maquina,
-      tipo: tipo,
-      turno: turno,
-      operador: operador,
-      descricao: descricao,
+      setor, maquina, tipo, turno, operador, descricao,
       data: new Date().toISOString(),
       status: 'Pendente',
       resolucao: '',
-      itensChecklist: null // Para ocorrências comuns, não há checklist anexado
+      itensChecklist: null
     };
 
-    // Altera o botão para mostrar que está carregando
     const btn = this.querySelector('button[type="submit"]');
     const txtOriginal = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
     btn.style.pointerEvents = 'none';
 
     try {
-      // O MOTOBOY VAI ENTREGAR O PACOTE NO SERVIDOR
       const resposta = await fetch(`${API_BASE_URL}/cadastrar-ocorrencia`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -315,7 +286,6 @@
       });
 
       if (resposta.status === 201) {
-        // Deu certo! Vamos gerar a mensagem do WhatsApp...
         const msg = encodeURIComponent(
           ` *Nova Ocorrência - FactoryTrack*\n\n` +
           ` *Setor:* ${setor}\n` +
@@ -326,21 +296,22 @@
           `Acesse o FactoryTrack para mais detalhes.`
         );
 
-        // ...e mostrar as telas de sucesso!
         document.getElementById('wppLink').href = `https://wa.me/${SUPERVISOR_WPP}?text=${msg}`;
         document.getElementById('successMsg').classList.add('show');
         document.getElementById('wppBox').classList.add('show');
         document.getElementById('ocorrenciaForm').style.display = 'none';
       } else {
-        alert("Erro ao salvar ocorrência no banco.");
+        alert('Erro ao salvar ocorrência no banco.');
         btn.innerHTML = txtOriginal;
         btn.style.pointerEvents = 'auto';
       }
     } catch (erro) {
-      console.error("Falha ao comunicar com o servidor:", erro);
-      alert("Erro na conexão com o servidor. O XAMPP e o Node.js estão ligados?");
+      console.error('Falha ao comunicar com o servidor:', erro);
+      alert('Erro na conexão com o servidor. O back-end está rodando?');
       btn.innerHTML = txtOriginal;
       btn.style.pointerEvents = 'auto';
     }
   });
 </script>
+</body>
+</html>

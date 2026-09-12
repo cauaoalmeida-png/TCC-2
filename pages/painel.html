@@ -77,6 +77,7 @@
         <li><a href="checklist.html" class="nav-link">Checklist</a></li>
         <li><a href="historico.html" class="nav-link">Histórico</a></li>
         <li><a href="estoque.html" class="nav-link">Estoque</a></li>
+        <li><a href="guindastes.html" class="nav-link">Guindastes</a></li>
         <li><a href="cadastros.html" class="nav-link">Cadastros</a></li>
       </ul>
     </nav>
@@ -128,8 +129,9 @@
       <div class="footer-section">
         <h4>Funcionalidades</h4>
         <ul>
-          <li><a href="ocorrencia.html">Checklist</a></li>
+          <li><a href="checklist.html">Checklist</a></li>
           <li><a href="historico.html">Histórico</a></li>
+          <li><a href="guindastes.html">Guindastes</a></li>
           <li><a href="cadastros.html">Cadastros</a></li>
         </ul>
       </div>
@@ -147,16 +149,34 @@
 <script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
 <script>
-  // Acesso: operador visualiza, supervisor gerencia
+  let setoresCache = [];
+  let maquinasCache = [];
+  let ocorrenciasCache = [];
+
   document.addEventListener('DOMContentLoaded', () => {
     if (!requireAuth()) return;
-    // Depois que validar sessão, limpa o destino salvo para evitar redirecionar novamente.
     try { clearNextUrl && clearNextUrl(); } catch (e) {}
+    renderPainel();
   });
 
+  // Recarrega quando o usuário volta para esta aba (ex: vindo de outra tela do sistema)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') renderPainel();
+  });
+
+  async function carregarDadosPainel() {
+    const [resSetores, resMaquinas, resOcorrencias] = await Promise.all([
+      fetch(`${API_BASE_URL}/setores`),
+      fetch(`${API_BASE_URL}/maquinas`),
+      fetch(`${API_BASE_URL}/ocorrencias`)
+    ]);
+    setoresCache = await resSetores.json();
+    maquinasCache = await resMaquinas.json();
+    ocorrenciasCache = await resOcorrencias.json();
+  }
+
   function getStatusMaquina(maquina) {
-    const ocorrencias = getOcorrencias();
-    const pendentes = ocorrencias.filter(o => o.maquina === maquina.nome && o.status === 'Pendente');
+    const pendentes = ocorrenciasCache.filter(o => o.maquina === maquina.nome_maquina && o.status === 'Pendente');
     if (pendentes.length === 0) return { status: 'Funcionando', cor: 'green', icone: 'fa-check-circle' };
     const tipos = pendentes.map(o => o.tipo);
     if (tipos.includes('Parada de máquina')) return { status: 'Parado', cor: 'red', icone: 'fa-times-circle' };
@@ -164,102 +184,88 @@
   }
 
   function getUltimaOcorrencia(maquina) {
-    const todas = getOcorrencias().filter(o => o.maquina === maquina.nome);
+    const todas = ocorrenciasCache.filter(o => o.maquina === maquina.nome_maquina);
     if (!todas.length) return null;
-    return todas.sort((a, b) => new Date(b.data) - new Date(a.data))[0];
+    return todas.slice().sort((a, b) => new Date(b.data) - new Date(a.data))[0];
   }
 
-  
-function renderPainel() {
-    
-    // 🟢 Busca os dados cadastrados na memória
-    const setores = getSetores();
-    const maquinas = getMaquinas();
+  async function renderPainel() {
+    try {
+      await carregarDadosPainel();
+    } catch (erro) {
+      console.error('Erro ao carregar dados do painel:', erro);
+      document.getElementById('painelGrid').innerHTML =
+        `<div class="empty-state"><i class="fas fa-plug-circle-xmark"></i><p>Não foi possível conectar ao servidor.</p></div>`;
+      return;
+    }
 
-    // --- DAQUI PARA BAIXO O SEU CÓDIGO CONTINUA EXATAMENTE IGUAL ---
     const filterSetor = document.getElementById('filterSetor').value;
     const filterStatus = document.getElementById('filterStatus').value;
 
-    // (O bloco catch que estava aqui foi apagado!)
-
-    // 🟡 Atualiza o filtro de Setores dinamicamente no menu dropdown <select>
+    // Atualiza o filtro de Setores dinamicamente
     const sel = document.getElementById('filterSetor');
     const valorAtual = sel.value;
     sel.innerHTML = '<option value="">Todos os Setores</option>';
-    
-    setores.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.nome;
-        opt.textContent = s.nome;
-        sel.appendChild(opt);
+    setoresCache.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.nome_setor;
+      opt.textContent = s.nome_setor;
+      sel.appendChild(opt);
     });
     sel.value = valorAtual;
 
     const grid = document.getElementById('painelGrid');
     let html = '';
 
-    const setoresFiltrados = filterSetor ? setores.filter(s => s.nome === filterSetor) : setores;
+    const setoresFiltrados = filterSetor ? setoresCache.filter(s => s.nome_setor === filterSetor) : setoresCache;
 
     setoresFiltrados.forEach(setor => {
-        let maquinasSetor = maquinas.filter(m => m.setor === setor.nome);
+      let maquinasSetor = maquinasCache.filter(m => m.setor_associado === setor.nome_setor);
 
-        if (filterStatus) {
-            maquinasSetor = maquinasSetor.filter(m => getStatusMaquina(m).status === filterStatus);
-        }
+      if (filterStatus) {
+        maquinasSetor = maquinasSetor.filter(m => getStatusMaquina(m).status === filterStatus);
+      }
 
-        if (!maquinasSetor.length) return;
+      if (!maquinasSetor.length) return;
 
-        html += `<div class="setor-title"><h2><i class="fas fa-cogs"></i> ${setor.nome} <span style="font-size:0.9rem; color:#64748b; font-weight:normal; margin-left:10px;">Resp: ${setor.responsavel}</span></h2></div>`;
+      html += `<div class="setor-title"><h2><i class="fas fa-cogs"></i> ${setor.nome_setor} <span style="font-size:0.9rem; color:#64748b; font-weight:normal; margin-left:10px;">Resp: ${setor.responsavel}</span></h2></div>`;
 
-        maquinasSetor.forEach(maq => {
-            const st = getStatusMaquina(maq);
-            const ultima = getUltimaOcorrencia(maq); // Assume que esta função ainda vai ler do localStorage ou será adaptada depois
-            html += `
-            <div class="painel-card">
-                <div class="painel-card-top">
-                    <div>
-                        <h3>${maq.nome}</h3>
-                        <p>Série: ${maq.serie || 'N/A'} | Setor: ${maq.setor}</p>
-                        ${ultima ? `<p class="last-update">Última ocorrência: ${formatDate(ultima.data)}</p>` : `<p class="last-update">Sem ocorrências registradas</p>`}
-                    </div>
-                    <i class="fas ${st.icone}" style="font-size:1.8rem;color:${st.cor === 'green' ? '#22c55e' : st.cor === 'yellow' ? '#f59e0b' : '#ef4444'}"></i>
+      maquinasSetor.forEach(maq => {
+        const st = getStatusMaquina(maq);
+        const ultima = getUltimaOcorrencia(maq);
+        html += `
+        <div class="painel-card">
+            <div class="painel-card-top">
+                <div>
+                    <h3>${maq.nome_maquina}</h3>
+                    <p>Série: ${maq.numero_serie || 'N/A'} | Setor: ${maq.setor_associado}</p>
+                    ${ultima ? `<p class="last-update">Última ocorrência: ${formatDate(ultima.data)}</p>` : `<p class="last-update">Sem ocorrências registradas</p>`}
                 </div>
-                <div class="painel-card-status ${st.cor}">
-                    <span class="status-dot ${st.cor}"></span>
-                    ${st.status}
-                </div>
-                <div class="painel-card-footer">
-                    <a href="ocorrencia.html?setor=${encodeURIComponent(maq.setor)}&maquina=${encodeURIComponent(maq.nome)}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i> Registrar Ocorrência
-                    </a>
-                    <a href="historico.html?maquina=${encodeURIComponent(maq.nome)}" class="btn btn-sm" style="background:#f1f5f9;color:#475569">
-                        <i class="fas fa-history"></i> Histórico
-                    </a>
-                </div>
+                <i class="fas ${st.icone}" style="font-size:1.8rem;color:${st.cor === 'green' ? '#22c55e' : st.cor === 'yellow' ? '#f59e0b' : '#ef4444'}"></i>
             </div>
-            `;
-        });
+            <div class="painel-card-status ${st.cor}">
+                <span class="status-dot ${st.cor}"></span>
+                ${st.status}
+            </div>
+            <div class="painel-card-footer">
+                <a href="ocorrencia.html?setor=${encodeURIComponent(maq.setor_associado)}&maquina=${encodeURIComponent(maq.nome_maquina)}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Registrar Ocorrência
+                </a>
+                <a href="historico.html?maquina=${encodeURIComponent(maq.nome_maquina)}" class="btn btn-sm" style="background:#f1f5f9;color:#475569">
+                    <i class="fas fa-history"></i> Histórico
+                </a>
+            </div>
+        </div>
+        `;
+      });
     });
 
     if (!html) {
-        html = `<div class="empty-state"><i class="fas fa-search"></i><p>Nenhum resultado para os filtros selecionados.</p></div>`;
+      html = `<div class="empty-state"><i class="fas fa-search"></i><p>Nenhum resultado para os filtros selecionados.</p></div>`;
     }
 
     grid.innerHTML = html;
-}
-
-  document.addEventListener('DOMContentLoaded', renderPainel);
-
-    // Recarrega quando o usuário volta para esta aba (ex: vindo da página de cadastros)
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') renderPainel();
-  });
-
-  // Recarrega quando o localStorage é alterado em outra aba
-  window.addEventListener('storage', () => renderPainel());
-
-  // Atualiza também quando a página disparar um evento custom (mesma aba)
-  window.addEventListener('factorytrack:storage', () => renderPainel());
+  }
 </script>
 </body>
 </html>

@@ -1,0 +1,133 @@
+/* ============================================
+   GUINDASTES.CSS — Estilos da Área de Guindastes
+   ============================================ */
+
+.guindastes-page { padding: 2rem 0 4rem; background: var(--bg); }
+
+/* PAINEL DE CADASTRO */
+.novo-guindaste-panel {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+.novo-guindaste-header {
+  background: var(--primary);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.novo-guindaste-header h2 { font-size: 1.1rem; color: white; }
+.novo-guindaste-form {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+.novo-guindaste-form .form-group { margin: 0; }
+.novo-guindaste-form label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.3rem; }
+.novo-guindaste-form input {
+  width: 100%; padding: 0.6rem 0.9rem;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+}
+.novo-guindaste-form input:focus { outline: none; border-color: var(--accent); }
+
+/* CARDS DOS GUINDASTES */
+.guindaste-card {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+.guindaste-card:hover { transform: translateY(-3px); }
+
+.guindaste-card-header {
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.guindaste-card-header h3 { font-size: 1.1rem; color: var(--text); margin-bottom: 0.2rem; }
+.guindaste-card-header p  { font-size: 0.82rem; color: var(--text-muted); }
+
+.guindaste-card-body { padding: 1rem 1.5rem; min-height: 70px; }
+.guindaste-card-body .aluguel-info p { font-size: 0.85rem; color: var(--text); margin-bottom: 0.3rem; }
+.guindaste-card-body .aluguel-info strong { color: var(--primary); }
+.guindaste-card-body .sem-aluguel { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
+
+.guindaste-card-footer {
+  padding: 0.8rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* HISTÓRICO */
+.historico-guindastes {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-top: 2.5rem;
+}
+.historico-guindastes-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.historico-guindastes-header h2 { font-size: 1.1rem; color: var(--primary); }
+.historico-table-wrap { overflow-x: auto; }
+.historico-table { width: 100%; border-collapse: collapse; }
+.historico-table th, .historico-table td {
+  padding: 0.8rem 1.5rem;
+  text-align: left;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.historico-table th { color: var(--text-muted); font-weight: 600; background: #f8fafc; }
+.historico-table tr:last-child td { border-bottom: none; }
+
+/* MODAL DE ALUGUEL */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  padding: 2rem;
+  width: 90%; max-width: 450px;
+  box-shadow: var(--shadow-lg);
+}
+.modal h3 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary); }
+.modal .form-group { margin-bottom: 1rem; text-align: left; }
+.modal .form-group label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.3rem; }
+.modal input {
+  width: 100%; padding: 0.7rem 1rem;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+}
+.modal input:focus { outline: none; border-color: var(--accent); }
+.modal-buttons { display: flex; gap: 0.8rem; margin-top: 0.5rem; }
+
+@media (max-width: 600px) {
+  .novo-guindaste-form { grid-template-columns: 1fr; }
+  .historico-table th, .historico-table td { padding: 0.6rem 1rem; }
+}

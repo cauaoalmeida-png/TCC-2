@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guindastes - FactoryTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/header.css">
+  <link rel="stylesheet" href="../css/guindastes.css">
+  <link rel="stylesheet" href="../css/footer.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="logo">
+      <a href="../index.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
+    </div>
+    <nav class="nav">
+      <ul class="nav-list">
+        <li><a href="../index.html" class="nav-link">Início</a></li>
+        <li><a href="painel.html" class="nav-link">Painel de Status</a></li>
+        <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrencia</a></li>
+        <li><a href="checklist.html" class="nav-link">Checklist</a></li>
+        <li><a href="historico.html" class="nav-link">Histórico</a></li>
+        <li><a href="estoque.html" class="nav-link">Estoque</a></li>
+        <li><a href="guindastes.html" class="nav-link active">Guindastes</a></li>
+        <li><a href="cadastros.html" class="nav-link">Cadastros</a></li>
+      </ul>
+    </nav>
+    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- MODAL ALUGAR -->
+<div class="modal-overlay" id="modalAlugar">
+  <div class="modal">
+    <h3><i class="fas fa-truck-pickup" style="color:var(--accent)"></i> Registrar Aluguel</h3>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem" id="modalAlugarGuindasteInfo"></p>
+    <div class="form-group">
+      <label>Cliente / Empresa *</label>
+      <input type="text" id="aluguelCliente" placeholder="Ex: Construtora Horizonte">
+    </div>
+    <div class="form-group">
+      <label>Data prevista de devolução *</label>
+      <input type="date" id="aluguelDataDevolucao">
+    </div>
+    <div id="erroAlugar" style="color:#dc2626;font-size:0.85rem;margin-bottom:0.5rem;display:none"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-primary" onclick="confirmarAluguel()"><i class="fas fa-check"></i> Confirmar Aluguel</button>
+      <button class="btn btn-cancel" onclick="document.getElementById('modalAlugar').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<main class="guindastes-page">
+  <div class="container">
+
+    <div class="page-header" style="margin:-2rem -1.5rem 2rem;border-radius:0">
+      <div style="padding:2rem 1.5rem">
+        <h1><i class="fas fa-truck-pickup"></i> Guindastes</h1>
+        <p>Controle de disponibilidade e locação dos guindastes da garagem</p>
+      </div>
+    </div>
+
+    <!-- CADASTRO NOVO GUINDASTE -->
+    <div class="novo-guindaste-panel" id="painelCadastroGuindaste">
+      <div class="novo-guindaste-header">
+        <i class="fas fa-plus-circle"></i>
+        <h2>Cadastrar Novo Guindaste</h2>
+      </div>
+      <div class="novo-guindaste-form">
+        <div class="form-group">
+          <label>Modelo *</label>
+          <input type="text" id="guindasteModelo" placeholder="Ex: F5">
+        </div>
+        <div class="form-group">
+          <label>Identificação</label>
+          <input type="text" id="guindasteIdentificacao" placeholder="Ex: GD-F5-03">
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary" onclick="addGuindaste()" style="width:100%;justify-content:center">
+            <i class="fas fa-plus"></i> Adicionar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters">
+      <label>Filtrar:</label>
+      <select id="filterModelo" onchange="renderGuindastes()">
+        <option value="">Todos os Modelos</option>
+      </select>
+      <select id="filterStatus" onchange="renderGuindastes()">
+        <option value="">Todos os Status</option>
+        <option value="Disponível">Disponível</option>
+        <option value="Alugado">Alugado</option>
+      </select>
+    </div>
+
+    <div class="grid-3" id="guindastesGrid"></div>
+
+    <!-- HISTÓRICO DE ALUGUÉIS -->
+    <div class="historico-guindastes">
+      <div class="historico-guindastes-header">
+        <i class="fas fa-clock-rotate-left"></i>
+        <h2>Histórico de Aluguéis</h2>
+      </div>
+      <div class="historico-table-wrap">
+        <table class="historico-table">
+          <thead>
+            <tr>
+              <th>Guindaste</th>
+              <th>Cliente</th>
+              <th>Locação</th>
+              <th>Devolução Prevista</th>
+              <th>Devolução Real</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historicoBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>FactoryTrack</h4>
+        <ul>
+          <li><a href="../index.html">Início</a></li>
+          <li><a href="painel.html">Painel de Status</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Funcionalidades</h4>
+        <ul>
+          <li><a href="checklist.html">Checklist</a></li>
+          <li><a href="historico.html">Histórico</a></li>
+          <li><a href="estoque.html">Estoque</a></li>
+          <li><a href="guindastes.html">Guindastes</a></li>
+          <li><a href="cadastros.html">Cadastros</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>FactoryTrack — Eficiência começa com informação.</p>
+      <p>© 2025 FactoryTrack</p>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/rbac.js"></script>
+<script src="../js/navigation.js"></script>
+<script>
+let guindastesAtuais = [];
+let guindasteSelecionadoId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (!requireAuth()) return;
+    try { clearNextUrl && clearNextUrl(); } catch (e) {}
+
+    // Somente supervisor/gerente podem cadastrar, alugar ou devolver.
+    // Operador consegue ver a tela, mas os botões de ação ficam desativados.
+    const sess = getSessao();
+    if (sess && sess.cargo === 'operador') {
+        document.getElementById('painelCadastroGuindaste').style.display = 'none';
+    }
+
+    renderGuindastes();
+    renderHistorico();
+});
+
+function podeGerenciar() {
+    const sess = getSessao();
+    return sess && (sess.cargo === 'gerente' || sess.cargo === 'chefe_geral');
+}
+
+function formatDataCurta(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('pt-BR');
+}
+
+// BUSCAR guindastes do banco e renderizar
+async function renderGuindastes() {
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/guindastes`);
+        guindastesAtuais = await resposta.json();
+    } catch (erro) {
+        console.error('Erro ao buscar guindastes do servidor:', erro);
+        return;
+    }
+
+    // Também busca os aluguéis ativos para mostrar cliente/data na tela
+    let alugueisAtivos = [];
+    try {
+        const respAlug = await fetch(`${API_BASE_URL}/alugueis`);
+        const todos = await respAlug.json();
+        alugueisAtivos = todos.filter(a => a.status === 'Ativo');
+    } catch (erro) {
+        console.error('Erro ao buscar aluguéis do servidor:', erro);
+    }
+
+    // Atualiza o filtro de modelos dinamicamente
+    const selModelo = document.getElementById('filterModelo');
+    const modeloAtual = selModelo.value;
+    const modelosUnicos = [...new Set(guindastesAtuais.map(g => g.modelo))];
+    selModelo.innerHTML = '<option value="">Todos os Modelos</option>' +
+        modelosUnicos.map(m => `<option value="${m}">${m}</option>`).join('');
+    selModelo.value = modeloAtual;
+
+    let lista = [...guindastesAtuais];
+    const fModelo = document.getElementById('filterModelo').value;
+    const fStatus = document.getElementById('filterStatus').value;
+    if (fModelo) lista = lista.filter(g => g.modelo === fModelo);
+    if (fStatus) lista = lista.filter(g => g.status === fStatus);
+
+    const grid = document.getElementById('guindastesGrid');
+
+    if (!lista.length) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-truck-pickup"></i><p>Nenhum guindaste encontrado.</p></div>`;
+        return;
+    }
+
+    const gerenciar = podeGerenciar();
+
+    grid.innerHTML = lista.map(g => {
+        const disponivel = g.status === 'Disponível';
+        const aluguel = alugueisAtivos.find(a => a.guindasteId === g.id);
+
+        const bodyHtml = disponivel
+            ? `<p class="sem-aluguel">Nenhum aluguel ativo no momento.</p>`
+            : aluguel
+                ? `<div class="aluguel-info">
+                     <p><strong>Cliente:</strong> ${aluguel.cliente}</p>
+                     <p><strong>Saiu em:</strong> ${formatDataCurta(aluguel.dataLocacao)}</p>
+                     <p><strong>Devolução prevista:</strong> ${formatDataCurta(aluguel.dataPrevistaDevolucao)}</p>
+                   </div>`
+                : `<p class="sem-aluguel">Marcado como alugado, sem registro de aluguel encontrado.</p>`;
+
+        const footerHtml = gerenciar
+            ? (disponivel
+                ? `<button class="btn btn-primary btn-sm" onclick="abrirModalAlugar(${g.id})"><i class="fas fa-truck-pickup"></i> Alugar</button>
+                   <button class="btn-del" onclick="deleteGuindaste(${g.id})"><i class="fas fa-trash"></i></button>`
+                : `<button class="btn btn-success btn-sm" onclick="devolverGuindaste(${aluguel ? aluguel.id : ''})"><i class="fas fa-check"></i> Marcar como Devolvido</button>`)
+            : '';
+
+        return `
+        <div class="guindaste-card">
+            <div class="guindaste-card-header">
+                <div><h3>${g.modelo}</h3><p>${g.identificacao || 'Sem identificação'}</p></div>
+                <span class="badge ${disponivel ? 'badge-success' : 'badge-danger'}">${g.status}</span>
+            </div>
+            <div class="guindaste-card-body">${bodyHtml}</div>
+            <div class="guindaste-card-footer">${footerHtml}</div>
+        </div>`;
+    }).join('');
+}
+
+// HISTÓRICO
+async function renderHistorico() {
+    let alugueis = [];
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/alugueis`);
+        alugueis = await resposta.json();
+    } catch (erro) {
+        console.error('Erro ao buscar histórico de aluguéis:', erro);
+        return;
+    }
+
+    const tbody = document.getElementById('historicoBody');
+    if (!alugueis.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Nenhum aluguel registrado ainda.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = alugueis.map(a => {
+        const nomeGuindaste = a.guindaste ? `${a.guindaste.modelo} (${a.guindaste.identificacao || 's/ id'})` : '—';
+        const statusBadge = a.status === 'Ativo'
+            ? '<span class="badge badge-warning">Ativo</span>'
+            : '<span class="badge badge-success">Concluído</span>';
+        return `
+        <tr>
+            <td>${nomeGuindaste}</td>
+            <td>${a.cliente}</td>
+            <td>${formatDataCurta(a.dataLocacao)}</td>
+            <td>${formatDataCurta(a.dataPrevistaDevolucao)}</td>
+            <td>${a.dataDevolucaoReal ? formatDataCurta(a.dataDevolucaoReal) : '-'}</td>
+            <td>${statusBadge}</td>
+        </tr>`;
+    }).join('');
+}
+
+// CADASTRAR NOVO GUINDASTE
+async function addGuindaste() {
+    const modelo = document.getElementById('guindasteModelo').value.trim();
+    const identificacao = document.getElementById('guindasteIdentificacao').value.trim();
+
+    if (!modelo) { alert('Informe o modelo do guindaste.'); return; }
+
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/cadastrar-guindaste`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ modelo, identificacao })
+        });
+
+        if (resposta.status === 201) {
+            document.getElementById('guindasteModelo').value = '';
+            document.getElementById('guindasteIdentificacao').value = '';
+            renderGuindastes();
+        } else {
+            alert('Erro ao cadastrar guindaste.');
+        }
+    } catch (erro) {
+        console.error(erro);
+        alert('Erro de conexão com o servidor.');
+    }
+}
+
+// MODAL DE ALUGUEL
+function abrirModalAlugar(id) {
+    guindasteSelecionadoId = id;
+    const g = guindastesAtuais.find(x => x.id === id);
+    document.getElementById('modalAlugarGuindasteInfo').textContent = g
+        ? `Guindaste: ${g.modelo} (${g.identificacao || 's/ identificação'})`
+        : '';
+    document.getElementById('aluguelCliente').value = '';
+    document.getElementById('aluguelDataDevolucao').value = '';
+    document.getElementById('erroAlugar').style.display = 'none';
+    document.getElementById('modalAlugar').classList.add('open');
+}
+
+async function confirmarAluguel() {
+    const cliente = document.getElementById('aluguelCliente').value.trim();
+    const dataDevolucao = document.getElementById('aluguelDataDevolucao').value;
+    const erroEl = document.getElementById('erroAlugar');
+
+    if (!cliente || !dataDevolucao) {
+        erroEl.textContent = 'Preencha o cliente e a data prevista de devolução.';
+        erroEl.style.display = 'block';
+        return;
+    }
+
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/alugar-guindaste`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                guindasteId: guindasteSelecionadoId,
+                cliente,
+                dataPrevistaDevolucao: dataDevolucao
+            })
+        });
+
+        if (resposta.status === 201) {
+            document.getElementById('modalAlugar').classList.remove('open');
+            renderGuindastes();
+            renderHistorico();
+        } else {
+            const erro = await resposta.json();
+            erroEl.textContent = erro.erro || 'Erro ao registrar aluguel.';
+            erroEl.style.display = 'block';
+        }
+    } catch (erro) {
+        erroEl.textContent = 'Erro de conexão com o servidor.';
+        erroEl.style.display = 'block';
+    }
+}
+
+// DEVOLVER GUINDASTE
+async function devolverGuindaste(aluguelId) {
+    if (!aluguelId) { alert('Não foi possível localizar o registro de aluguel deste guindaste.'); return; }
+    if (!confirm('Confirmar a devolução deste guindaste?')) return;
+
+    try {
+        await fetch(`${API_BASE_URL}/devolver-aluguel/${aluguelId}`, { method: 'PUT' });
+        renderGuindastes();
+        renderHistorico();
+    } catch (erro) {
+        alert('Erro ao registrar devolução no servidor.');
+    }
+}
+
+// DELETAR GUINDASTE
+async function deleteGuindaste(id) {
+    if (!confirm('Excluir este guindaste do cadastro?')) return;
+
+    try {
+        await fetch(`${API_BASE_URL}/deletar-guindaste/${id}`, { method: 'DELETE' });
+        renderGuindastes();
+    } catch (erro) {
+        alert('Erro ao deletar guindaste no servidor.');
+    }
+}
+</script>
+</body>
+</html>
