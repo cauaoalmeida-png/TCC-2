@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd Back-end && npm install",
+  "buildCommand": "cd Back-end && npm run db:setup && cd .. && rm -rf public && mkdir public && cp -r index.html apresentacao.html css js pages public/",
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "Back-end/node_modules/.prisma/client/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ]
+}

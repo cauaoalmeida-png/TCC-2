@@ -9,7 +9,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "seed": "node prisma/seed.js",
+    "db:setup": "prisma db push && node prisma/seed.js"
   },
   "keywords": [],
   "author": "",
