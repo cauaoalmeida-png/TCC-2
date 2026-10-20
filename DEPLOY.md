@@ -3,6 +3,10 @@
 Com isso o sistema fica num link público (ex.: `https://factory-track.vercel.app`),
 sem XAMPP e sem `npm start`. Tudo no plano gratuito, sem cartão.
 
+- `https://SEU-LINK.vercel.app/` abre a apresentação (landing).
+- `https://SEU-LINK.vercel.app/sistema` abre o login do sistema. Ao sair, ou
+  quando a sessão expira, o sistema volta para `/sistema`.
+
 - **Vercel**: hospeda o site (`index.html`, `css/`, `js/`, `pages/`) e roda a API
   Express como função (`api/index.js`). A cada push na `main` ela publica de novo.
 - **TiDB Cloud (plano Starter)**: banco compatível com MySQL na nuvem. O Prisma
@@ -55,7 +59,7 @@ exemplo só se as tabelas estiverem vazias (`prisma/seed.js`). Não precisa roda
 
 ## 3. Primeiro acesso
 
-1. Abra o link e entre com o `INITIAL_ADMIN_USERNAME` e a senha.
+1. Abra `SEU-LINK.vercel.app/sistema` e entre com o `INITIAL_ADMIN_USERNAME` e a senha.
 2. Em **Cadastros**, crie as contas da equipe.
 3. Depois que a conta de chefe existir, as variáveis `INITIAL_ADMIN_*` podem ser
    apagadas na Vercel (Settings → Environment Variables). Elas só são usadas

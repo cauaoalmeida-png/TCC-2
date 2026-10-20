@@ -69,7 +69,7 @@ window.fetch = function(input, init = {}) {
   return fetchFactoryTrack(input, { ...init, headers }).then(resposta => {
     if (resposta.status === 401 && !url.endsWith('/login')) {
       clearSessao();
-      window.location.href = window.location.pathname.includes('/pages/') ? '../index.html' : 'index.html';
+      window.location.href = LOGIN_URL;
     }
     return resposta;
   });

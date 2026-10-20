@@ -20,7 +20,7 @@ function goBackOrLogin() {
   // Quando não estiver logado, sempre força login preservando a página destino.
   // Isso evita frustração (principal/páginas protegidas abrindo e depois não voltando).
   setNextUrl();
-  window.location.href = '../index.html';
+  window.location.href = LOGIN_URL;
 }
 
 function requireAuth() {

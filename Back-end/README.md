@@ -83,8 +83,8 @@ Essa divisão não altera a configuração do banco: o schema continua em
     conectado ao banco de dados
     Servidor rodando em http://localhost:3000
    ```
-   Abra `http://localhost:3000` para ver o login do sistema. A página de
-   apresentação do projeto fica separada em `/apresentacao.html`.
+   Abra `http://localhost:3000/sistema` para ver o login do sistema. A raiz
+   `http://localhost:3000` abre a página de apresentação do projeto.
    O servidor fornece o site e a API no mesmo endereço; não é necessário
    iniciar o Live Server.
 

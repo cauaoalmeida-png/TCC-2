@@ -60,14 +60,12 @@ app.get('/api/health', (req, res) => {
 });
 
 const frontendRoot = path.resolve(__dirname, '..', '..');
-app.get('/', (req, res) => {
-    res.sendFile(path.join(frontendRoot, 'index.html'));
-});
-app.get('/index.html', (req, res) => {
-    res.sendFile(path.join(frontendRoot, 'index.html'));
-});
-app.get('/apresentacao.html', (req, res) => {
+// A raiz abre a apresentação; o login do sistema fica em /sistema.
+app.get(['/', '/apresentacao.html'], (req, res) => {
     res.sendFile(path.join(frontendRoot, 'apresentacao.html'));
+});
+app.get(['/sistema', '/index.html'], (req, res) => {
+    res.sendFile(path.join(frontendRoot, 'index.html'));
 });
 app.use('/css', express.static(path.join(frontendRoot, 'css'), { index: false }));
 app.use('/js', express.static(path.join(frontendRoot, 'js'), { index: false }));

@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd Back-end && npm install",
-  "buildCommand": "cd Back-end && npm run db:setup && cd .. && rm -rf public && mkdir public && cp -r index.html apresentacao.html css js pages public/",
+  "buildCommand": "cd Back-end && npm run db:setup && cd .. && rm -rf public && mkdir public && cp -r apresentacao.html css js pages public/ && cp index.html public/sistema.html && cp apresentacao.html public/index.html",
   "outputDirectory": "public",
   "functions": {
     "api/index.js": {
@@ -9,6 +9,10 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/sistema",
+      "destination": "/sistema.html"
+    },
     {
       "source": "/(.*)",
       "destination": "/api"
