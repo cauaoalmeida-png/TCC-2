@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111310" />
+  <meta name="description" content="FactoryTrack: um projeto de sistema web para organizar ocorrências, manutenção e recursos no chão de fábrica." />
+  <title>FactoryTrack — Clareza para a operação industrial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/footer.css" />
+  <link rel="stylesheet" href="css/landing.css" />
+</head>
+<body class="landing-page" id="top">
+  <header class="header">
+    <div class="container">
+      <div class="logo">
+        <a href="apresentacao.html" aria-label="FactoryTrack, início">
+          <i class="fa-solid fa-industry" aria-hidden="true"></i>
+          <span>FactoryTrack</span>
+        </a>
+      </div>
+      <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav" id="mainNav" aria-label="Navegação principal">
+        <ul class="nav-list">
+          <li><a href="#desafio" class="nav-link">O desafio</a></li>
+          <li><a href="#proposta" class="nav-link">A proposta</a></li>
+          <li><a href="#modulos" class="nav-link">Módulos</a></li>
+          <li><a href="#equipe" class="nav-link">Equipe</a></li>
+          <li><a href="#contato" class="nav-link">Fale com a equipe</a></li>
+          <li><a href="index.html" class="nav-link nav-access">Acessar o sistema <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <img
+        class="hero-image"
+        src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=2200&amp;q=85"
+        alt="Profissional acompanhando equipamentos em um ambiente industrial"
+        fetchpriority="high"
+      />
+      <div class="hero-shade"></div>
+      <div class="hero-content">
+        <p class="eyebrow hero-eyebrow"><span></span> Projeto de gestão industrial · TCC 2026</p>
+        <h1 id="hero-title">A operação<br />em <em>movimento.</em></h1>
+        <div class="hero-bottom">
+          <p class="hero-copy">Mais clareza para o que acontece no chão de fábrica. Ocorrências, manutenção e recursos reunidos em uma experiência digital.</p>
+          <a class="round-link" href="#desafio" aria-label="Conheça o projeto">
+            <span>Conheça<br />o projeto</span>
+            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+          </a>
+        </div>
+        <p class="hero-side-note">FactoryTrack <span>—</span> Informação que conecta pessoas e processos.</p>
+      </div>
+      <div class="hero-index" aria-hidden="true">01 <span>/ 04</span></div>
+    </section>
+
+    <div class="ticker" aria-label="Módulos do FactoryTrack">
+      <div class="ticker-track" aria-hidden="true">
+        <span>Ocorrências</span><i class="fa-solid fa-asterisk" aria-hidden="true"></i>
+        <span>Manutenção</span><i class="fa-solid fa-asterisk" aria-hidden="true"></i>
+        <span>Estoque</span><i class="fa-solid fa-asterisk" aria-hidden="true"></i>
+        <span>Ativos</span><i class="fa-solid fa-asterisk" aria-hidden="true"></i>
+        <span>Histórico</span><i class="fa-solid fa-asterisk" aria-hidden="true"></i>
+        <span>Ocorrências</span><i class="fa-solid fa-asterisk" aria-hidden="true"></i>
+        <span>Manutenção</span><i class="fa-solid fa-asterisk" aria-hidden="true"></i>
+        <span>Estoque</span><i class="fa-solid fa-asterisk" aria-hidden="true"></i>
+        <span>Ativos</span><i class="fa-solid fa-asterisk" aria-hidden="true"></i>
+        <span>Histórico</span><i class="fa-solid fa-asterisk" aria-hidden="true"></i>
+      </div>
+    </div>
+
+    <section class="challenge section-pad" id="desafio" aria-labelledby="challenge-title">
+      <div class="section-shell">
+        <div class="section-kicker reveal"><span>01</span> O contexto</div>
+        <div class="challenge-layout">
+          <h2 class="display-title reveal" id="challenge-title">Quando a informação se perde, <em>a operação sente.</em></h2>
+          <div class="challenge-copy reveal">
+            <p>Em uma rotina industrial, cada parada, peça e decisão importa. Mas registros em papel, estoque difícil de rastrear e comunicação que demora podem deixar informações importantes fora do alcance de quem precisa agir.</p>
+            <p>O FactoryTrack nasceu como uma proposta para organizar esse fluxo e aproximar as pessoas envolvidas na operação.</p>
+          </div>
+        </div>
+        <div class="challenge-lines">
+          <article class="challenge-line reveal">
+            <span>01</span><h3>Informação dispersa</h3><p>Registros manuais podem se perder e dificultar a consulta do histórico.</p>
+            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+          </article>
+          <article class="challenge-line reveal">
+            <span>02</span><h3>Estoque sem contexto</h3><p>Sem visibilidade das quantidades, fica mais difícil perceber itens críticos.</p>
+            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+          </article>
+          <article class="challenge-line reveal">
+            <span>03</span><h3>Comunicação fragmentada</h3><p>Uma ocorrência precisa chegar às pessoas certas com as informações necessárias.</p>
+            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="proposal" id="proposta" aria-labelledby="proposal-title">
+      <div class="proposal-image-wrap">
+        <img
+          src="https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&amp;fit=crop&amp;w=1500&amp;q=85"
+          alt="Detalhe de uma equipe trabalhando junto a equipamentos industriais"
+          loading="lazy"
+          data-parallax
+        />
+        <span class="image-caption">Pessoas, processos e informação.</span>
+      </div>
+      <div class="proposal-content">
+        <div class="section-kicker reveal"><span>02</span> A proposta</div>
+        <h2 class="display-title reveal" id="proposal-title">Um lugar para <em>entender o todo.</em></h2>
+        <p class="proposal-copy reveal">Uma plataforma web que conecta registros de ocorrências, setores, máquinas e recursos. Cada pessoa acessa com sua própria conta e acompanha as informações de acordo com seu perfil.</p>
+        <a class="text-link reveal" href="#fluxo">Veja como funciona <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+        <div class="proposal-note reveal"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>O painel apresenta status calculados a partir das ocorrências registradas no sistema.</span></div>
+      </div>
+    </section>
+
+    <section class="workflow section-pad" id="fluxo" aria-labelledby="workflow-title">
+      <div class="section-shell">
+        <div class="section-kicker reveal"><span>03</span> Como funciona</div>
+        <div class="workflow-heading">
+          <h2 class="display-title reveal" id="workflow-title">Do registro à <em>ação.</em></h2>
+          <p class="reveal">Um fluxo direto para organizar o acompanhamento da rotina industrial.</p>
+        </div>
+        <div class="workflow-steps">
+          <article class="workflow-step reveal">
+            <span class="step-number">01</span><span class="step-icon"><i class="fa-solid fa-sitemap" aria-hidden="true"></i></span>
+            <h3>Estruture</h3><p>Cadastre setores, máquinas, peças e contas individuais para a equipe.</p>
+          </article>
+          <article class="workflow-step reveal">
+            <span class="step-number">02</span><span class="step-icon"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i></span>
+            <h3>Registre</h3><p>Documente ocorrências e checklists com contexto, turno e responsável.</p>
+          </article>
+          <article class="workflow-step reveal">
+            <span class="step-number">03</span><span class="step-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span>
+            <h3>Acompanhe</h3><p>Consulte o painel, o histórico e os recursos para apoiar as decisões da equipe.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="modules section-pad" id="modulos" aria-labelledby="modules-title">
+      <div class="section-shell">
+        <div class="section-kicker reveal"><span>04</span> Dentro da plataforma</div>
+        <div class="modules-heading">
+          <h2 class="display-title reveal" id="modules-title">Cada detalhe<br />tem seu <em>lugar.</em></h2>
+          <p class="reveal">Módulos conectados para dar estrutura aos registros e recursos da operação.</p>
+        </div>
+        <div class="module-list">
+          <article class="module-row reveal">
+            <span class="module-index">01</span><div><h3>Painel de status</h3><p>Visualize máquinas por setor e consulte o status calculado com base nas ocorrências cadastradas.</p></div><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+          </article>
+          <article class="module-row reveal">
+            <span class="module-index">02</span><div><h3>Ocorrências &amp; histórico</h3><p>Registre problemas, acompanhe pendências e documente as resoluções.</p></div><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+          </article>
+          <article class="module-row reveal">
+            <span class="module-index">03</span><div><h3>Checklist de manutenção</h3><p>Organize inspeções por categoria e sinalize itens conforme sua gravidade.</p></div><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+          </article>
+          <article class="module-row reveal">
+            <span class="module-index">04</span><div><h3>Estoque &amp; recursos</h3><p>Acompanhe quantidades de peças, níveis mínimos e a gestão de guindastes e aluguéis.</p></div><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+          </article>
+          <article class="module-row reveal">
+            <span class="module-index">05</span><div><h3>Cadastros &amp; relatórios</h3><p>Administre setores, máquinas e usuários; exporte informações selecionadas para Excel.</p></div><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="roles" aria-labelledby="roles-title">
+      <div class="roles-photo">
+        <img
+          src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&amp;fit=crop&amp;w=1800&amp;q=85"
+          alt="Trabalhadora analisando informações em um ambiente técnico"
+          loading="lazy"
+          data-parallax
+        />
+        <div class="roles-overlay"></div>
+        <div class="roles-content">
+          <div class="section-kicker reveal"><span>05</span> Feito para trabalhar em equipe</div>
+          <h2 class="display-title reveal" id="roles-title">Cada perfil,<br /><em>uma perspectiva.</em></h2>
+          <div class="role-list reveal">
+            <div><span>01</span><p><strong>Operador</strong>Registra ocorrências e consulta informações da operação.</p></div>
+            <div><span>02</span><p><strong>Gerente</strong>Acompanha registros e acessa ferramentas de supervisão.</p></div>
+            <div><span>03</span><p><strong>Chefe Geral</strong>Gerencia as contas e os cargos da equipe.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="project section-pad" id="equipe" aria-labelledby="team-title">
+      <div class="section-shell">
+        <div class="section-kicker reveal"><span>06</span> O projeto</div>
+        <div class="project-layout">
+          <div class="project-intro">
+            <h2 class="display-title reveal" id="team-title">Tecnologia com propósito.<br /><em>Feita em equipe.</em></h2>
+            <p class="reveal">O FactoryTrack é um Trabalho de Conclusão de Curso desenvolvido por estudantes do curso técnico em Informática para Internet. A proposta foi pensada para o contexto da Guindaste Brasil.</p>
+          </div>
+          <div class="project-details reveal">
+            <div><span>Construído com</span><p>HTML · CSS · JavaScript<br />Node.js · Express · Prisma · MySQL</p></div>
+            <div><span>Etapas do trabalho</span><p>Pesquisa e objetivo<br />Identidade visual e protótipo<br />Desenvolvimento e testes</p></div>
+          </div>
+        </div>
+        <div class="team">
+          <div class="team-label reveal">A equipe <span>· 2026</span></div>
+          <div class="team-names">
+            <p class="reveal">Hugo Harley <span>da Paixão Santos</span></p>
+            <p class="reveal">Gabriel Melo <span>Aragão</span></p>
+            <p class="reveal">Cauã Oliveira <span>de Almeida</span></p>
+            <p class="reveal">João Maurício <span>Barbosa dos Santos</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing" id="contato" aria-labelledby="contact-title">
+      <div class="closing-image" aria-hidden="true" data-parallax></div>
+      <div class="closing-content reveal">
+        <p class="eyebrow"><span></span> Vamos conversar</p>
+        <h2 id="contact-title">Quer conhecer o FactoryTrack <em>na prática?</em></h2>
+        <p class="closing-copy">Entre em contato com a equipe para tirar dúvidas e agendar uma apresentação acompanhada do sistema.</p>
+        <div class="closing-actions">
+          <a
+            class="closing-cta"
+            href="https://wa.me/5571984257073?text=Ol%C3%A1%2C%20tenho%20interesse%20em%20conhecer%20o%20FactoryTrack%20e%20gostaria%20de%20agendar%20uma%20apresenta%C3%A7%C3%A3o."
+            target="_blank"
+            rel="noopener noreferrer"
+          >Fale pelo WhatsApp <i class="fa-brands fa-whatsapp" aria-hidden="true"></i></a>
+          <a class="closing-cta closing-cta-secondary" href="mailto:contato@factory-track.com.br?subject=Apresenta%C3%A7%C3%A3o%20do%20FactoryTrack">contato@factory-track.com.br <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+        </div>
+      </div>
+      <span class="closing-wordmark" aria-hidden="true">FT.</span>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <a class="footer-brand" href="apresentacao.html"><i class="fa-solid fa-industry" aria-hidden="true"></i> FactoryTrack</a>
+      <p>Um projeto de TCC · Informática para Internet · 2026</p>
+      <a class="footer-top" href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false">Voltar ao topo <i class="fa-solid fa-arrow-up" aria-hidden="true"></i></a>
+    </div>
+  </footer>
+
+  <script src="js/navigation.js"></script>
+  <script src="js/landing.js"></script>
+</body>
+</html>

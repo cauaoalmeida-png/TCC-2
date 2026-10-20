@@ -26,15 +26,15 @@
       justify-content: space-between;
       align-items: flex-start;
     }
-    .painel-card-top h3 { font-size: 1.05rem; color: var(--text); margin-bottom: 0.2rem; }
-    .painel-card-top p { font-size: 0.85rem; color: var(--text-muted); }
+    .painel-card-top h3 { font-size: 1.2rem; color: var(--text); margin-bottom: 0.2rem; }
+    .painel-card-top p { font-size: 0.92rem; color: var(--text-muted); }
     .painel-card-status {
       padding: 0.8rem 1.5rem;
       border-top: 1px solid var(--border);
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 600;
     }
     .painel-card-status.green { color: #16a34a; background: #f0fdf4; }
@@ -54,12 +54,44 @@
     }
     .setor-title h2 {
       font-family: 'Rajdhani', sans-serif;
-      font-size: 1.2rem;
+      font-size: 1.45rem;
       color: var(--primary);
       border-left: 4px solid var(--accent);
       padding-left: 0.7rem;
     }
-    .last-update { font-size: 0.78rem; color: var(--text-muted); }
+    .setor-resp { margin-left: 0.6rem; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500; }
+    .status-icon { font-size: 1.9rem; }
+    .status-icon.green { color: var(--success); }
+    .status-icon.yellow { color: var(--warning); }
+    .status-icon.red { color: var(--danger); }
+
+    /* Resumo por status (também funciona como filtro) */
+    .status-summary { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.5rem; }
+    .status-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1.2rem;
+      border: 2px solid transparent;
+      border-radius: var(--radius);
+      background: white;
+      box-shadow: var(--shadow);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .status-chip:hover { transform: translateY(-2px); }
+    .status-chip strong { font-family: 'Rajdhani', sans-serif; font-size: 1.6rem; line-height: 1; }
+    .status-chip.green strong { color: #16a34a; }
+    .status-chip.yellow strong { color: #ca8a04; }
+    .status-chip.red strong { color: #dc2626; }
+    .status-chip.active.green { border-color: var(--success); }
+    .status-chip.active.yellow { border-color: var(--warning); }
+    .status-chip.active.red { border-color: var(--danger); }
+    .last-update { font-size: 0.85rem; color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -67,13 +99,13 @@
 <header class="header">
   <div class="container">
     <div class="logo">
-      <a href="../index.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
+      <a href="Inicio.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
     </div>
     <nav class="nav">
       <ul class="nav-list">
-        <li><a href="../index.html" class="nav-link">Início</a></li>
-        <li><a href="painel.html" class="nav-link active">Painel de Status</a></li>
-        <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrencia</a></li>
+        <li><a href="Inicio.html" class="nav-link">Início</a></li>
+        <li><a href="painel.html" class="nav-link active" aria-current="page">Painel de Status</a></li>
+        <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrência</a></li>
         <li><a href="checklist.html" class="nav-link">Checklist</a></li>
         <li><a href="historico.html" class="nav-link">Histórico</a></li>
         <li><a href="estoque.html" class="nav-link">Estoque</a></li>
@@ -81,7 +113,7 @@
         <li><a href="cadastros.html" class="nav-link">Cadastros</a></li>
       </ul>
     </nav>
-    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+    <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
 </header>
 
@@ -111,6 +143,8 @@
         </button>
       </div>
 
+      <div class="status-summary" id="statusSummary" aria-label="Resumo das máquinas por status"></div>
+
       <div class="grid-3" id="painelGrid"></div>
     </div>
   </div>
@@ -119,18 +153,24 @@
 <footer class="footer">
   <div class="container">
     <div class="footer-content">
+      <div class="footer-section footer-about">
+        <h4><i class="fas fa-industry"></i> FactoryTrack</h4>
+        <p>Ocorrências, manutenção e recursos da fábrica reunidos em um só lugar.</p>
+      </div>
       <div class="footer-section">
-        <h4>FactoryTrack</h4>
+        <h4>Operação</h4>
         <ul>
-          <li><a href="../index.html">Início</a></li>
+          <li><a href="Inicio.html">Início</a></li>
           <li><a href="painel.html">Painel de Status</a></li>
+          <li><a href="ocorrencia.html">Registrar Ocorrência</a></li>
+          <li><a href="historico.html">Histórico</a></li>
         </ul>
       </div>
       <div class="footer-section">
-        <h4>Funcionalidades</h4>
+        <h4>Gestão</h4>
         <ul>
           <li><a href="checklist.html">Checklist</a></li>
-          <li><a href="historico.html">Histórico</a></li>
+          <li><a href="estoque.html">Estoque</a></li>
           <li><a href="guindastes.html">Guindastes</a></li>
           <li><a href="cadastros.html">Cadastros</a></li>
         </ul>
@@ -138,7 +178,7 @@
     </div>
     <div class="footer-bottom">
       <p>FactoryTrack — Eficiência começa com informação.</p>
-      <p>© 2025 FactoryTrack</p>
+      <p>© 2026 FactoryTrack · Projeto de TCC</p>
     </div>
   </div>
 </footer>
@@ -148,124 +188,6 @@
 <script src="../js/auth.js"></script>
 <script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
-<script>
-  let setoresCache = [];
-  let maquinasCache = [];
-  let ocorrenciasCache = [];
-
-  document.addEventListener('DOMContentLoaded', () => {
-    if (!requireAuth()) return;
-    try { clearNextUrl && clearNextUrl(); } catch (e) {}
-    renderPainel();
-  });
-
-  // Recarrega quando o usuário volta para esta aba (ex: vindo de outra tela do sistema)
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') renderPainel();
-  });
-
-  async function carregarDadosPainel() {
-    const [resSetores, resMaquinas, resOcorrencias] = await Promise.all([
-      fetch(`${API_BASE_URL}/setores`),
-      fetch(`${API_BASE_URL}/maquinas`),
-      fetch(`${API_BASE_URL}/ocorrencias`)
-    ]);
-    setoresCache = await resSetores.json();
-    maquinasCache = await resMaquinas.json();
-    ocorrenciasCache = await resOcorrencias.json();
-  }
-
-  function getStatusMaquina(maquina) {
-    const pendentes = ocorrenciasCache.filter(o => o.maquina === maquina.nome_maquina && o.status === 'Pendente');
-    if (pendentes.length === 0) return { status: 'Funcionando', cor: 'green', icone: 'fa-check-circle' };
-    const tipos = pendentes.map(o => o.tipo);
-    if (tipos.includes('Parada de máquina')) return { status: 'Parado', cor: 'red', icone: 'fa-times-circle' };
-    return { status: 'Atenção', cor: 'yellow', icone: 'fa-exclamation-circle' };
-  }
-
-  function getUltimaOcorrencia(maquina) {
-    const todas = ocorrenciasCache.filter(o => o.maquina === maquina.nome_maquina);
-    if (!todas.length) return null;
-    return todas.slice().sort((a, b) => new Date(b.data) - new Date(a.data))[0];
-  }
-
-  async function renderPainel() {
-    try {
-      await carregarDadosPainel();
-    } catch (erro) {
-      console.error('Erro ao carregar dados do painel:', erro);
-      document.getElementById('painelGrid').innerHTML =
-        `<div class="empty-state"><i class="fas fa-plug-circle-xmark"></i><p>Não foi possível conectar ao servidor.</p></div>`;
-      return;
-    }
-
-    const filterSetor = document.getElementById('filterSetor').value;
-    const filterStatus = document.getElementById('filterStatus').value;
-
-    // Atualiza o filtro de Setores dinamicamente
-    const sel = document.getElementById('filterSetor');
-    const valorAtual = sel.value;
-    sel.innerHTML = '<option value="">Todos os Setores</option>';
-    setoresCache.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.nome_setor;
-      opt.textContent = s.nome_setor;
-      sel.appendChild(opt);
-    });
-    sel.value = valorAtual;
-
-    const grid = document.getElementById('painelGrid');
-    let html = '';
-
-    const setoresFiltrados = filterSetor ? setoresCache.filter(s => s.nome_setor === filterSetor) : setoresCache;
-
-    setoresFiltrados.forEach(setor => {
-      let maquinasSetor = maquinasCache.filter(m => m.setor_associado === setor.nome_setor);
-
-      if (filterStatus) {
-        maquinasSetor = maquinasSetor.filter(m => getStatusMaquina(m).status === filterStatus);
-      }
-
-      if (!maquinasSetor.length) return;
-
-      html += `<div class="setor-title"><h2><i class="fas fa-cogs"></i> ${setor.nome_setor} <span style="font-size:0.9rem; color:#64748b; font-weight:normal; margin-left:10px;">Resp: ${setor.responsavel}</span></h2></div>`;
-
-      maquinasSetor.forEach(maq => {
-        const st = getStatusMaquina(maq);
-        const ultima = getUltimaOcorrencia(maq);
-        html += `
-        <div class="painel-card">
-            <div class="painel-card-top">
-                <div>
-                    <h3>${maq.nome_maquina}</h3>
-                    <p>Série: ${maq.numero_serie || 'N/A'} | Setor: ${maq.setor_associado}</p>
-                    ${ultima ? `<p class="last-update">Última ocorrência: ${formatDate(ultima.data)}</p>` : `<p class="last-update">Sem ocorrências registradas</p>`}
-                </div>
-                <i class="fas ${st.icone}" style="font-size:1.8rem;color:${st.cor === 'green' ? '#22c55e' : st.cor === 'yellow' ? '#f59e0b' : '#ef4444'}"></i>
-            </div>
-            <div class="painel-card-status ${st.cor}">
-                <span class="status-dot ${st.cor}"></span>
-                ${st.status}
-            </div>
-            <div class="painel-card-footer">
-                <a href="ocorrencia.html?setor=${encodeURIComponent(maq.setor_associado)}&maquina=${encodeURIComponent(maq.nome_maquina)}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Registrar Ocorrência
-                </a>
-                <a href="historico.html?maquina=${encodeURIComponent(maq.nome_maquina)}" class="btn btn-sm" style="background:#f1f5f9;color:#475569">
-                    <i class="fas fa-history"></i> Histórico
-                </a>
-            </div>
-        </div>
-        `;
-      });
-    });
-
-    if (!html) {
-      html = `<div class="empty-state"><i class="fas fa-search"></i><p>Nenhum resultado para os filtros selecionados.</p></div>`;
-    }
-
-    grid.innerHTML = html;
-  }
-</script>
+<script src="../js/pages/painel.js"></script>
 </body>
 </html>

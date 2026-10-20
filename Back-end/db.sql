@@ -25,7 +25,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
   usuario VARCHAR(100),
   senha VARCHAR(255) NOT NULL,
   cargo VARCHAR(50),
-  tipo VARCHAR(50)
+  tipo VARCHAR(50),
+  ativo BOOLEAN NOT NULL DEFAULT TRUE,
+  UNIQUE KEY uq_usuarios_usuario (usuario)
 );
 
 -- ---------- MÁQUINAS ----------
@@ -40,6 +42,7 @@ CREATE TABLE IF NOT EXISTS maquinas (
 -- ---------- OCORRÊNCIAS (registro livre + checklists) ----------
 CREATE TABLE IF NOT EXISTS ocorrencias (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NULL,
   data DATETIME NOT NULL,
   setor VARCHAR(100) NOT NULL,
   maquina VARCHAR(100) NOT NULL,
@@ -50,7 +53,10 @@ CREATE TABLE IF NOT EXISTS ocorrencias (
   status VARCHAR(20) NOT NULL DEFAULT 'Pendente',
   resolucao TEXT,
   itensChecklist TEXT,          -- JSON serializado (itens marcados no checklist)
-  dataResolucao DATETIME NULL   -- preenchida quando a ocorrência é resolvida
+  dataResolucao DATETIME NULL,  -- preenchida quando a ocorrência é resolvida
+  CONSTRAINT fk_ocorrencia_usuario
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    ON DELETE SET NULL
 );
 
 -- ---------- ESTOQUE (peças) ----------
@@ -61,6 +67,27 @@ CREATE TABLE IF NOT EXISTS pecas (
   qtd INT NOT NULL DEFAULT 0,
   min INT NOT NULL DEFAULT 0,
   unidade VARCHAR(20)
+);
+
+-- ---------- GUINDASTES E ALUGUÉIS ----------
+CREATE TABLE IF NOT EXISTS guindastes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  modelo VARCHAR(100) NOT NULL,
+  identificacao VARCHAR(100),
+  status VARCHAR(30) NOT NULL DEFAULT 'Disponível'
+);
+
+CREATE TABLE IF NOT EXISTS alugueis (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  guindaste_id INT NOT NULL,
+  cliente VARCHAR(150) NOT NULL,
+  data_locacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  data_prevista_devolucao DATE NOT NULL,
+  data_devolucao_real DATE NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'Ativo',
+  CONSTRAINT fk_aluguel_guindaste
+    FOREIGN KEY (guindaste_id) REFERENCES guindastes(id)
+    ON DELETE RESTRICT
 );
 
 -- ============================================
@@ -88,8 +115,3 @@ INSERT INTO pecas (nome, categoria, qtd, min, unidade) VALUES
   ('Correia Esteira A', 'Peça de máquina', 3, 2, 'un'),
   ('Óleo Lubrificante', 'Insumo', 12, 5, 'l'),
   ('Filtro de Ar Compressor', 'Manutenção', 1, 2, 'un');
-
--- Usuário de exemplo para testar a rota /login
--- (senha em texto puro, só para fins de demonstração do TCC)
-INSERT INTO usuarios (nome, usuario, senha, cargo) VALUES
-  ('Administrador', 'admin', 'admin123', 'administrador');

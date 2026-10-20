@@ -25,7 +25,7 @@ function goBackOrLogin() {
 
 function requireAuth() {
   const sess = getSessao && getSessao();
-  if (!sess) {
+  if (!sess || !sess.token || !sess.usuario) {
     goBackOrLogin();
     return false;
   }
@@ -38,7 +38,7 @@ function requireRole(rolesAllowed) {
     goBackOrLogin();
     return false;
   }
-  const cargo = sess.cargo;
+  const cargo = sess.usuario.cargo;
   if (!rolesAllowed.includes(cargo)) {
     alert('Acesso negado: permissões insuficientes.');
     // Sem salvar next_url aqui: a pessoa está logada, apenas recebeu bloqueio por cargo.
@@ -63,6 +63,5 @@ function requireSupervisor() {
 
 function isOperator() {
   const sess = getSessao && getSessao();
-  return !!sess && sess.cargo === 'operador';
+  return !!sess && sess.usuario.cargo === 'operador';
 }
-

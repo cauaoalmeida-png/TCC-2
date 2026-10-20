@@ -23,12 +23,12 @@
         <span>FactoryTrack</span>
       </a>
     </div>
-    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
+    <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <nav class="nav" id="mainNav">
       <ul class="nav-list">
-        <li><a href="Inicio.html" class="nav-link active">início</a></li>
+        <li><a href="Inicio.html" class="nav-link active" aria-current="page">Início</a></li>
         <li><a href="painel.html" class="nav-link">Painel de Status</a></li>
-        <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrencia</a></li>
+        <li><a href="ocorrencia.html" class="nav-link">Registrar Ocorrência</a></li>
         <li><a href="checklist.html" class="nav-link">Checklist</a></li>
         <li><a href="historico.html" class="nav-link">Histórico</a></li>
         <li><a href="estoque.html" class="nav-link">Estoque</a></li>
@@ -88,6 +88,36 @@
     </div>
   </section>
 
+  <!-- PAINEL PESSOAL (saudação, atalhos do cargo e pendências) -->
+  <section class="dash">
+    <div class="container">
+      <div class="dash-head">
+        <div>
+          <p class="dash-date" id="dashData"></p>
+          <h2 id="dashSaudacao">Olá!</h2>
+        </div>
+        <span class="dash-cargo" id="dashCargo"></span>
+      </div>
+      <div class="dash-grid">
+        <div>
+          <div class="dash-subtitle-row">
+            <h3 class="dash-subtitle">O que você quer fazer?</h3>
+          </div>
+          <div class="atalhos" id="atalhos"></div>
+        </div>
+        <aside aria-labelledby="pendenciasTitulo">
+          <div class="dash-subtitle-row">
+            <h3 class="dash-subtitle" id="pendenciasTitulo"><i class="fas fa-clock"></i> Pendências recentes</h3>
+            <a href="historico.html?status=Pendente" class="dash-link">Ver todas <i class="fas fa-arrow-right"></i></a>
+          </div>
+          <ul class="pendencias pendencias-list" id="pendenciasList">
+            <li class="pendencias-vazio">Carregando…</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+  </section>
+
   <!-- COMO FUNCIONA -->
   <section class="how">
     <div class="container">
@@ -124,7 +154,7 @@
         <a href="painel.html" class="btn btn-primary btn-large">
           <i class="fas fa-gauge-high"></i> Acessar Painel
         </a>
-        <a href="cadastros.html" class="btn btn-outline btn-large" style="border-color:white;color:white;">
+        <a href="cadastros.html" class="btn btn-outline-light btn-large">
           <i class="fas fa-gear"></i> Configurar
         </a>
       </div>
@@ -136,34 +166,39 @@
 <footer class="footer">
   <div class="container">
     <div class="footer-content">
+      <div class="footer-section footer-about">
+        <h4><i class="fas fa-industry"></i> FactoryTrack</h4>
+        <p>Ocorrências, manutenção e recursos da fábrica reunidos em um só lugar.</p>
+      </div>
       <div class="footer-section">
-        <h4>FactoryTrack</h4>
+        <h4>Operação</h4>
         <ul>
           <li><a href="Inicio.html">Início</a></li>
           <li><a href="painel.html">Painel de Status</a></li>
+          <li><a href="ocorrencia.html">Registrar Ocorrência</a></li>
+          <li><a href="historico.html">Histórico</a></li>
         </ul>
       </div>
       <div class="footer-section">
-        <h4>Módulos</h4>
+        <h4>Gestão</h4>
         <ul>
-          <li><a href="ocorrencia.html">Ocorrências</a></li>
-          <li><a href="historico.html">Histórico</a></li>
-          <li><a href="cadastros.html">Cadastros</a></li>
+          <li><a href="checklist.html">Checklist</a></li>
           <li><a href="estoque.html">Estoque</a></li>
           <li><a href="guindastes.html">Guindastes</a></li>
-          <li><a href="painel.html">Painel de Status</a></li>
-          <li><a href="checklist.html">Checklist</a></li>
+          <li><a href="cadastros.html">Cadastros</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
       <p>FactoryTrack — Eficiência começa com informação.</p>
-      <p>© 2025 FactoryTrack</p>
+      <p>© 2026 FactoryTrack · Projeto de TCC</p>
     </div>
   </div>
 </footer>
 
 <script src="../js/config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
 <script src="../js/home.js"></script>
 </body>

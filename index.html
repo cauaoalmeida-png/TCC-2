@@ -20,7 +20,6 @@
     <div class="logo">
       <a href="pages/Inicio.html"><i class="fas fa-industry"></i><span>FactoryTrack</span></a>
     </div>
-    <button class="menu-toggle" id="menuToggle"><span></span><span></span><span></span></button>
   </div>
 </header>
 
@@ -30,27 +29,27 @@
   <div class="login-container"> <!-- Novo container para centralização total -->
     <div class="login-card">
       <h1><i class="fas fa-lock"></i> Login</h1>
-      <p>Acesse o FactoryTrack com seu usuário e senha.</p>
+      <p>Acesse o FactoryTrack com seu e-mail corporativo e senha.</p>
 
       <form id="form-login">
         <div class="form-group">
-          <label for="nomeInput">Nome</label>
-          <div class="input-icon-wrapper"> <!-- Novo wrapper para ícone + input -->
-            <i class="fas fa-user"></i> <!-- Ícone de Usuário -->
-            <input id="nomeInput" type="text" placeholder="Seu nome" required />
+          <label for="nomeInput">E-mail corporativo</label>
+          <div class="input-icon-wrapper">
+            <i class="fas fa-user"></i>
+            <input id="nomeInput" type="email" placeholder="seu.email@empresa.com" autocomplete="username" required />
           </div>
         </div>
         
         <div class="form-group">
           <label for="senhaInput">Senha</label>
-          <div class="input-icon-wrapper"> <!-- Novo wrapper para ícone + input -->
-            <i class="fas fa-key"></i> <!-- Ícone de Chave/Senha -->
-            <input id="senhaInput" type="password" placeholder="Sua senha" required />
+          <div class="input-icon-wrapper">
+            <i class="fas fa-key"></i>
+            <input id="senhaInput" type="password" placeholder="Sua senha" autocomplete="current-password" required />
           </div>
         </div>
 
         <div class="login-actions">
-          <button type="button" class="btn btn-primary" onclick="fazerLogin()">
+          <button type="submit" class="btn btn-primary">
             <i class="fas fa-right-to-bracket"></i> Entrar
           </button>
         </div>
@@ -68,13 +67,13 @@
       <div class="footer-section">
         <h4>FactoryTrack</h4>
         <ul>
-          <li><a href="pages/Inicio.html">Início</a></li>
+          <li><a href="apresentacao.html">Conheça o projeto</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
       <p>FactoryTrack — Eficiência começa com informação.</p>
-      <p>© 2025 FactoryTrack</p>
+      <p>© 2026 FactoryTrack · Projeto de TCC</p>
     </div>
   </div>
 </footer>
@@ -92,7 +91,7 @@
     el.style.display = 'block';
   }
 
-  function fazerLogin() {
+  async function fazerLogin() {
     const nome = document.getElementById('nomeInput').value.trim();
     const senha = document.getElementById('senhaInput').value;
     if (!nome || !senha) {
@@ -100,16 +99,14 @@
       return;
     }
 
-    // Tenta autenticar no localStorage
-    const res = loginUsuario(nome, senha);
+    const res = await loginUsuario(nome, senha);
     if (!res.ok) {
       setError(res.msg || 'Login inválido.');
       return;
     }
 
-    const sess = getSessao();
     document.getElementById('sessionInfo').style.display = 'block';
-    document.getElementById('sessionInfo').textContent = `Sessão ativa: ${sess.nome} (${cargoLabel(sess.cargo)})`;
+    document.getElementById('sessionInfo').textContent = `Sessão ativa: ${res.user.nome} (${cargoLabel(res.user.cargo)})`;
 
     let next = null;
     try { next = sessionStorage.getItem('ft_next_url'); } catch (e) {}
@@ -123,27 +120,19 @@
     redirecionar('pages/Inicio.html');
   }
 
-  // Garante que os usuários padrão existam na memória sem precisar do botão Demo
-  function garantirUsuariosDemo() {
-    if (!temUsuarios()) {
-      registrarUsuario('operador', '123', 'operador');
-      registrarUsuario('gerente', '123', 'gerente');
-      registrarUsuario('chefe', '123', 'chefe_geral');
-    }
-  }
+  document.getElementById('form-login').addEventListener('submit', event => {
+    event.preventDefault();
+    fazerLogin();
+  });
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Executa automaticamente ao abrir a página
-    garantirUsuariosDemo();
-
     const sess = getSessao();
     if (sess) {
       document.getElementById('sessionInfo').style.display = 'block';
-      document.getElementById('sessionInfo').textContent = `Sessão ativa: ${sess.nome} (${cargoLabel(sess.cargo)})`;
+      document.getElementById('sessionInfo').textContent = `Sessão ativa: ${sess.usuario.nome} (${cargoLabel(sess.usuario.cargo)})`;
       redirecionar('pages/Inicio.html');
     }
   });
 </script>
 </body>
 </html>
-

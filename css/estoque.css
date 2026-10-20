@@ -2,7 +2,7 @@
    ESTOQUE.CSS — Estilos da Área de Estoque
    ============================================ */
 
-.estoque-page { padding: 2rem 0 4rem; background: var(--bg); }
+.estoque-page { padding: 0 0 4rem; background: var(--bg); }
 
 /* LOGIN MODAL */
 .login-overlay {
@@ -26,7 +26,7 @@
 }
 .login-box i { font-size: 2.5rem; color: var(--accent); margin-bottom: 1rem; }
 .login-box h3 { font-size: 1.4rem; color: var(--primary); margin-bottom: 0.3rem; }
-.login-box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+.login-box p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
 .login-box input {
   width: 100%; padding: 0.7rem 1rem;
   border: 1.5px solid var(--border); border-radius: 8px;
@@ -34,7 +34,7 @@
   margin-bottom: 0.8rem; text-align: center; letter-spacing: 3px;
 }
 .login-box input:focus { outline: none; border-color: var(--accent); }
-.login-error { color: #dc2626; font-size: 0.85rem; margin-bottom: 0.8rem; display: none; }
+.login-error { color: #dc2626; font-size: 0.92rem; margin-bottom: 0.8rem; display: none; }
 .login-error.show { display: block; }
 
 /* ROLE BANNER */
@@ -46,7 +46,7 @@
   border-radius: var(--radius);
   margin-bottom: 1.5rem;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 .role-banner.operador { background: #dbeafe; color: #1d4ed8; }
 .role-banner.gerente  { background: #fce7f3; color: #9d174d; }
@@ -68,8 +68,8 @@
   justify-content: space-between;
   align-items: flex-start;
 }
-.estoque-card-header h3 { font-size: 1rem; color: var(--text); margin-bottom: 0.2rem; }
-.estoque-card-header p  { font-size: 0.82rem; color: var(--text-muted); }
+.estoque-card-header h3 { font-size: 1.15rem; color: var(--text); margin-bottom: 0.2rem; }
+.estoque-card-header p  { font-size: 0.875rem; color: var(--text-muted); }
 
 .estoque-card-body { padding: 1rem 1.5rem; }
 
@@ -80,7 +80,7 @@
   color: var(--primary);
   line-height: 1;
 }
-.estoque-qty-label { font-size: 0.8rem; color: var(--text-muted); }
+.estoque-qty-label { font-size: 0.875rem; color: var(--text-muted); }
 
 /* PROGRESS BAR */
 .estoque-bar-wrap { margin: 0.8rem 0; }
@@ -106,7 +106,7 @@
   border: 1.5px solid #fca5a5;
   border-radius: 6px;
   padding: 0.5rem 0.8rem;
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   color: #dc2626;
   font-weight: 600;
   margin-top: 0.5rem;
@@ -114,6 +114,10 @@
   gap: 0.4rem;
 }
 .alerta-gerente.show { display: flex; }
+
+.estoque-card-footer .btn-del { margin-left: auto; }
+.estoque-min { margin-top: 0.3rem; color: var(--text-muted); font-size: 0.92rem; }
+.estoque-consulta { color: var(--text-muted); font-size: 0.92rem; font-style: italic; }
 
 .estoque-card-footer {
   padding: 0.8rem 1.5rem;
@@ -148,41 +152,14 @@
   align-items: end;
 }
 .nova-peca-form .form-group { margin: 0; }
-.nova-peca-form label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.3rem; }
+.nova-peca-form label { font-size: 0.92rem; font-weight: 600; display: block; margin-bottom: 0.3rem; }
 .nova-peca-form input, .nova-peca-form select {
   width: 100%; padding: 0.6rem 0.9rem;
   border: 1.5px solid var(--border); border-radius: 8px;
-  font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+  font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
 }
 .nova-peca-form input:focus, .nova-peca-form select:focus { outline: none; border-color: var(--accent); }
 
-/* MODAL USAR PEÇA */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 200;
-  align-items: center;
-  justify-content: center;
-}
-.modal-overlay.open { display: flex; }
-.modal {
-  background: white;
-  border-radius: var(--radius);
-  padding: 2rem;
-  width: 90%; max-width: 450px;
-  box-shadow: var(--shadow-lg);
-}
-.modal h3 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary); }
-.modal input {
-  width: 100%; padding: 0.7rem 1rem;
-  border: 1.5px solid var(--border); border-radius: 8px;
-  font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
-  margin-bottom: 1rem;
-}
-.modal input:focus { outline: none; border-color: var(--accent); }
-.modal-buttons { display: flex; gap: 0.8rem; }
 
 @media (max-width: 600px) {
   .nova-peca-form { grid-template-columns: 1fr; }

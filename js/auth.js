@@ -1,59 +1,49 @@
-/* ============================================
-   AUTH.JS — Sistema de Usuários - FactoryTrack
-   Cargos: chefe_geral, gerente, operador
-   ============================================ */
+const AUTH_SESSION_KEY = 'ft_sessao';
 
-const AUTH_USERS_KEY    = 'ft_usuarios';
-const AUTH_SESSION_KEY  = 'ft_sessao';
-
-function getUsuarios() { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || '[]'); }
-function saveUsuarios(l) { localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(l)); }
+try {
+  localStorage.removeItem('ft_usuarios');
+} catch (erro) {
+  console.error('Não foi possível limpar as credenciais antigas do navegador:', erro);
+}
 
 function getSessao() {
-  try { return JSON.parse(sessionStorage.getItem(AUTH_SESSION_KEY)); } catch { return null; }
-}
-function saveSessao(u) { sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(u)); }
-function clearSessao() { sessionStorage.removeItem(AUTH_SESSION_KEY); }
-
-function temChefe() {
-  return getUsuarios().some(u => u.cargo === 'chefe_geral');
-}
-
-function temUsuarios() {
-  return getUsuarios().length > 0;
+  try {
+    const sessao = JSON.parse(sessionStorage.getItem(AUTH_SESSION_KEY));
+    if (sessao?.token && sessao?.usuario?.id) return sessao;
+    sessionStorage.removeItem(AUTH_SESSION_KEY);
+  } catch (erro) {
+    console.error('Não foi possível ler a sessão:', erro);
+  }
+  return null;
 }
 
-function registrarUsuario(nome, senha, cargo) {
-  const lista = getUsuarios();
-  if (lista.find(u => u.nome.toLowerCase() === nome.toLowerCase())) return { ok: false, msg: 'Já existe um usuário com esse nome.' };
-  const novoUser = { id: Date.now(), nome, senha, cargo };
-  lista.push(novoUser);
-  saveUsuarios(lista);
-  return { ok: true, user: novoUser };
+function saveSessao(sessao) {
+  sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(sessao));
 }
 
-function loginUsuario(nome, senha) {
-  const user = getUsuarios().find(u => u.nome.toLowerCase() === nome.toLowerCase() && u.senha === senha);
-  if (!user) return { ok: false, msg: 'Nome ou senha incorretos.' };
-  saveSessao(user);
-  return { ok: true, user };
+function clearSessao() {
+  sessionStorage.removeItem(AUTH_SESSION_KEY);
 }
 
-function atualizarCargo(userId, novoCargo) {
-  const lista = getUsuarios();
-  const idx = lista.findIndex(u => u.id === userId);
-  if (idx === -1) return false;
-  lista[idx].cargo = novoCargo;
-  saveUsuarios(lista);
-  return true;
-}
-
-function excluirUsuario(userId) {
-  saveUsuarios(getUsuarios().filter(u => u.id !== userId));
+async function loginUsuario(usuario, senha) {
+  try {
+    const resposta = await fetch(`${API_BASE_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, senha })
+    });
+    const resultado = await resposta.json();
+    if (!resposta.ok) return { ok: false, msg: resultado.erro || 'Não foi possível entrar.' };
+    saveSessao({ token: resultado.token, usuario: resultado.usuario });
+    return { ok: true, user: resultado.usuario };
+  } catch (erro) {
+    console.error('Erro ao conectar para autenticação:', erro);
+    return { ok: false, msg: 'Não foi possível conectar ao servidor.' };
+  }
 }
 
 function cargoLabel(cargo) {
-  const map = { chefe_geral: 'Chefe Geral', gerente: 'Gerente', operador: 'Operador', pendente: 'Pendente' };
+  const map = { chefe_geral: 'Chefe Geral', gerente: 'Gerente', operador: 'Operador' };
   return map[cargo] || cargo;
 }
 
@@ -61,8 +51,26 @@ function cargoBadgeStyle(cargo) {
   const map = {
     chefe_geral: 'background:#fce7f3;color:#9d174d',
     gerente: 'background:#dbeafe;color:#1d4ed8',
-    operador: 'background:#dcfce7;color:#16a34a',
-    pendente: 'background:#fef9c3;color:#ca8a04'
+    operador: 'background:#dcfce7;color:#16a34a'
   };
   return map[cargo] || '';
 }
+
+const fetchFactoryTrack = window.fetch.bind(window);
+window.fetch = function(input, init = {}) {
+  const url = input instanceof Request ? input.url : String(input);
+  const sessao = getSessao();
+  if (!sessao?.token || !url.startsWith(API_BASE_URL)) {
+    return fetchFactoryTrack(input, init);
+  }
+
+  const headers = new Headers(init.headers || (input instanceof Request ? input.headers : undefined));
+  headers.set('Authorization', 'Bearer ' + sessao.token);
+  return fetchFactoryTrack(input, { ...init, headers }).then(resposta => {
+    if (resposta.status === 401 && !url.endsWith('/login')) {
+      clearSessao();
+      window.location.href = window.location.pathname.includes('/pages/') ? '../index.html' : 'index.html';
+    }
+    return resposta;
+  });
+};

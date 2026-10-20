@@ -22,6 +22,13 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
      DATABASE_URL="mysql://USUARIO:SENHA@HOST:PORTA/NOME_DO_BANCO"
      ```
 
+   - Gere um valor aleatório para `AUTH_SECRET` e mantenha-o estável entre
+     reinicializações. Na primeira execução, informe
+     `INITIAL_ADMIN_NAME`, `INITIAL_ADMIN_USERNAME` e
+     `INITIAL_ADMIN_PASSWORD` (mínimo de 8 caracteres); o servidor cria a
+     conta inicial de Chefe Geral quando a tabela de usuários está vazia.
+     Depois da criação, remova essas três variáveis.
+
 3. **Instalar dependências**
    ```bash
    cd Back-end
@@ -30,6 +37,21 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
    O `npm install` já roda o `prisma generate` automaticamente no final
    (script `postinstall`), gerando o Prisma Client a partir de
    `prisma/schema.prisma`.
+
+### Estrutura do servidor
+
+`server.js` continua sendo o ponto de entrada usado por `npm start` e
+`npm run dev`; execute os comandos a partir de `Back-end/` como acima.
+Ele carrega as variáveis do `.env` e inicia `src/server.js`, que configura
+o Express e mantém a ordem dos middlewares e grupos de rotas.
+
+- `src/database.js` configura o Prisma e cria a conta inicial.
+- `src/auth.js` contém autenticação, autorização e rotas de login/contas.
+- `src/routes/` separa as rotas de setores, máquinas, ocorrências,
+  estoque e guindastes/aluguéis.
+
+Essa divisão não altera a configuração do banco: o schema continua em
+`prisma/schema.prisma`, e o Prisma Client é gerado pelo `npm install`.
 
 4. **Sincronizar o schema do Prisma com o banco** (só na primeira vez, ou
    sempre que `prisma/schema.prisma` mudar)
@@ -41,7 +63,18 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
    pular esse passo — o Prisma só precisa que a `DATABASE_URL` esteja
    correta para funcionar.
 
-5. **Iniciar o servidor**
+   Para atualizar um banco já existente, faça backup antes e ajuste a tabela
+   `usuarios` com:
+   ```sql
+   ALTER TABLE usuarios ADD COLUMN ativo BOOLEAN NOT NULL DEFAULT TRUE;
+   ALTER TABLE usuarios ADD UNIQUE KEY uq_usuarios_usuario (usuario);
+   ALTER TABLE ocorrencias ADD COLUMN usuario_id INT NULL;
+   ALTER TABLE ocorrencias ADD CONSTRAINT fk_ocorrencia_usuario
+     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL;
+   ```
+   Corrija identificadores vazios/duplicados antes de criar a chave única.
+
+5. **Iniciar o site e o servidor**
    ```bash
    npm start
    ```
@@ -50,6 +83,10 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
     conectado ao banco de dados
     Servidor rodando em http://localhost:3000
    ```
+   Abra `http://localhost:3000` para ver o login do sistema. A página de
+   apresentação do projeto fica separada em `/apresentacao.html`.
+   O servidor fornece o site e a API no mesmo endereço; não é necessário
+   iniciar o Live Server.
 
 ### Comandos úteis do Prisma
 
@@ -59,15 +96,18 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
 | `npx prisma migrate dev`    | Cria/aplica migrations e atualiza o banco               |
 | `npx prisma studio`         | Abre uma interface visual no navegador para ver os dados |
 
-5. Abra o front-end normalmente com o **Live Server** (a URL base usada nas
-   chamadas `fetch` já é `http://localhost:3000`, então não precisa mudar
-   nada no front-end).
+O front-end local também usa `http://localhost:3000` para a API.
 
 ## Rotas disponíveis
 
 | Método | Rota                          | Descrição                                  |
 |--------|-------------------------------|---------------------------------------------|
-| GET    | `/`                            | Health check da API                        |
+| POST   | `/login`                       | Autentica uma conta individual             |
+| GET    | `/me`                           | Retorna a conta autenticada                 |
+| GET/POST | `/usuarios`                   | Lista/cria contas (somente Chefe Geral)     |
+| PUT    | `/usuarios/:id/cargo`          | Altera cargo (somente Chefe Geral)          |
+| PUT    | `/usuarios/:id/status`         | Ativa/desativa conta (somente Chefe Geral)  |
+| GET    | `/api/health`                  | Health check da API                        |
 | POST   | `/cadastrar-setor`            | Cadastra um setor                          |
 | GET    | `/setores`                    | Lista todos os setores                     |
 | DELETE | `/deletar-setor/:id`          | Remove um setor                            |
@@ -81,6 +121,19 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
 | POST   | `/cadastrar-peca`             | Cadastra uma nova peça                     |
 | PUT    | `/atualizar-peca/:id`         | Atualiza a quantidade de uma peça          |
 | DELETE | `/deletar-peca/:id`           | Remove uma peça                            |
+
+Todas as rotas de API, exceto `POST /login` e `GET /api/health`, exigem sessão autenticada.
+O cargo é validado também no servidor. Contas novas têm senhas armazenadas
+com scrypt; senhas em texto puro de contas antigas são convertidas para hash
+no primeiro login correto. Ocorrências e checklists guardam o ID da conta e
+o nome da sessão, ignorando nomes enviados pelo formulário.
+
+Contas criadas anteriormente apenas no `localStorage` não são migradas. Após
+configurar o Chefe Geral inicial, cadastre cada trabalhador em **Cadastros →
+Contas dos Trabalhadores**, usando como login o e-mail corporativo individual
+fornecido pela empresa. O sistema valida o formato do e-mail e não permite
+repetir o mesmo endereço. O trabalhador não escolhe nem cria seu cargo: o
+Chefe Geral atribui a função adequada e fornece as credenciais individuais.
 
 ## Colocando no ar (produção, de graça)
 
@@ -111,9 +164,10 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
   `maquinas`, `ocorrencias`, `pecas` (já existentes em `db.sql`) e também
   `usuarios` (usada pela rota `/login`, mas que não existia no `db.sql`
   original — agora existe nos dois lugares).
-- **`server.js` reescrito** para usar `PrismaClient` em vez de `mysql2`
-  puro. Todas as rotas continuam com o mesmo caminho, método e formato de
-  resposta — só a forma de consultar o banco mudou por dentro.
+- **O back-end usa `PrismaClient`** em vez de `mysql2` puro. A configuração
+  do banco fica em `src/database.js`, e `server.js` continua sendo o ponto
+  de entrada. Todas as rotas mantêm o mesmo caminho, método e formato de
+  resposta.
 - **`mysql2` removido do `package.json`**: o Prisma já tem seu próprio
   driver de conexão com o MySQL, então essa dependência não é mais
   necessária.
@@ -125,10 +179,6 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
   `CREATE TABLE setores` (`);a`), o que quebraria a execução do script SQL.
 - **Bug corrigido no `.env`**: havia um `x` sobrando no final da linha do
   `DATABASE_URL`.
-- Adicionei um usuário de exemplo (`admin` / `admin123`) no `db.sql` para
-  vocês conseguirem testar a rota `/login` sem precisar cadastrar ninguém
-  na mão.
-
 > Como o `node_modules/` não foi enviado, não consegui rodar
 > `npm install` nem testar a execução real por aqui. Depois de baixar os
 > arquivos, rode `npm install` (que já vai gerar o Prisma Client sozinho)
@@ -138,14 +188,9 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
 
 ## Observações importantes (leia antes de apresentar)
 
-- **Login continua 100% no navegador.** O `js/auth.js` usa `localStorage`
-  para cadastrar/logar usuários (`registrarUsuario`, `loginUsuario`) — isso
-  não foi alterado. Existe um trecho morto em `auth.js` que tenta chamar
-  `POST /cadastro`, mas ele nunca é executado porque não há nenhum
-  formulário com `id="form-cadastro"` em nenhuma página. Se vocês quiserem
-  migrar a autenticação para o banco também, é um próximo passo natural —
-  posso te ajudar com isso depois, mas não mexi nessa parte para não quebrar
-  o fluxo de login que já funciona.
+- **Autenticação individual no banco.** Cada pessoa entra com o e-mail
+  corporativo e a senha próprios. O Chefe Geral cria, altera o cargo e ativa/desativa contas
+  na área Cadastros. O servidor confere o cargo em todas as rotas restritas.
 - **URL da API centralizada.** Criei `js/config.js` com a constante
   `API_BASE_URL`. Todos os `fetch(...)` do projeto agora usam essa
   constante — pra apontar pra produção, troque só esse arquivo.
@@ -156,11 +201,11 @@ API REST em **Node.js + Express + MySQL** que dá suporte às páginas do front-
   quebraria tudo no Vercel/Netlify/GitHub Pages, que rodam em Linux e são
   *case-sensitive*. Já corrigi e testei localmente.
 - **Dois links quebrados corrigidos:** `rbac.js` redirecionava para um
-  `pages/login.html` que nunca existiu (agora vai para `index.html`, que é
-  a página de login de verdade), e `Inicio.html` linkava para
+  `pages/login.html` que nunca existiu (agora vai para `index.html`, que é o login), e
+  `Inicio.html` linkava para
   `PaginaInicial.html` (também inexistente — agora aponta para si mesma).
-- **CSS do `index.html` não carregava.** O login referenciava `../css/...`
-  como se estivesse uma pasta abaixo, mas ele está na raiz do projeto —
+- **CSS da tela de login não carregava.** A página referenciava `../css/...`
+  como se estivesse uma pasta abaixo, mas ela está na raiz do projeto —
   corrigido para `css/...`.
 - **`painel.html` calcula o status das máquinas usando `getOcorrencias()`
   (localStorage)**, enquanto setores/máquinas já vêm do banco via `fetch`.

@@ -34,6 +34,7 @@ model Maquina {
 
 model Ocorrencia {
   id             Int       @id @default(autoincrement())
+  usuarioId      Int?      @map("usuario_id")
   data           DateTime
   setor          String    @db.VarChar(100)
   maquina        String    @db.VarChar(100)
@@ -45,6 +46,7 @@ model Ocorrencia {
   resolucao      String?   @db.Text
   itensChecklist String?   @db.Text
   dataResolucao  DateTime?
+  usuario        Usuario?  @relation(fields: [usuarioId], references: [id], onDelete: SetNull, map: "fk_ocorrencia_usuario")
 
   @@map("ocorrencias")
 }
@@ -60,16 +62,39 @@ model Peca {
   @@map("pecas")
 }
 
-// Tabela usada pela rota /login no server.js, mas que ainda não existia
-// no db.sql original. Campos como String? porque o código aceita tanto
-// "usuario" quanto "nome", e tanto "cargo" quanto "tipo".
+// Campos opcionais legado permitem migrar contas antigas sem perder acesso.
 model Usuario {
-  id      Int     @id @default(autoincrement())
-  nome    String? @db.VarChar(100)
-  usuario String? @db.VarChar(100)
-  senha   String  @db.VarChar(255)
-  cargo   String? @db.VarChar(50)
-  tipo    String? @db.VarChar(50)
+  id      Int      @id @default(autoincrement())
+  nome    String?  @db.VarChar(100)
+  usuario String?  @unique(map: "uq_usuarios_usuario") @db.VarChar(100)
+  senha   String   @db.VarChar(255)
+  cargo   String?  @db.VarChar(50)
+  tipo    String?  @db.VarChar(50)
+  ativo   Boolean  @default(true)
+  ocorrencias Ocorrencia[]
 
   @@map("usuarios")
+}
+
+model Guindaste {
+  id           Int       @id @default(autoincrement())
+  modelo       String    @db.VarChar(100)
+  identificacao String?  @db.VarChar(100)
+  status       String    @default("Disponível") @db.VarChar(30)
+  alugueis     Aluguel[]
+
+  @@map("guindastes")
+}
+
+model Aluguel {
+  id                     Int        @id @default(autoincrement())
+  guindasteId            Int        @map("guindaste_id")
+  cliente                String     @db.VarChar(150)
+  dataLocacao            DateTime   @default(now()) @map("data_locacao")
+  dataPrevistaDevolucao  DateTime   @map("data_prevista_devolucao")
+  dataDevolucaoReal      DateTime?  @map("data_devolucao_real")
+  status                 String     @default("Ativo") @db.VarChar(30)
+  guindaste              Guindaste  @relation(fields: [guindasteId], references: [id], onDelete: Restrict)
+
+  @@map("alugueis")
 }
