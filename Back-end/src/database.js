@@ -7,7 +7,10 @@ function createDatabase() {
         user: process.env.DB_USER || 'root',
         password: process.env.DB_PASSWORD || '',
         database: process.env.DB_NAME || 'factorytrack_db',
-        port: Number(process.env.DB_PORT || 3306)
+        port: Number(process.env.DB_PORT || 3306),
+        // Bancos na nuvem (TiDB Cloud, Aiven etc.) exigem conexão segura.
+        ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : undefined,
+        connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10)
     });
     const prisma = new PrismaClient({ adapter });
     return { prisma };

@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
   sair.title = `Encerrar sessão de ${sessao.usuario.nome}`;
   sair.addEventListener('click', () => {
     clearSessao();
-    window.location.href = window.location.pathname.includes('/pages/') ? '../index.html' : 'index.html';
+    window.location.href = LOGIN_URL;
   });
   actions.appendChild(sair);
   if (toggle) actions.appendChild(toggle);
