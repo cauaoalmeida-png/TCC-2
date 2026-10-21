@@ -7,9 +7,31 @@ document.addEventListener('DOMContentLoaded', function () {
   const toggle = document.getElementById('menuToggle');
   const nav = document.querySelector('.nav');
   if (toggle && nav) {
-    toggle.addEventListener('click', () => {
-      const aberto = nav.classList.toggle('open');
+    // Telas menores: o menu abre como gaveta lateral
+    const definirMenu = (aberto) => {
+      nav.classList.toggle('open', aberto);
+      document.body.classList.toggle('menu-aberto', aberto);
       toggle.setAttribute('aria-expanded', String(aberto));
+      toggle.setAttribute('aria-label', aberto ? 'Fechar menu' : 'Abrir menu');
+    };
+
+    toggle.addEventListener('click', (evento) => {
+      evento.stopPropagation();
+      definirMenu(!nav.classList.contains('open'));
+    });
+
+    // Fecha ao clicar fora da gaveta, ao apertar Esc ou ao voltar para tela grande
+    document.addEventListener('click', (evento) => {
+      if (nav.classList.contains('open') && !nav.contains(evento.target)) definirMenu(false);
+    });
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Escape' && nav.classList.contains('open')) {
+        definirMenu(false);
+        toggle.focus();
+      }
+    });
+    window.matchMedia('(min-width: 1024px)').addEventListener('change', (mq) => {
+      if (mq.matches) definirMenu(false);
     });
   }
 

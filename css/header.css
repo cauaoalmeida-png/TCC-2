@@ -1,6 +1,16 @@
-/* HEADER
-   Linha 1: logo + usuário logado + Sair
-   Linha 2: menu com todos os módulos (vira botão de menu em telas menores) */
+/* HEADER / MENU LATERAL
+   Telas grandes (1024px+): menu fixo na lateral esquerda
+     - topo: logo
+     - meio: módulos do sistema
+     - rodapé do menu: usuário logado + Sair
+   Telas menores: barra no topo com botão de menu; o menu abre como gaveta pela esquerda.
+   A página de login (sem .nav) continua com a barra simples no topo. */
+
+:root {
+  --sidebar-w: 256px;
+  --sidebar-bg: #132540;
+}
+
 .header {
   background: var(--primary);
   position: sticky;
@@ -17,9 +27,6 @@
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
 }
-
-/* Com menu, a linha de abas encosta na borda de baixo */
-.header:has(.nav) .container { padding-bottom: 0; }
 
 .logo { order: 1; }
 
@@ -50,11 +57,12 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  min-width: 0;
   color: white;
 }
 
-.header-user > i { font-size: 1.7rem; color: rgba(255,255,255,0.55); }
-.header-user-info { display: flex; flex-direction: column; line-height: 1.2; }
+.header-user > i { flex-shrink: 0; font-size: 1.7rem; color: rgba(255,255,255,0.55); }
+.header-user-info { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
 .header-user-name {
   max-width: 15rem;
   overflow: hidden;
@@ -77,26 +85,22 @@
 
 .header-logout:hover { background: rgba(255,255,255,0.22); }
 
-/* MENU */
-.nav { order: 3; flex-basis: 100%; }
-
+/* MENU (itens) */
 .nav-list {
   display: flex;
-  gap: 0.15rem;
-  margin-top: 0.6rem;
+  flex-direction: column;
+  gap: 0.2rem;
   list-style: none;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 0.95rem 0.75rem;
-  border-bottom: 3px solid transparent;
-  border-radius: 8px 8px 0 0;
-  color: rgba(255,255,255,0.78);
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.75);
   font-size: 1rem;
   font-weight: 600;
   white-space: nowrap;
@@ -105,9 +109,12 @@
 
 /* Ícone de cada módulo (Font Awesome) */
 .nav-link::before {
+  width: 1.25rem;
+  flex-shrink: 0;
   font-family: 'Font Awesome 6 Free';
-  font-size: 0.9em;
+  font-size: 0.95em;
   font-weight: 900;
+  text-align: center;
   opacity: 0.85;
 }
 .nav-link[href$="Inicio.html"]::before     { content: "\f015"; }
@@ -119,8 +126,13 @@
 .nav-link[href$="guindastes.html"]::before { content: "\f63c"; }
 .nav-link[href$="cadastros.html"]::before  { content: "\f1c0"; }
 
-.nav-link:hover { background: rgba(255,255,255,0.08); color: white; }
-.nav-link.active { border-bottom-color: var(--accent); background: rgba(255,255,255,0.07); color: white; }
+.nav-link:hover { background: rgba(255,255,255,0.07); color: white; }
+.nav-link.active {
+  border-left-color: var(--accent);
+  background: rgba(255,140,66,0.14);
+  color: white;
+}
+.nav-link.active::before { opacity: 1; color: var(--accent); }
 
 /* Ação principal do sistema em destaque */
 .nav-link[href$="ocorrencia.html"] { color: var(--accent); }
@@ -129,54 +141,112 @@
 
 /* BOTÃO DE MENU (telas menores) */
 .menu-toggle {
-  order: 2;
   display: none;
   flex-direction: column;
   gap: 5px;
-  margin-left: auto;
   padding: 5px;
   background: none;
   border: none;
   cursor: pointer;
 }
-.header-actions .menu-toggle { margin-left: 0; }
 .menu-toggle span {
   display: block;
   width: 24px;
   height: 2px;
   background: white;
   border-radius: 2px;
-  transition: all 0.3s;
+  transition: transform 0.3s, opacity 0.3s;
 }
 
+/* ============================================
+   TELAS GRANDES: MENU LATERAL FIXO
+   ============================================ */
+@media (min-width: 1024px) {
+  body:has(.header .nav) { padding-left: var(--sidebar-w); }
+
+  .header:has(.nav) {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--sidebar-w);
+    background: var(--sidebar-bg);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 2px 0 14px rgba(0,0,0,0.18);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+  }
+
+  .header:has(.nav) .container {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0;
+    max-width: none;
+    min-height: 100%;
+    padding: 1.4rem 1rem 1rem;
+  }
+
+  .header:has(.nav) .logo {
+    padding: 0 0.6rem 1.3rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .header:has(.nav) .nav { order: 2; }
+
+  .header:has(.nav) .header-actions {
+    order: 3;
+    gap: 0.6rem;
+    margin: auto 0 0;
+    padding: 1rem 0.4rem 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  /* Empurra a área do usuário para o fim do menu, com um respiro acima */
+  .header:has(.nav) .nav { margin-bottom: 1.5rem; }
+
+  .header:has(.nav) .header-user { flex: 1; }
+  .header:has(.nav) .header-user-name { max-width: 100%; }
+
+  .header:has(.nav) .header-logout { padding: 0.5rem 0.8rem; }
+}
+
+/* ============================================
+   TELAS MENORES: BARRA NO TOPO + GAVETA LATERAL
+   ============================================ */
 @media (max-width: 1023px) {
   .menu-toggle { display: flex; }
 
-  .header:has(.nav) .container { padding-bottom: 0.75rem; }
-
   .nav {
-    display: none;
-    position: absolute;
-    top: 100%;
+    position: fixed;
+    top: 0;
+    bottom: 0;
     left: 0;
-    right: 0;
-    padding: 0.75rem 1.5rem 1rem;
-    background: var(--primary);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    z-index: 150;
+    width: min(var(--sidebar-w), 82vw);
+    padding: 1.5rem 1rem;
+    background: var(--sidebar-bg);
+    overflow-y: auto;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s;
   }
 
-  .nav.open { display: block; }
-
-  .nav-list { flex-direction: column; gap: 0.2rem; margin-top: 0; }
-
-  .nav-link {
-    padding: 0.7rem 0.9rem;
-    border-bottom: 0;
-    border-left: 3px solid transparent;
-    border-radius: 6px;
+  .nav.open {
+    transform: translateX(0);
+    visibility: visible;
+    /* escurece o resto da tela enquanto a gaveta está aberta */
+    box-shadow: 0 0 0 100vmax rgba(15,23,42,0.55);
   }
 
-  .nav-link.active { border-left-color: var(--accent); }
+  /* Botão vira "X" com o menu aberto */
+  .menu-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .menu-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+  .menu-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  body.menu-aberto { overflow: hidden; }
 }
 
 @media (max-width: 600px) {
@@ -193,4 +263,8 @@
     padding: 0.5rem 0.7rem;
     font-size: 0.9rem;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav, .menu-toggle span { transition: none; }
 }
