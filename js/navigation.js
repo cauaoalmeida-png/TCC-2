@@ -3,36 +3,74 @@
 // Páginas que o operador não pode abrir (o servidor também bloqueia)
 const PAGINAS_SO_CHEFIA = ['checklist.html', 'guindastes.html', 'cadastros.html'];
 
+// Menu lateral escondido ou não (telas grandes). A escolha fica salva no navegador.
+const CHAVE_MENU_RECOLHIDO = 'ft_menu_recolhido';
+const telaGrande = window.matchMedia('(min-width: 1024px)');
+
+function menuRecolhidoSalvo() {
+  try { return localStorage.getItem(CHAVE_MENU_RECOLHIDO) === '1'; } catch (e) { return false; }
+}
+
+// Aplica já, antes de a página aparecer, para o menu não "piscar" aberto
+document.documentElement.classList.toggle('menu-recolhido', menuRecolhidoSalvo());
+
 document.addEventListener('DOMContentLoaded', function () {
   const toggle = document.getElementById('menuToggle');
   const nav = document.querySelector('.nav');
   if (toggle && nav) {
     // Telas menores: o menu abre como gaveta lateral
-    const definirMenu = (aberto) => {
+    const definirGaveta = (aberto) => {
       nav.classList.toggle('open', aberto);
       document.body.classList.toggle('menu-aberto', aberto);
-      toggle.setAttribute('aria-expanded', String(aberto));
-      toggle.setAttribute('aria-label', aberto ? 'Fechar menu' : 'Abrir menu');
+      atualizarBotao();
     };
+
+    // Telas grandes: o ☰ esconde ou mostra o menu lateral
+    const definirRecolhido = (recolhido) => {
+      document.documentElement.classList.toggle('menu-recolhido', recolhido);
+      try { localStorage.setItem(CHAVE_MENU_RECOLHIDO, recolhido ? '1' : '0'); } catch (e) {}
+      atualizarBotao();
+    };
+
+    function atualizarBotao() {
+      const aberto = telaGrande.matches
+        ? !document.documentElement.classList.contains('menu-recolhido')
+        : nav.classList.contains('open');
+      toggle.setAttribute('aria-expanded', String(aberto));
+      const texto = aberto ? 'Esconder menu' : 'Mostrar menu';
+      toggle.setAttribute('aria-label', texto);
+      toggle.title = texto;
+    }
 
     toggle.addEventListener('click', (evento) => {
       evento.stopPropagation();
-      definirMenu(!nav.classList.contains('open'));
+      if (telaGrande.matches) {
+        definirRecolhido(!document.documentElement.classList.contains('menu-recolhido'));
+      } else {
+        definirGaveta(!nav.classList.contains('open'));
+      }
     });
 
-    // Fecha ao clicar fora da gaveta, ao apertar Esc ou ao voltar para tela grande
+    // Gaveta (telas menores): fecha ao clicar fora, ao apertar Esc ou ao virar tela grande
     document.addEventListener('click', (evento) => {
-      if (nav.classList.contains('open') && !nav.contains(evento.target)) definirMenu(false);
+      if (nav.classList.contains('open') && !nav.contains(evento.target)) definirGaveta(false);
     });
     document.addEventListener('keydown', (evento) => {
       if (evento.key === 'Escape' && nav.classList.contains('open')) {
-        definirMenu(false);
+        definirGaveta(false);
         toggle.focus();
       }
     });
-    window.matchMedia('(min-width: 1024px)').addEventListener('change', (mq) => {
-      if (mq.matches) definirMenu(false);
+    telaGrande.addEventListener('change', () => {
+      if (nav.classList.contains('open')) definirGaveta(false);
+      else atualizarBotao();
     });
+
+    atualizarBotao();
+    // Liga a animação só depois que a página já apareceu
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.documentElement.classList.add('menu-animado');
+    }));
   }
 
   if (typeof getSessao !== 'function' || typeof clearSessao !== 'function') return;
