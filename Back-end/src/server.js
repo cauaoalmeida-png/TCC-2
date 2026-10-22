@@ -67,6 +67,9 @@ app.get(['/', '/apresentacao.html'], (req, res) => {
 app.get(['/sistema', '/index.html'], (req, res) => {
     res.sendFile(path.join(frontendRoot, 'index.html'));
 });
+app.get(['/privacidade.html', '/termos.html'], (req, res) => {
+    res.sendFile(path.join(frontendRoot, req.path));
+});
 // Ícones da aba do navegador (só esses arquivos, para não expor a raiz e o .env)
 app.get(['/favicon.svg', '/favicon.ico', '/apple-touch-icon.png'], (req, res) => {
     res.sendFile(path.join(frontendRoot, req.path));

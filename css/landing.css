@@ -544,7 +544,7 @@
 .footer-inner > p { margin: 0; color: #a5a69f; font-size: 0.95rem; }
 .footer-top { display: inline-flex; align-items: center; gap: 0.8rem; color: #c5c6c0; font-size: 0.95rem; }
 .footer-top i { color: var(--landing-orange); }
-.footer-links { display: flex; align-items: center; gap: 2rem; }
+.footer-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 1.6rem; }
 .footer-client { display: inline-flex; align-items: center; gap: 0.5rem; color: #8d8f88; font-size: 0.9rem; transition: color 0.2s ease; }
 .footer-client i { font-size: 0.8rem; }
 .footer-client:hover { color: var(--landing-white); }
