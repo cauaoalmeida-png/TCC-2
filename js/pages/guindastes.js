@@ -14,6 +14,17 @@ function podeGerenciar() {
     return sess && (sess.usuario.cargo === 'gerente' || sess.usuario.cargo === 'chefe_geral');
 }
 
+// Escapa texto do usuário antes de injetar no HTML (evita XSS).
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[character]);
+}
+
 function formatDataCurta(dateStr) {
     if (!dateStr) return '-';
     const d = new Date(dateStr);
@@ -45,7 +56,7 @@ async function renderGuindastes() {
     const modeloAtual = selModelo.value;
     const modelosUnicos = [...new Set(guindastesAtuais.map(g => g.modelo))];
     selModelo.innerHTML = '<option value="">Todos os Modelos</option>' +
-        modelosUnicos.map(m => `<option value="${m}">${m}</option>`).join('');
+        modelosUnicos.map(m => `<option value="${escapeHTML(m)}">${escapeHTML(m)}</option>`).join('');
     selModelo.value = modeloAtual;
 
     let lista = [...guindastesAtuais];
@@ -71,7 +82,7 @@ async function renderGuindastes() {
             ? `<p class="sem-aluguel">Nenhum aluguel ativo no momento.</p>`
             : aluguel
                 ? `<div class="aluguel-info">
-                     <p><strong>Cliente:</strong> ${aluguel.cliente}</p>
+                     <p><strong>Cliente:</strong> ${escapeHTML(aluguel.cliente)}</p>
                      <p><strong>Saiu em:</strong> ${formatDataCurta(aluguel.dataLocacao)}</p>
                      <p><strong>Devolução prevista:</strong> ${formatDataCurta(aluguel.dataPrevistaDevolucao)}</p>
                    </div>`
@@ -87,7 +98,7 @@ async function renderGuindastes() {
         return `
         <div class="guindaste-card">
             <div class="guindaste-card-header">
-                <div><h3>${g.modelo}</h3><p>${g.identificacao || 'Sem identificação'}</p></div>
+                <div><h3>${escapeHTML(g.modelo)}</h3><p>${escapeHTML(g.identificacao || 'Sem identificação')}</p></div>
                 <span class="badge ${disponivel ? 'badge-success' : 'badge-danger'}">${g.status}</span>
             </div>
             <div class="guindaste-card-body">${bodyHtml}</div>
@@ -114,14 +125,14 @@ async function renderHistorico() {
     }
 
     tbody.innerHTML = alugueis.map(a => {
-        const nomeGuindaste = a.guindaste ? `${a.guindaste.modelo} (${a.guindaste.identificacao || 's/ id'})` : '—';
+        const nomeGuindaste = a.guindaste ? `${escapeHTML(a.guindaste.modelo)} (${escapeHTML(a.guindaste.identificacao || 's/ id')})` : '—';
         const statusBadge = a.status === 'Ativo'
             ? '<span class="badge badge-warning">Ativo</span>'
             : '<span class="badge badge-success">Concluído</span>';
         return `
         <tr>
             <td>${nomeGuindaste}</td>
-            <td>${a.cliente}</td>
+            <td>${escapeHTML(a.cliente)}</td>
             <td>${formatDataCurta(a.dataLocacao)}</td>
             <td>${formatDataCurta(a.dataPrevistaDevolucao)}</td>
             <td>${a.dataDevolucaoReal ? formatDataCurta(a.dataDevolucaoReal) : '-'}</td>
