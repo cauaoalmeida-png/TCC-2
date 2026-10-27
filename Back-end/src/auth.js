@@ -106,9 +106,43 @@ async function countActiveChiefs(prisma) {
     return users.filter(user => normalizeRole(user.cargo || user.tipo) === 'chefe_geral').length;
 }
 
+// Limite simples de tentativas de login por IP, em memória.
+// Freia força bruta sem depender de biblioteca externa. Observação: em
+// ambiente serverless (Vercel) a contagem é por instância, então serve
+// como primeira barreira, não como proteção absoluta.
+const LOGIN_WINDOW_MS = 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 10;
+const loginAttempts = new Map();
+
+function loginRateLimit(req, res, next) {
+    const now = Date.now();
+    const ip = req.ip || req.socket?.remoteAddress || 'desconhecido';
+
+    // Limpeza preguiçosa para o Map não crescer sem limite.
+    if (loginAttempts.size > 5000) {
+        for (const [chave, dados] of loginAttempts) {
+            if (now > dados.reset) loginAttempts.delete(chave);
+        }
+    }
+
+    const entry = loginAttempts.get(ip);
+    if (!entry || now > entry.reset) {
+        loginAttempts.set(ip, { count: 1, reset: now + LOGIN_WINDOW_MS });
+        return next();
+    }
+
+    entry.count += 1;
+    if (entry.count > LOGIN_MAX_ATTEMPTS) {
+        const retry = Math.ceil((entry.reset - now) / 1000);
+        res.set('Retry-After', String(retry));
+        return res.status(429).json({ erro: `Muitas tentativas de login. Tente novamente em ${retry} segundos.` });
+    }
+    next();
+}
+
 function registerLoginRoute(app, { prisma, authSecret }) {
     // rota de login
-    app.post('/login', async (req, res) => {
+    app.post('/login', loginRateLimit, async (req, res) => {
         const loginInput = typeof req.body.usuario === 'string' ? req.body.usuario.trim().toLowerCase() : '';
         const senhaInput = typeof req.body.senha === 'string' ? req.body.senha : '';
         if (!loginInput || !senhaInput) {

@@ -15,6 +15,17 @@
     }
   });
 
+  // Escapa texto do usuário antes de injetar no HTML (evita XSS).
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[character]);
+  }
+
   // ==========================================
   // SETORES — busca, cria e exclui no banco
   // ==========================================
@@ -45,8 +56,8 @@
     container.innerHTML = setores.map(s => `
       <div class="cad-item">
         <div class="cad-item-info">
-          <h4>${s.nome_setor}</h4>
-          <p>Resp: ${s.responsavel}</p>
+          <h4>${escapeHTML(s.nome_setor)}</h4>
+          <p>Resp: ${escapeHTML(s.responsavel)}</p>
         </div>
         <button class="btn-del" onclick="deleteSetor(${s.id})" title="Excluir setor" aria-label="Excluir setor">
           <i class="fas fa-trash"></i>
@@ -114,8 +125,8 @@
     container.innerHTML = maquinas.map(m => `
       <div class="cad-item">
         <div class="cad-item-info">
-          <h4>${m.nome_maquina}</h4>
-          <p>${m.setor_associado} ${m.numero_serie ? '| ' + m.numero_serie : ''}</p>
+          <h4>${escapeHTML(m.nome_maquina)}</h4>
+          <p>${escapeHTML(m.setor_associado)} ${m.numero_serie ? '| ' + escapeHTML(m.numero_serie) : ''}</p>
         </div>
         <button class="btn-del" onclick="deleteMaquina(${m.id})" title="Excluir máquina" aria-label="Excluir máquina">
           <i class="fas fa-trash"></i>
