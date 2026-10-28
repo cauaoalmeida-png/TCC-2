@@ -1,0 +1,1247 @@
+{
+  "info": {
+    "name": "FactoryTrack - API Mocks",
+    "description": "Rotas Express + Zod do FactoryTrack com respostas mockadas. Requisições \"ERRO\" devem retornar 400.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Saúde",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/api/health",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "api",
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Login e Usuários",
+      "item": [
+        {
+          "name": "Login (válido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"caua@factorytrack.com\",\n  \"senha\": \"minhasenha\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Login ERRO: e-mail inválido e senha vazia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"caua\",\n  \"senha\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Usuário logado (/me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar usuários",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/usuarios",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "usuarios"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar usuário (válido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/usuarios",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Maria Santos\",\n  \"usuario\": \"maria@factorytrack.com\",\n  \"senha\": \"senhaforte123\",\n  \"cargo\": \"operador\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Criar usuário ERRO: senha curta e cargo inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/usuarios",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Maria\",\n  \"usuario\": \"maria@factorytrack.com\",\n  \"senha\": \"123\",\n  \"cargo\": \"dono\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Alterar status (válido)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/usuarios/3/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "usuarios",
+                "3",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ativo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Alterar status ERRO: id texto e ativo string",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/usuarios/abc/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "usuarios",
+                "abc",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ativo\": \"sim\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Alterar cargo (válido)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/usuarios/3/cargo",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "usuarios",
+                "3",
+                "cargo"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cargo\": \"gerente\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Alterar cargo ERRO: cargo inválido",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/usuarios/3/cargo",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "usuarios",
+                "3",
+                "cargo"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cargo\": \"presidente\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Setores",
+      "item": [
+        {
+          "name": "Listar setores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/setores",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "setores"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cadastrar setor (válido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-setor",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-setor"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome_setor\": \"Solda\",\n  \"responsavel\": \"Pedro Alves\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar setor ERRO: campos faltando",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-setor",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-setor"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome_setor\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Deletar setor (válido)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/deletar-setor/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "deletar-setor",
+                "2"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar setor ERRO: id negativo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/deletar-setor/-1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "deletar-setor",
+                "-1"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Máquinas",
+      "item": [
+        {
+          "name": "Listar máquinas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/maquinas",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "maquinas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cadastrar máquina (válido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-maquina",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-maquina"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome_maquina\": \"Fresadora 02\",\n  \"setor_associado\": \"Usinagem\",\n  \"numero_serie\": \"FR-778\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar máquina ERRO: tipos errados",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-maquina",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-maquina"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome_maquina\": 123,\n  \"setor_associado\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Deletar máquina (válido)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/deletar-maquina/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "deletar-maquina",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar máquina ERRO: id texto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/deletar-maquina/torno",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "deletar-maquina",
+                "torno"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Ocorrências e Checklist",
+      "item": [
+        {
+          "name": "Listar ocorrências",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/ocorrencias",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "ocorrencias"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Registrar ocorrência (válido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-ocorrencia",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-ocorrencia"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"setor\": \"Usinagem\",\n  \"maquina\": \"Torno CNC 01\",\n  \"tipo\": \"Parada de máquina\",\n  \"turno\": \"Manhã\",\n  \"descricao\": \"Fuso travou.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registrar checklist (válido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-ocorrencia",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-ocorrencia"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"setor\": \"Montagem\",\n  \"maquina\": \"Prensa Hidráulica\",\n  \"tipo\": \"Checklist\",\n  \"turno\": \"Tarde\",\n  \"itensChecklist\": [\n    {\n      \"item\": \"Nível de óleo\",\n      \"ok\": true\n    },\n    {\n      \"item\": \"Proteções no lugar\",\n      \"ok\": false\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registrar ocorrência ERRO: tipo e turno inválidos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-ocorrencia",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-ocorrencia"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"setor\": \"\",\n  \"tipo\": \"Explosão\",\n  \"turno\": \"Madrugada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Resolver ocorrência (válido)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/resolver-ocorrencia/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "resolver-ocorrencia",
+                "1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolucao\": \"Fuso lubrificado e máquina liberada.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Resolver ocorrência ERRO: sem resolução e data errada",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/resolver-ocorrencia/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "resolver-ocorrencia",
+                "1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataResolucao\": \"ontem\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Excluir ocorrência (válido)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/ocorrencias/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "ocorrencias",
+                "2"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Excluir ocorrência ERRO: id zero",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/ocorrencias/0",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "ocorrencias",
+                "0"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Estoque (Peças)",
+      "item": [
+        {
+          "name": "Listar peças",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/pecas",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "pecas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cadastrar peça (válido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-peca",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-peca"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Filtro de ar\",\n  \"categoria\": \"Pneumática\",\n  \"qtd\": 12,\n  \"min\": 4,\n  \"unidade\": \"un\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar peça ERRO: qtd negativa e min texto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-peca",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-peca"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Filtro\",\n  \"qtd\": -2,\n  \"min\": \"cinco\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar quantidade (válido)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/atualizar-peca/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "atualizar-peca",
+                "2"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qtd\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Atualizar quantidade ERRO: qtd decimal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/atualizar-peca/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "atualizar-peca",
+                "2"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qtd\": 2.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Deletar peça (válido)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/deletar-peca/3",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "deletar-peca",
+                "3"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar peça ERRO: id texto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/deletar-peca/abc",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "deletar-peca",
+                "abc"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Guindastes e Aluguéis",
+      "item": [
+        {
+          "name": "Listar guindastes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/guindastes",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "guindastes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cadastrar guindaste (válido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-guindaste",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-guindaste"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"modelo\": \"Tadano GR-500\",\n  \"identificacao\": \"GD-03\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cadastrar guindaste ERRO: sem modelo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/cadastrar-guindaste",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "cadastrar-guindaste"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identificacao\": \"GD-03\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Deletar guindaste (válido)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/deletar-guindaste/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "deletar-guindaste",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar guindaste ERRO: id inválido",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/deletar-guindaste/x",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "deletar-guindaste",
+                "x"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar aluguéis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/alugueis",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "alugueis"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Alugar guindaste (válido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/alugar-guindaste",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "alugar-guindaste"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guindasteId\": 1,\n  \"cliente\": \"Construtora Horizonte\",\n  \"dataPrevistaDevolucao\": \"2026-11-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Alugar guindaste ERRO: data no formato errado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3333/alugar-guindaste",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "alugar-guindaste"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guindasteId\": \"um\",\n  \"cliente\": \"\",\n  \"dataPrevistaDevolucao\": \"10/11/2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Devolver aluguel (válido)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/devolver-aluguel/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "devolver-aluguel",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Devolver aluguel ERRO: id inválido",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3333/devolver-aluguel/abc",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3333",
+              "path": [
+                "devolver-aluguel",
+                "abc"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
