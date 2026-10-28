@@ -21,7 +21,7 @@ api-mocks/
 │   ├── controllers/           # controllers que devolvem os mocks
 │   └── mocks/dados.js         # JSON estático que simula o banco
 └── thunder/
-    └── thunder-collection_FactoryTrack-API-Mocks.json   # coleção pronta p/ importar
+    └── FactoryTrack-API-Mocks.postman_collection.json   # coleção pronta p/ importar
 ```
 
 ## Como rodar
@@ -82,10 +82,10 @@ Exemplo de resposta quando o Zod barra a requisição:
 
 1. No VS Code, instale a extensão **Thunder Client** (ícone de raio na barra lateral).
 2. Rode a API (`npm start` dentro de `api-mocks`).
-3. No Thunder Client, abra a aba **Collections** → menu **☰** → **Import** e escolha
-   `api-mocks/thunder/thunder-collection_FactoryTrack-API-Mocks.json`.
+3. No Thunder Client, abra a aba **Collections** → menu **☰** → **Import from Postman** e escolha
+   `api-mocks/thunder/FactoryTrack-API-Mocks.postman_collection.json`
+   (o Thunder Client importa coleções no formato Postman v2.1).
 4. A coleção **FactoryTrack - API Mocks** aparece com 46 requisições divididas em pastas.
    Para cada rota existe uma versão **(válido)** e uma versão **ERRO**, com dados errados de propósito.
 5. Clique em cada requisição e em **Send**. As válidas respondem 200/201 e as de erro respondem **400** com a mensagem do Zod.
-   Cada requisição já tem um teste de status code (aba **Tests**), então aparece ✔ quando o resultado é o esperado.
-6. Para rodar tudo de uma vez: clique nos **⋯** da coleção → **Run All**. O resultado mostra todas as requisições passando.
+6. Para rodar tudo de uma vez: clique nos **⋯** da coleção → **Run All**.
