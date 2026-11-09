@@ -1,5 +1,5 @@
 /* ============================================
-   IA — funções comuns das telas que usam o Claude
+   IA — funções comuns das telas que usam a IA (Gemini)
    (Ocorrência, Painel, Histórico, Estoque, Checklist)
    ============================================ */
 

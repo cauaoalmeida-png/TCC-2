@@ -48,7 +48,7 @@ exemplo só se as tabelas estiverem vazias (`prisma/seed.js`). Não precisa roda
 | `INITIAL_ADMIN_NAME` | nome do chefe geral |
 | `INITIAL_ADMIN_USERNAME` | login do chefe geral |
 | `INITIAL_ADMIN_PASSWORD` | senha do chefe geral (mínimo 8 caracteres) |
-| `ANTHROPIC_API_KEY` | (opcional) chave da API do Claude, criada em https://console.anthropic.com. Liga os recursos de IA: relato na Ocorrência, assistente no Painel, sugestão de solução no Histórico, nota fiscal no Estoque e foto no Checklist |
+| `GEMINI_API_KEY` | (opcional) chave gratuita do Gemini, criada em https://aistudio.google.com/apikey (sem cartão). Liga os recursos de IA: relato na Ocorrência, assistente no Painel, sugestão de solução no Histórico, nota fiscal no Estoque e foto no Checklist |
 
    Se a senha do banco tiver caracteres especiais (`@ : / ? # %`), troque-os no
    `DATABASE_URL` pelo código URL (ex.: `@` vira `%40`). Nos outros campos use a senha normal.
@@ -56,9 +56,12 @@ exemplo só se as tabelas estiverem vazias (`prisma/seed.js`). Não precisa roda
    O `AUTH_SECRET` é obrigatório na Vercel: sem ele cada função gera uma chave
    diferente e o login cai a toda hora.
 
-   Sem `ANTHROPIC_API_KEY` o sistema funciona normalmente; só as caixas
-   de IA não aparecem. Cada relato custa poucos centavos de dólar,
-   cobrados na conta da Anthropic; vale definir um limite de gasto no console.
+   Sem `GEMINI_API_KEY` o sistema funciona normalmente; só as caixas
+   de IA não aparecem. A chave do AI Studio sem cartão cadastrado usa só a
+   cota gratuita, então não há cobrança: quando a cota do dia acaba, a IA
+   avisa para tentar mais tarde. No plano gratuito o Google pode usar os
+   textos e fotos enviados para melhorar os produtos dele, então evite dados
+   sigilosos. Opcional: `GEMINI_MODEL` troca o modelo (padrão `gemini-3.8-flash`).
 
 5. Clique em **Deploy**. Ao terminar, a Vercel mostra o link público.
 

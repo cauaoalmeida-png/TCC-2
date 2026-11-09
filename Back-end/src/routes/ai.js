@@ -1,5 +1,3 @@
-const Anthropic = require('@anthropic-ai/sdk').default;
-
 // ROTAS DE IA
 // Todas as rotas só sugerem: nada é gravado no banco por aqui. Quem confere
 // e salva é sempre a pessoa, pelas rotas normais do sistema.
@@ -11,7 +9,11 @@ const Anthropic = require('@anthropic-ai/sdk').default;
 //   POST /ia/checklist-foto  chefia manda a foto da máquina, IA aponta itens
 // ==========================================
 
-const MODELO = 'claude-opus-5-5';
+// Gemini (Google AI Studio), que tem uso gratuito. Se o modelo principal
+// estiver sem cota ou fora do ar, tenta o reserva (mais leve).
+const MODELO = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+const MODELO_RESERVA = process.env.GEMINI_MODEL_RESERVA || 'gemini-3.5-flash-lite';
+const URL_GEMINI = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/models';
 const TIPOS = ['Parada de máquina', 'Problema de qualidade', 'Falta de material', 'Manutenção preventiva', 'Outro'];
 const TURNOS = ['Manhã', 'Tarde', 'Noite'];
 const GRAVIDADES = ['Baixa', 'Média', 'Alta', 'Crítica'];
@@ -76,8 +78,7 @@ function validarArquivo(arquivo, tiposAceitos) {
 }
 
 function blocoArquivo(arquivo) {
-    const source = { type: 'base64', media_type: arquivo.mediaType, data: arquivo.data };
-    return arquivo.mediaType === 'application/pdf' ? { type: 'document', source } : { type: 'image', source };
+    return { inlineData: { mimeType: arquivo.mediaType, data: arquivo.data } };
 }
 
 function corta(texto, tamanho) {
@@ -97,58 +98,99 @@ class ErroIA extends Error {
     }
 }
 
+// Erro devolvido pela API do Gemini.
+class ErroAPI extends Error {
+    constructor(status, mensagem) {
+        super(mensagem);
+        this.status = status;
+    }
+}
+
 function responderErro(res, err, contexto) {
     if (err instanceof ErroIA) {
         return res.status(err.status).json({ erro: err.message });
     }
-    if (err instanceof Anthropic.AuthenticationError) {
-        console.error(' Chave da IA inválida:', err.message);
-        return res.status(503).json({ erro: 'A chave da IA está inválida. Avise o administrador.' });
-    }
-    if (err instanceof Anthropic.RateLimitError) {
-        return res.status(429).json({ erro: 'A IA está ocupada agora. Tente de novo em instantes.' });
-    }
-    if (err instanceof Anthropic.APIError) {
+    if (err instanceof ErroAPI) {
+        if ((err.status === 400 && /API key/i.test(err.message)) || err.status === 401 || err.status === 403) {
+            console.error(' Chave da IA inválida:', err.message);
+            return res.status(503).json({ erro: 'A chave da IA está inválida. Avise o administrador.' });
+        }
+        if (err.status === 429) {
+            return res.status(429).json({ erro: 'A cota gratuita da IA acabou por agora. Tente de novo mais tarde.' });
+        }
         console.error(` Erro da API de IA (${contexto}):`, err.status, err.message);
         return res.status(502).json({ erro: 'A IA está indisponível agora. Tente de novo mais tarde.' });
+    }
+    if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+        return res.status(504).json({ erro: 'A IA demorou demais para responder. Tente de novo.' });
     }
     console.error(` Erro na IA (${contexto}):`, err.message);
     return res.status(500).json({ erro: 'Erro ao falar com a IA.' });
 }
 
 function registerRoutes(app, { prisma, requireSupervisor }) {
-    const cliente = process.env.ANTHROPIC_API_KEY
-        ? new Anthropic({ timeout: 50_000, maxRetries: 1 })
-        : null;
+    const chave = process.env.GEMINI_API_KEY || '';
+    const ativa = Boolean(chave);
 
-    // Faz o pedido ao Claude e devolve o JSON já no formato do schema.
-    async function pedirJSON({ system, conteudo, schema, esforco = 'low' }) {
-        const resposta = await cliente.beta.messages.create({
-            model: MODELO,
-            max_tokens: 16000,
-            betas: ['server-side-fallback-2026-07-01'],
-            fallbacks: 'default',
-            output_config: {
-                effort: esforco,
-                format: { type: 'json_schema', schema }
-            },
-            system,
-            messages: [{ role: 'user', content: conteudo }]
+    // Uma chamada ao Gemini pedindo JSON no formato do schema.
+    async function chamarGemini(modelo, corpo, tempoMs) {
+        const resposta = await fetch(`${URL_GEMINI}/${encodeURIComponent(modelo)}:generateContent`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chave },
+            body: JSON.stringify(corpo),
+            signal: AbortSignal.timeout(tempoMs)
         });
-        if (resposta.stop_reason === 'refusal') {
+        const dados = await resposta.json().catch(() => ({}));
+        if (!resposta.ok) {
+            throw new ErroAPI(resposta.status, dados.error?.message || `HTTP ${resposta.status}`);
+        }
+        return dados;
+    }
+
+    // Faz o pedido à IA e devolve o JSON já no formato do schema.
+    // `conteudo` é uma lista de { type: 'text', text } ou blocos de arquivo.
+    async function pedirJSON({ system, conteudo, schema }) {
+        const corpo = {
+            systemInstruction: { parts: [{ text: system }] },
+            contents: [{ role: 'user', parts: conteudo.map(b => (b.type === 'text' ? { text: b.text } : b)) }],
+            generationConfig: {
+                responseMimeType: 'application/json',
+                responseJsonSchema: schema,
+                maxOutputTokens: 8192
+            }
+        };
+        let dados;
+        try {
+            dados = await chamarGemini(MODELO, corpo, 30_000);
+        } catch (err) {
+            const tentarReserva = MODELO_RESERVA && MODELO_RESERVA !== MODELO &&
+                (err.name === 'TimeoutError' || (err instanceof ErroAPI && [404, 429, 500, 503].includes(err.status)));
+            if (!tentarReserva) throw err;
+            console.warn(` IA: ${MODELO} falhou (${err.status || err.name}), tentando ${MODELO_RESERVA}`);
+            dados = await chamarGemini(MODELO_RESERVA, corpo, 25_000);
+        }
+        if (dados.promptFeedback?.blockReason) {
             throw new ErroIA(422, 'A IA não conseguiu analisar este pedido.');
         }
-        if (resposta.stop_reason === 'max_tokens') {
+        const candidato = dados.candidates?.[0];
+        if (candidato?.finishReason === 'MAX_TOKENS') {
             throw new ErroIA(502, 'A resposta da IA ficou grande demais. Tente um pedido menor.');
         }
-        const bloco = resposta.content.find(b => b.type === 'text');
-        if (!bloco) throw new ErroIA(502, 'A IA não devolveu uma resposta. Tente de novo.');
-        return JSON.parse(bloco.text);
+        if (candidato && !['STOP', undefined].includes(candidato.finishReason)) {
+            throw new ErroIA(422, 'A IA não conseguiu analisar este pedido.');
+        }
+        const texto = (candidato?.content?.parts || []).filter(p => p.text && !p.thought).map(p => p.text).join('');
+        if (!texto) throw new ErroIA(502, 'A IA não devolveu uma resposta. Tente de novo.');
+        try {
+            return JSON.parse(texto);
+        } catch {
+            throw new ErroIA(502, 'A IA devolveu uma resposta inválida. Tente de novo.');
+        }
     }
 
     // Checagens comuns a todas as rotas que chamam a IA.
     function prepararPedido(req, res, next) {
-        if (!cliente) {
+        if (!ativa) {
             return res.status(503).json({ erro: 'A IA não está configurada neste servidor.' });
         }
         if (!dentroDoLimite(req.user.id)) {
@@ -225,7 +267,7 @@ function registerRoutes(app, { prisma, requireSupervisor }) {
 
     // Diz para as telas se o recurso de IA está ligado (chave configurada).
     app.get('/ia/status', (req, res) => {
-        res.json({ ativa: Boolean(cliente) });
+        res.json({ ativa });
     });
 
     // ==========================================
@@ -331,7 +373,6 @@ Não use markdown além das listas com "- ".`
         try {
             const [dados, repetidas] = await Promise.all([retratoDaFabrica(), falhasRepetidas()]);
             const resumo = await pedirJSON({
-                esforco: 'medium',
                 conteudo: [{ type: 'text', text: `Dados atuais da fábrica (JSON):\n${JSON.stringify(dados)}\n\nFalhas repetidas nos últimos 30 dias (calculadas pelo sistema):\n${JSON.stringify(repetidas)}` }],
                 schema: {
                     type: 'object',
@@ -474,7 +515,6 @@ Escreva em português.`
             conteudo.push({ type: 'text', text: `Peças já cadastradas no estoque:\n${JSON.stringify(pecas.map(p => ({ pecaId: p.id, nome: p.nome, categoria: p.categoria, unidade: p.unidade })))}` });
 
             const nota = await pedirJSON({
-                esforco: 'medium',
                 conteudo,
                 schema: {
                     type: 'object',
@@ -544,7 +584,6 @@ Ignore fretes, impostos e serviços. Não invente itens que não estão na nota.
         try {
             const ids = itensValidos.map(i => i.id);
             const analise = await pedirJSON({
-                esforco: 'medium',
                 conteudo: [
                     blocoArquivo(checagem.arquivo),
                     { type: 'text', text: `${maquina ? `Equipamento: ${maquina}\n` : ''}Itens do checklist:\n${itensValidos.map(i => `${i.id}: ${i.label}`).join('\n')}` }
