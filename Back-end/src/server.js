@@ -5,6 +5,7 @@ const registerMachineRoutes = require('./routes/machines');
 const registerOccurrenceRoutes = require('./routes/occurrences');
 const registerInventoryRoutes = require('./routes/inventory');
 const registerRentalRoutes = require('./routes/rentals');
+const registerAiRoutes = require('./routes/ai');
 
 const express = require('express');
 const cors = require('cors');
@@ -12,7 +13,10 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 
 const app = express();
-app.use(express.json());
+// O relato por IA pode trazer uma foto, então só essa rota aceita corpo maior.
+const jsonPadrao = express.json();
+const jsonComFoto = express.json({ limit: '4mb' });
+app.use((req, res, next) => (req.path === '/ia/relato' ? jsonComFoto : jsonPadrao)(req, res, next));
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 const allowedOrigins = new Set(
@@ -82,6 +86,7 @@ registerMachineRoutes(app, { prisma, requireSupervisor });
 registerOccurrenceRoutes(app, { prisma, requireSupervisor });
 registerInventoryRoutes(app, { prisma, requireSupervisor });
 registerRentalRoutes(app, { prisma, requireSupervisor });
+registerAiRoutes(app, { prisma });
 
 // ROTA 404 (Coringa)
 // ==========================================
