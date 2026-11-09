@@ -313,7 +313,8 @@ function registerRoutes(app, { prisma, requireSupervisor }) {
                 system: `Você ajuda operadores de uma fábrica a registrar ocorrências no FactoryTrack.
 O operador descreve o problema com as próprias palavras, às vezes com erros de digitação ou ditado por voz, e pode mandar uma foto.
 Preencha os campos da ocorrência:
-- setor e maquina: escolha só entre os cadastrados abaixo. A máquina precisa pertencer ao setor escolhido. Se o relato não deixar claro, use "".
+- maquina: escolha entre as cadastradas abaixo a que o operador citou, mesmo que ele tenha escrito o nome de forma abreviada, diferente ou com erro (ex.: "prensa 2" pode ser "Prensa Hidráulica 02"; "esteira A" pode ser "Esteira Linha A"). Use "" só se nenhuma máquina cadastrada se parecer com o que ele descreveu.
+- setor: o setor da máquina escolhida. Sem máquina, escolha o setor citado ou deduzido pelo relato; se não der para saber, use "".
 - tipo: o tipo de ocorrência que melhor se encaixa.
 - turno: use "${turnoAtual()}" (turno atual), a não ser que o operador diga outro.
 - descricao: reescreva o relato em português claro e objetivo, em até 4 frases, sem inventar fatos que o operador não disse. Se houver foto, inclua o que ela mostra de relevante.
@@ -325,9 +326,12 @@ Setores e máquinas cadastrados:
 ${listaMaquinas || '(nenhum setor cadastrado)'}`
             });
 
-            // Garante que a máquina sugerida pertence ao setor sugerido.
+            // Garante que a máquina sugerida pertence ao setor sugerido. Se não
+            // pertencer, usa o setor da máquina (quando só um setor a tem).
             if (sugestao.maquina && !(maquinasPorSetor.get(sugestao.setor) || []).includes(sugestao.maquina)) {
-                sugestao.maquina = '';
+                const setoresDaMaquina = setores.filter(s => (maquinasPorSetor.get(s) || []).includes(sugestao.maquina));
+                if (setoresDaMaquina.length === 1) sugestao.setor = setoresDaMaquina[0];
+                else sugestao.maquina = '';
             }
             res.status(200).json(sugestao);
         } catch (err) {
