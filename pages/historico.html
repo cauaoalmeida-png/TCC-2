@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/header.css">
   <link rel="stylesheet" href="../css/footer.css">
+  <link rel="stylesheet" href="../css/ia.css">
   <style>
     .hist-card {
       background: white;
@@ -180,6 +181,16 @@
   <div class="modal">
     <h3><i class="fas fa-check-circle text-success"></i> Marcar como Resolvido</h3>
     <p class="modal-text">Descreva o que foi feito para resolver o problema:</p>
+    <div class="ia-modal-sugestao" id="iaSolucaoBox" hidden>
+      <button type="button" class="btn btn-outline btn-sm" id="iaSolucaoBtn" onclick="sugerirSolucaoIA()">
+        <i class="fas fa-wand-magic-sparkles"></i> Sugerir com IA
+      </button>
+      <div class="ia-erro" id="iaSolucaoErro" role="alert" hidden></div>
+      <div class="ia-resultado" id="iaSolucaoResultado" hidden>
+        <p id="iaSolucaoBase"></p>
+        <div id="iaSolucaoPecas"></div>
+      </div>
+    </div>
     <textarea id="resolucaoInput" placeholder="Ex: Correia reposicionada e tensionada. Máquina retornou ao normal."></textarea>
     <div class="modal-buttons">
       <button class="btn btn-success" onclick="confirmarResolucao()">
@@ -229,4 +240,5 @@
 <script src="../js/auth.js"></script>
 <script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
+<script src="../js/ia.js"></script>
 <script src="../js/pages/historico.js"></script>

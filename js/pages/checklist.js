@@ -9,6 +9,7 @@
     document.getElementById('inspetorNome').value = getSessao().usuario.nome;
     renderChecklist();
     loadSetores(); // Agora carrega direto do MySQL!
+    iaAtiva().then(ativa => { document.getElementById('iaChecklistBox').hidden = !ativa; });
 });
 
 const CHECKLIST_ITENS = [
@@ -238,3 +239,69 @@ function limparChecklist() {
   });
   updateSummary();
 }
+
+// ==========================================
+// ANÁLISE POR FOTO (IA)
+// A IA marca os itens que parecem com problema; o inspetor confere.
+// ==========================================
+document.getElementById('iaChecklistFoto').addEventListener('change', e => {
+  const file = e.target.files[0];
+  document.getElementById('iaChecklistFotoNome').textContent = file ? 'Foto escolhida' : 'Escolher foto';
+});
+
+document.getElementById('iaChecklistBtn').addEventListener('click', async function() {
+  const file = document.getElementById('iaChecklistFoto').files[0];
+  const caixaErro = document.getElementById('iaChecklistErro');
+  const resultado = document.getElementById('iaChecklistResultado');
+  iaMostrarErro(caixaErro, '');
+  resultado.hidden = true;
+  if (!file) {
+    iaMostrarErro(caixaErro, 'Escolha uma foto do equipamento.');
+    return;
+  }
+
+  let foto;
+  try {
+    foto = await iaReduzirFoto(file, 1600);
+  } catch (erro) {
+    iaMostrarErro(caixaErro, 'Não foi possível ler essa imagem. Tente outra foto.');
+    return;
+  }
+
+  const itens = CHECKLIST_ITENS.flatMap(cat => cat.itens.map(item => ({ id: item.id, label: `${cat.categoria}: ${item.label}` })));
+  const maquina = document.getElementById('maquinaSelect').value;
+
+  iaCarregando(this, true);
+  const { dados, erro } = await iaChamar('/ia/checklist-foto', { foto, itens, maquina });
+  iaCarregando(this, false);
+  if (erro) {
+    iaMostrarErro(caixaErro, erro);
+    return;
+  }
+
+  const marcados = [];
+  dados.itens.forEach(sugestao => {
+    const cb = document.getElementById(sugestao.id);
+    const obs = document.getElementById(`obs-${sugestao.id}`);
+    if (!cb || !obs) return;
+    cb.checked = true;
+    obs.classList.add('show');
+    obs.value = obs.value ? `${obs.value}\nIA: ${sugestao.motivo}` : `IA: ${sugestao.motivo}`;
+    const item = CHECKLIST_ITENS.flatMap(c => c.itens).find(i => i.id === sugestao.id);
+    marcados.push(`${item.label}: ${sugestao.motivo}`);
+  });
+  updateSummary();
+
+  resultado.replaceChildren();
+  const geral = document.createElement('p');
+  geral.textContent = dados.observacaoGeral;
+  resultado.appendChild(geral);
+  if (marcados.length) {
+    iaRenderLista(resultado, `${marcados.length} item(ns) marcado(s) pela IA — confira abaixo:`, marcados);
+  } else {
+    const nada = document.createElement('p');
+    nada.textContent = 'A IA não viu problemas na foto. Confira os itens pessoalmente.';
+    resultado.appendChild(nada);
+  }
+  resultado.hidden = false;
+});

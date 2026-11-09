@@ -155,33 +155,7 @@
   let iaFoto = null;
 
   async function iniciarRelatoIA() {
-    try {
-      const resposta = await fetch(`${API_BASE_URL}/ia/status`);
-      if (!resposta.ok) return;
-      const status = await resposta.json();
-      if (status.ativa) document.getElementById('iaBox').hidden = false;
-    } catch (erro) {
-      console.error('Não foi possível verificar a IA:', erro);
-    }
-  }
-
-  // Reduz a foto para no máximo 1280 px e JPEG, para o envio ficar leve.
-  function reduzirFoto(file) {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => {
-        const escala = Math.min(1, 1280 / Math.max(img.width, img.height));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * escala);
-        canvas.height = Math.round(img.height * escala);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        URL.revokeObjectURL(url);
-        resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem inválida')); };
-      img.src = url;
-    });
+    if (await iaAtiva()) document.getElementById('iaBox').hidden = false;
   }
 
   document.getElementById('iaFoto').addEventListener('change', async function(e) {
@@ -191,18 +165,12 @@
     nome.textContent = 'Foto (opcional)';
     if (!file) return;
     try {
-      iaFoto = { mediaType: 'image/jpeg', data: await reduzirFoto(file) };
+      iaFoto = await iaReduzirFoto(file);
       nome.textContent = 'Foto anexada';
     } catch (erro) {
-      mostrarErroIA('Não foi possível ler essa imagem. Tente outra foto.');
+      iaMostrarErro(document.getElementById('iaErro'), 'Não foi possível ler essa imagem. Tente outra foto.');
     }
   });
-
-  function mostrarErroIA(mensagem) {
-    const caixa = document.getElementById('iaErro');
-    caixa.textContent = mensagem;
-    caixa.hidden = !mensagem;
-  }
 
   function preencherFormulario(sugestao) {
     if (sugestao.setor) {
@@ -225,34 +193,20 @@
 
   document.getElementById('iaBtn').addEventListener('click', async function() {
     const texto = document.getElementById('iaTexto').value.trim();
-    mostrarErroIA('');
+    const caixaErro = document.getElementById('iaErro');
+    iaMostrarErro(caixaErro, '');
     if (texto.length < 5) {
-      mostrarErroIA('Escreva um pouco mais sobre o problema.');
+      iaMostrarErro(caixaErro, 'Escreva um pouco mais sobre o problema.');
       return;
     }
 
-    const txtOriginal = this.innerHTML;
-    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
-    this.disabled = true;
-
-    try {
-      const resposta = await fetch(`${API_BASE_URL}/ia/relato`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ texto, foto: iaFoto })
-      });
-      const resultado = await resposta.json().catch(() => ({}));
-      if (!resposta.ok) {
-        mostrarErroIA(resultado.erro || 'A IA não respondeu. Preencha o formulário manualmente.');
-        return;
-      }
-      preencherFormulario(resultado);
-      document.getElementById('ocorrenciaForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch (erro) {
-      console.error('Falha no relato por IA:', erro);
-      mostrarErroIA('Erro na conexão com o servidor. Tente de novo.');
-    } finally {
-      this.innerHTML = txtOriginal;
-      this.disabled = false;
+    iaCarregando(this, true);
+    const { dados, erro } = await iaChamar('/ia/relato', { texto, foto: iaFoto });
+    iaCarregando(this, false);
+    if (erro) {
+      iaMostrarErro(caixaErro, erro);
+      return;
     }
+    preencherFormulario(dados);
+    document.getElementById('ocorrenciaForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });

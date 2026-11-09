@@ -232,6 +232,8 @@ async function excluirRegistro(id) {
   function abrirModal(id) {
     resolvendoId = id;
     document.getElementById('resolucaoInput').value = '';
+    limparSugestaoIA();
+    iaAtiva().then(ativa => { document.getElementById('iaSolucaoBox').hidden = !ativa; });
     document.getElementById('modalOverlay').classList.add('open');
   }
 
@@ -258,7 +260,9 @@ async function excluirRegistro(id) {
             alert(erro.erro || 'Não foi possível marcar como resolvido.');
             return;
         }
+        const baixas = pecasMarcadasIA();
         fecharModal();
+        if (baixas.length) await darBaixaPecasIA(baixas);
         renderHistorico(); // Recarrega da base de dados
     } catch (erro) {
         alert('Erro ao comunicar com o servidor.');
@@ -396,3 +400,77 @@ async function confirmarExportacao() {
       btn.style.pointerEvents = 'auto';
   }
 }
+
+  // ==========================================
+  // SUGESTÃO DE SOLUÇÃO COM IA (modal de resolução)
+  // A IA olha casos parecidos já resolvidos e sugere o texto e as peças usadas.
+  // ==========================================
+  let pecasSugeridasIA = [];
+
+  function limparSugestaoIA() {
+    pecasSugeridasIA = [];
+    iaMostrarErro(document.getElementById('iaSolucaoErro'), '');
+    document.getElementById('iaSolucaoResultado').hidden = true;
+    document.getElementById('iaSolucaoPecas').replaceChildren();
+  }
+
+  async function sugerirSolucaoIA() {
+    const botao = document.getElementById('iaSolucaoBtn');
+    const caixaErro = document.getElementById('iaSolucaoErro');
+    limparSugestaoIA();
+    iaCarregando(botao, true);
+    const { dados, erro } = await iaChamar('/ia/solucao', { ocorrenciaId: resolvendoId });
+    iaCarregando(botao, false);
+    if (erro) {
+      iaMostrarErro(caixaErro, erro);
+      return;
+    }
+
+    document.getElementById('resolucaoInput').value = dados.solucao;
+    document.getElementById('iaSolucaoBase').textContent = dados.baseadoEm;
+    pecasSugeridasIA = dados.pecas || [];
+
+    const lista = document.getElementById('iaSolucaoPecas');
+    if (pecasSugeridasIA.length) {
+      const titulo = document.createElement('h4');
+      titulo.textContent = 'Dar baixa no estoque ao confirmar:';
+      lista.appendChild(titulo);
+      pecasSugeridasIA.forEach((peca, i) => {
+        const linha = document.createElement('label');
+        linha.className = 'ia-peca';
+        const marcar = document.createElement('input');
+        marcar.type = 'checkbox';
+        marcar.checked = true;
+        marcar.id = `iaPeca${i}`;
+        const texto = document.createElement('span');
+        texto.textContent = `${peca.quantidade} ${peca.unidade || 'un'} de ${peca.nome} (há ${peca.disponivel} no estoque)`;
+        linha.append(marcar, texto);
+        lista.appendChild(linha);
+      });
+    }
+    document.getElementById('iaSolucaoResultado').hidden = false;
+  }
+
+  function pecasMarcadasIA() {
+    return pecasSugeridasIA.filter((_, i) => document.getElementById(`iaPeca${i}`)?.checked);
+  }
+
+  // Desconta as peças usando a quantidade atual do banco.
+  async function darBaixaPecasIA(pecas) {
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/pecas`);
+      const estoque = await resposta.json();
+      for (const peca of pecas) {
+        const atual = estoque.find(p => p.id === peca.pecaId);
+        if (!atual) continue;
+        await fetch(`${API_BASE_URL}/atualizar-peca/${peca.pecaId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ qtd: Math.max(0, atual.qtd - peca.quantidade) })
+        });
+      }
+    } catch (erro) {
+      console.error('Erro ao dar baixa nas peças:', erro);
+      alert('A ocorrência foi resolvida, mas não foi possível dar baixa nas peças. Ajuste no Estoque.');
+    }
+  }

@@ -13,10 +13,10 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 
 const app = express();
-// O relato por IA pode trazer uma foto, então só essa rota aceita corpo maior.
+// As rotas de IA que recebem foto ou nota fiscal aceitam corpo maior; as demais não.
 const jsonPadrao = express.json();
-const jsonComFoto = express.json({ limit: '4mb' });
-app.use((req, res, next) => (req.path === '/ia/relato' ? jsonComFoto : jsonPadrao)(req, res, next));
+const jsonComArquivo = express.json({ limit: '4mb' });
+app.use((req, res, next) => (registerAiRoutes.ROTAS_COM_ARQUIVO.includes(req.path) ? jsonComArquivo : jsonPadrao)(req, res, next));
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 const allowedOrigins = new Set(
@@ -86,7 +86,7 @@ registerMachineRoutes(app, { prisma, requireSupervisor });
 registerOccurrenceRoutes(app, { prisma, requireSupervisor });
 registerInventoryRoutes(app, { prisma, requireSupervisor });
 registerRentalRoutes(app, { prisma, requireSupervisor });
-registerAiRoutes(app, { prisma });
+registerAiRoutes(app, { prisma, requireSupervisor });
 
 // ROTA 404 (Coringa)
 // ==========================================

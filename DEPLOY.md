@@ -48,7 +48,7 @@ exemplo só se as tabelas estiverem vazias (`prisma/seed.js`). Não precisa roda
 | `INITIAL_ADMIN_NAME` | nome do chefe geral |
 | `INITIAL_ADMIN_USERNAME` | login do chefe geral |
 | `INITIAL_ADMIN_PASSWORD` | senha do chefe geral (mínimo 8 caracteres) |
-| `ANTHROPIC_API_KEY` | (opcional) chave da API do Claude, criada em https://console.anthropic.com. Liga o "Relatar com IA" na tela de Ocorrência |
+| `ANTHROPIC_API_KEY` | (opcional) chave da API do Claude, criada em https://console.anthropic.com. Liga os recursos de IA: relato na Ocorrência, assistente no Painel, sugestão de solução no Histórico, nota fiscal no Estoque e foto no Checklist |
 
    Se a senha do banco tiver caracteres especiais (`@ : / ? # %`), troque-os no
    `DATABASE_URL` pelo código URL (ex.: `@` vira `%40`). Nos outros campos use a senha normal.
@@ -56,8 +56,8 @@ exemplo só se as tabelas estiverem vazias (`prisma/seed.js`). Não precisa roda
    O `AUTH_SECRET` é obrigatório na Vercel: sem ele cada função gera uma chave
    diferente e o login cai a toda hora.
 
-   Sem `ANTHROPIC_API_KEY` o sistema funciona normalmente; só a caixa
-   "Relatar com IA" não aparece. Cada relato custa poucos centavos de dólar,
+   Sem `ANTHROPIC_API_KEY` o sistema funciona normalmente; só as caixas
+   de IA não aparecem. Cada relato custa poucos centavos de dólar,
    cobrados na conta da Anthropic; vale definir um limite de gasto no console.
 
 5. Clique em **Deploy**. Ao terminar, a Vercel mostra o link público.
