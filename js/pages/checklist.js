@@ -164,7 +164,7 @@ async function enviarChecklist() {
   const turno = document.getElementById('turnoSelect').value;
 
   if (!setor || !maquina || !turno) {
-    alert('Preencha setor, máquina e turno antes de registrar.'); return;
+    avisar('Preencha setor, máquina e turno antes de registrar.'); return;
   }
 
   const itensMarcados = [];
@@ -220,15 +220,15 @@ async function enviarChecklist() {
 
           window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-          alert("Erro ao salvar checklist no servidor.");
+          avisar("Erro ao salvar checklist no servidor.");
       }
   } catch (erro) {
-      alert("Erro de conexão com o banco de dados.");
+      avisar("Erro de conexão com o banco de dados.");
   }
 }
 
-function limparChecklist() {
-  if (!confirm('Limpar todos os itens marcados?')) return;
+async function limparChecklist() {
+  if (!(await confirmar('Limpar todos os itens marcados?', { titulo: 'Limpar checklist', ok: 'Limpar' }))) return;
   CHECKLIST_ITENS.forEach(cat => {
     cat.itens.forEach(item => {
       const cb = document.getElementById(item.id);

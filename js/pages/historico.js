@@ -196,11 +196,11 @@
 // 🟢 Função de exclusão aprimorada com diagnóstico
 async function excluirRegistro(id) {
     if (!id) {
-        alert("Erro: ID do registro não foi encontrado.");
+        avisar("Erro: ID do registro não foi encontrado.");
         return;
     }
 
-    if (confirm(`Tem certeza que deseja excluir a ocorrência #${id}?`)) {
+    if (await confirmar(`Tem certeza que deseja excluir a ocorrência #${id}? Essa ação não pode ser desfeita.`, { titulo: 'Excluir ocorrência', ok: 'Excluir', perigo: true })) {
         try {
             // Garante o endereço correto do backend
             const baseUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:3000';
@@ -216,15 +216,15 @@ async function excluirRegistro(id) {
             });
 
             if (resposta.ok) {
-                alert("Ocorrência excluída com sucesso!");
+                avisar("Ocorrência excluída com sucesso!");
                 renderHistorico(); // Recarrega a tela do histórico
             } else {
                 const erroDados = await resposta.json().catch(() => ({}));
-                alert(`Erro (${resposta.status}): ${erroDados.erro || 'Servidor recusou a exclusão.'}`);
+                avisar(`Erro (${resposta.status}): ${erroDados.erro || 'Servidor recusou a exclusão.'}`);
             }
         } catch (erro) {
             console.error("Erro de conexão:", erro);
-            alert("Erro de conexão! Verifique se o servidor Node.js está rodando.");
+            avisar("Erro de conexão! Verifique se o servidor Node.js está rodando.");
         }
     }
 }
@@ -245,7 +245,7 @@ async function excluirRegistro(id) {
   // ATUALIZAR STATUS NO BANCO
   async function confirmarResolucao() {
     const texto = document.getElementById('resolucaoInput').value.trim();
-    if (!texto) { alert('Por favor, descreva o que foi feito.'); return; }
+    if (!texto) { avisar('Por favor, descreva o que foi feito.'); return; }
     
     const dataAtual = new Date().toISOString();
 
@@ -257,7 +257,7 @@ async function excluirRegistro(id) {
         });
         if (!resposta.ok) {
             const erro = await resposta.json().catch(() => ({}));
-            alert(erro.erro || 'Não foi possível marcar como resolvido.');
+            avisar(erro.erro || 'Não foi possível marcar como resolvido.');
             return;
         }
         const baixas = pecasMarcadasIA();
@@ -265,7 +265,7 @@ async function excluirRegistro(id) {
         if (baixas.length) await darBaixaPecasIA(baixas);
         renderHistorico(); // Recarrega da base de dados
     } catch (erro) {
-        alert('Erro ao comunicar com o servidor.');
+        avisar('Erro ao comunicar com o servidor.');
     }
   }
 
@@ -335,7 +335,7 @@ async function confirmarExportacao() {
   const expEst = document.getElementById('expEstoque').checked;
   const expCad = document.getElementById('expCadastros').checked;
 
-  if (!expOc && !expEst && !expCad) { alert('Selecione pelo menos uma opção.'); return; }
+  if (!expOc && !expEst && !expCad) { avisar('Selecione pelo menos uma opção.'); return; }
 
   const btn = document.getElementById('btnExportar');
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
@@ -395,7 +395,7 @@ async function confirmarExportacao() {
       document.getElementById('exportModal').remove();
 
   } catch (error) {
-      alert("Erro ao buscar dados do servidor para a exportação!");
+      avisar("Erro ao buscar dados do servidor para a exportação!");
       btn.innerHTML = '<i class="fas fa-download"></i> Exportar';
       btn.style.pointerEvents = 'auto';
   }
@@ -471,6 +471,6 @@ async function confirmarExportacao() {
       }
     } catch (erro) {
       console.error('Erro ao dar baixa nas peças:', erro);
-      alert('A ocorrência foi resolvida, mas não foi possível dar baixa nas peças. Ajuste no Estoque.');
+      avisar('A ocorrência foi resolvida, mas não foi possível dar baixa nas peças. Ajuste no Estoque.');
     }
   }

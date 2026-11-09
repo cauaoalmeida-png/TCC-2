@@ -94,7 +94,7 @@ async function addPeca() {
     const categoria = document.getElementById('pecaCategoria').value;
     const unidade = document.getElementById('pecaUnidade').value;
 
-    if (!nome || isNaN(qtd) || isNaN(min)) { alert('Preencha todos os campos obrigatórios.'); return; }
+    if (!nome || isNaN(qtd) || isNaN(min)) { avisar('Preencha todos os campos obrigatórios.'); return; }
 
     try {
         const resposta = await fetch(`${API_BASE_URL}/cadastrar-peca`, {
@@ -110,7 +110,7 @@ async function addPeca() {
             renderEstoque(); // Recarrega a lista do banco
         }
     } catch (erro) {
-        alert('Erro ao comunicar com o servidor.');
+        avisar('Erro ao comunicar com o servidor.');
     }
 }
 
@@ -148,14 +148,14 @@ async function confirmarUso() {
         document.getElementById('modalUsar').classList.remove('open');
         renderEstoque();
     } catch (erro) {
-        alert('Erro ao atualizar banco.');
+        avisar('Erro ao atualizar banco.');
     }
 }
 
 // REPOR PEÇA (ATUALIZAR BANCO)
 async function confirmarReposicao() {
     const qtdAdicionada = parseInt(document.getElementById('qtdRepor').value);
-    if (!qtdAdicionada || qtdAdicionada <= 0) { alert('Quantidade inválida.'); return; }
+    if (!qtdAdicionada || qtdAdicionada <= 0) { avisar('Quantidade inválida.'); return; }
     
     const peca = estoqueAtual.find(p => p.id === pecaSelecionada);
     const novaQtd = peca.qtd + qtdAdicionada;
@@ -169,19 +169,19 @@ async function confirmarReposicao() {
         document.getElementById('modalRepor').classList.remove('open');
         renderEstoque();
     } catch (erro) {
-        alert('Erro ao atualizar banco.');
+        avisar('Erro ao atualizar banco.');
     }
 }
 
 // DELETAR PEÇA
 async function deletePeca(id) {
-    if (!confirm('Excluir esta peça do estoque?')) return;
+    if (!(await confirmar('Excluir esta peça do estoque?', { titulo: 'Excluir peça', ok: 'Excluir', perigo: true }))) return;
 
     try {
         await fetch(`${API_BASE_URL}/deletar-peca/${id}`, { method: 'DELETE' });
         renderEstoque();
     } catch (erro) {
-        alert('Erro ao deletar do servidor.');
+        avisar('Erro ao deletar do servidor.');
     }
 }
 

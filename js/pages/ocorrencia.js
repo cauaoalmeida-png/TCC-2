@@ -136,13 +136,13 @@
         document.getElementById('wppBox').classList.add('show');
         document.getElementById('ocorrenciaForm').style.display = 'none';
       } else {
-        alert('Erro ao salvar ocorrência no banco.');
+        avisar('Erro ao salvar ocorrência no banco.');
         btn.innerHTML = txtOriginal;
         btn.style.pointerEvents = 'auto';
       }
     } catch (erro) {
       console.error('Falha ao comunicar com o servidor:', erro);
-      alert('Erro na conexão com o servidor. O back-end está rodando?');
+      avisar('Erro na conexão com o servidor. O back-end está rodando?');
       btn.innerHTML = txtOriginal;
       btn.style.pointerEvents = 'auto';
     }
