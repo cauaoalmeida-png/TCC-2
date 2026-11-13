@@ -60,7 +60,7 @@
             <h2>Relatar com IA</h2>
           </div>
           <p class="ia-intro">Conte com suas palavras o que aconteceu. Pode usar o microfone do teclado do celular. A IA preenche o formulário e sugere a causa provável; confira tudo antes de registrar.</p>
-          <textarea id="iaTexto" maxlength="2000" placeholder="Ex.: a prensa 2 da estamparia parou do nada, deu um estalo e está vazando óleo embaixo dela"></textarea>
+          <textarea id="iaTexto" maxlength="2000" aria-label="Conte o problema com suas palavras" placeholder="Ex.: a prensa 2 da estamparia parou do nada, deu um estalo e está vazando óleo embaixo dela"></textarea>
           <div class="ia-actions">
             <input type="file" id="iaFoto" accept="image/*" hidden>
             <label for="iaFoto" class="btn btn-outline ia-foto-btn"><i class="fas fa-camera"></i> <span id="iaFotoNome">Foto (opcional)</span></label>
@@ -81,13 +81,13 @@
         <form id="ocorrenciaForm">
           <div class="form-row">
             <div class="form-group">
-              <label>Setor *</label>
+              <label for="setorSelect">Setor *</label>
               <select id="setorSelect" name="setor" required>
                 <option value="">Selecione o setor</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Máquina / Etapa *</label>
+              <label for="maquinaSelect">Máquina / Etapa *</label>
               <select id="maquinaSelect" required>
                 <option value="">Selecione primeiro o setor</option>
               </select>
@@ -96,7 +96,7 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>Tipo de Ocorrência *</label>
+              <label for="tipoSelect">Tipo de Ocorrência *</label>
               <select id="tipoSelect" required>
                 <option value="">Selecione</option>
                 <option value="Parada de máquina">Parada de máquina</option>
@@ -107,7 +107,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label>Turno *</label>
+              <label for="turnoSelect">Turno *</label>
               <select id="turnoSelect" required>
                 <option value="">Selecione</option>
                 <option value="Manhã">Manhã</option>
@@ -118,17 +118,17 @@
           </div>
 
           <div class="form-group">
-            <label>Registrado por</label>
+            <label for="operadorIdentificado">Registrado por</label>
             <input type="text" id="operadorIdentificado" readonly>
           </div>
 
           <div class="form-group">
-            <label>Descrição da Ocorrência *</label>
+            <label for="descricaoInput">Descrição da Ocorrência *</label>
             <textarea id="descricaoInput" required placeholder="Descreva o que aconteceu, sintomas observados, impacto na produção..."></textarea>
           </div>
 
           <div class="form-group">
-            <label>Foto do Problema <span class="label-hint">(opcional)</span></label>
+            <label for="fotoInput">Foto do Problema <span class="label-hint">(opcional)</span></label>
             <div class="file-upload">
               <input type="file" id="fotoInput" accept="image/*">
               <label for="fotoInput" class="file-upload-label">

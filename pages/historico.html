@@ -147,10 +147,10 @@
 
       <div class="filters">
         <label>Filtrar:</label>
-        <select id="filterSetor" onchange="renderHistorico()">
+        <select id="filterSetor" onchange="renderHistorico()" aria-label="Filtrar por setor">
           <option value="">Todos os Setores</option>
         </select>
-        <select id="filterTipo" onchange="renderHistorico()">
+        <select id="filterTipo" onchange="renderHistorico()" aria-label="Filtrar por tipo">
           <option value="">Todos os Tipos</option>
           <option value="Parada de máquina">Parada de máquina</option>
           <option value="Problema de qualidade">Problema de qualidade</option>
@@ -158,12 +158,12 @@
           <option value="Manutenção preventiva">Manutenção preventiva</option>
           <option value="Outro">Outro</option>
         </select>
-        <select id="filterStatus" onchange="renderHistorico()">
+        <select id="filterStatus" onchange="renderHistorico()" aria-label="Filtrar por status">
           <option value="">Todos os Status</option>
           <option value="Pendente">Pendente</option>
           <option value="Resolvido">Resolvido</option>
         </select>
-        <select id="filterTurno" onchange="renderHistorico()">
+        <select id="filterTurno" onchange="renderHistorico()" aria-label="Filtrar por turno">
           <option value="">Todos os Turnos</option>
           <option value="Manhã">Manhã</option>
           <option value="Tarde">Tarde</option>
@@ -192,7 +192,7 @@
         <div id="iaSolucaoPecas"></div>
       </div>
     </div>
-    <textarea id="resolucaoInput" placeholder="Ex: Correia reposicionada e tensionada. Máquina retornou ao normal."></textarea>
+    <textarea id="resolucaoInput" aria-label="Descrição da solução" placeholder="Ex: Correia reposicionada e tensionada. Máquina retornou ao normal."></textarea>
     <div class="modal-buttons">
       <button class="btn btn-success" onclick="confirmarResolucao()">
         <i class="fas fa-check"></i> Confirmar Resolução
