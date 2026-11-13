@@ -17,6 +17,11 @@ const { preverFalhas, HORIZONTE_DIAS } = require('../previsao');
 // estiver sem cota ou fora do ar, tenta o reserva (mais leve).
 const MODELO = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 const MODELO_RESERVA = process.env.GEMINI_MODEL_RESERVA || 'gemini-3.5-flash-lite';
+// Se os dois acima falharem (nome de modelo que saiu do ar, sobrecarga etc.),
+// tenta os apelidos que o Google mantém sempre apontando para a versão atual.
+const MODELOS = [...new Set([MODELO, MODELO_RESERVA, 'gemini-flash-latest', 'gemini-flash-lite-latest'].filter(Boolean))];
+// A função da Vercel tem até 60 s; a IA usa no máximo 50 s somando as tentativas.
+const PRAZO_TOTAL_MS = 50_000;
 const URL_GEMINI = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/models';
 const TIPOS = ['Parada de máquina', 'Problema de qualidade', 'Falta de material', 'Manutenção preventiva', 'Outro'];
 const TURNOS = ['Manhã', 'Tarde', 'Noite'];
@@ -123,7 +128,10 @@ function responderErro(res, err, contexto) {
             return res.status(429).json({ erro: 'A cota gratuita da IA acabou por agora. Tente de novo mais tarde.' });
         }
         console.error(` Erro da API de IA (${contexto}):`, err.status, err.message);
-        return res.status(502).json({ erro: 'A IA está indisponível agora. Tente de novo mais tarde.' });
+        // Mostra o código e um trecho do motivo para facilitar o suporte
+        // (a mensagem do Google não traz a chave nem dados do sistema).
+        const motivo = String(err.message || '').replace(/\s+/g, ' ').slice(0, 140);
+        return res.status(502).json({ erro: `A IA está indisponível agora (Gemini, erro ${err.status}${motivo ? `: ${motivo}` : ''}). Tente de novo em alguns minutos.` });
     }
     if (err.name === 'TimeoutError' || err.name === 'AbortError') {
         return res.status(504).json({ erro: 'A IA demorou demais para responder. Tente de novo.' });
@@ -153,26 +161,35 @@ function registerRoutes(app, { prisma, requireSupervisor }) {
 
     // Faz o pedido à IA e devolve o JSON já no formato do schema.
     // `conteudo` é uma lista de { type: 'text', text } ou blocos de arquivo.
-    async function pedirJSON({ system, conteudo, schema }) {
+    async function pedirJSON({ system, conteudo, schema, maxTokens = 8192 }) {
         const corpo = {
             systemInstruction: { parts: [{ text: system }] },
             contents: [{ role: 'user', parts: conteudo.map(b => (b.type === 'text' ? { text: b.text } : b)) }],
             generationConfig: {
                 responseMimeType: 'application/json',
                 responseJsonSchema: schema,
-                maxOutputTokens: 8192
+                maxOutputTokens: maxTokens
             }
         };
+        // Tenta cada modelo da lista enquanto houver tempo. Só desiste na hora
+        // quando o problema é da chave (trocar de modelo não resolve).
+        const inicio = Date.now();
         let dados;
-        try {
-            dados = await chamarGemini(MODELO, corpo, 30_000);
-        } catch (err) {
-            const tentarReserva = MODELO_RESERVA && MODELO_RESERVA !== MODELO &&
-                (err.name === 'TimeoutError' || (err instanceof ErroAPI && [404, 429, 500, 503].includes(err.status)));
-            if (!tentarReserva) throw err;
-            console.warn(` IA: ${MODELO} falhou (${err.status || err.name}), tentando ${MODELO_RESERVA}`);
-            dados = await chamarGemini(MODELO_RESERVA, corpo, 25_000);
+        let ultimoErro;
+        for (const modelo of MODELOS) {
+            const restante = PRAZO_TOTAL_MS - (Date.now() - inicio);
+            if (restante < 5_000) break;
+            try {
+                dados = await chamarGemini(modelo, corpo, Math.min(40_000, restante));
+                break;
+            } catch (err) {
+                ultimoErro = err;
+                if (err instanceof ErroAPI && (err.status === 401 || err.status === 403 || (err.status === 400 && /API key/i.test(err.message)))) throw err;
+                if (!(err instanceof ErroAPI) && err.name !== 'TimeoutError' && err.name !== 'AbortError') throw err;
+                console.warn(` IA: ${modelo} falhou (${err.status || err.name}: ${String(err.message).slice(0, 200)})`);
+            }
         }
+        if (!dados) throw ultimoErro || new ErroIA(504, 'A IA demorou demais para responder. Tente de novo.');
         if (dados.promptFeedback?.blockReason) {
             throw new ErroIA(422, 'A IA não conseguiu analisar este pedido.');
         }
@@ -549,6 +566,8 @@ Escreva em português.`
                         }
                     }
                 },
+                // Notas grandes (50+ itens) geram respostas longas.
+                maxTokens: 32768,
                 system: `Você lê notas fiscais de compra (foto, PDF ou XML da NF-e) para dar entrada de peças no estoque do FactoryTrack.
 Para cada produto da nota:
 - descricao: a descrição como está na nota.
