@@ -13,6 +13,9 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 
 const app = express();
+// Atrás do proxy da Vercel: faz o req.ip refletir o cliente real
+// (usado pelo limite de tentativas de login).
+app.set('trust proxy', true);
 // As rotas de IA que recebem foto ou nota fiscal aceitam corpo maior; as demais não.
 const jsonPadrao = express.json();
 const jsonComArquivo = express.json({ limit: '4mb' });
@@ -53,10 +56,16 @@ app.use(cors((req, callback) => {
     return callback(new Error('Origem não autorizada pelo CORS.'));
 }));
 const PORT = process.env.PORT || 3000;
-const AUTH_SECRET = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
+const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
 if (!process.env.AUTH_SECRET) {
-    console.warn('AUTH_SECRET não definido; sessões serão invalidadas quando o servidor reiniciar.');
+    if (isProduction) {
+        // Em produção um segredo aleatório por instância invalidaria os logins
+        // de forma imprevisível. Melhor recusar a subir do que ficar instável.
+        throw new Error('AUTH_SECRET não definido. Configure uma chave aleatória longa e persistente nas variáveis de ambiente antes de subir em produção.');
+    }
+    console.warn('AUTH_SECRET não definido; sessões serão invalidadas quando o servidor reiniciar. Use apenas em desenvolvimento.');
 }
+const AUTH_SECRET = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
 const { prisma } = createDatabase();
 
 app.get('/api/health', (req, res) => {

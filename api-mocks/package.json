@@ -1,0 +1,20 @@
+{
+  "name": "factorytrack-api-mocks",
+  "version": "1.0.0",
+  "description": "Rotas Express + Zod do FactoryTrack com respostas mockadas (sem Prisma)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
