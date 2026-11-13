@@ -1,6 +1,9 @@
 // Variável global para guardar os dados que vieram do banco
 let estoqueAtual = [];
 let pecaSelecionada = null;
+// Peças marcadas para excluir em lote (ids)
+const pecasMarcadas = new Set();
+let pecasVisiveis = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!requireAuth()) return;
@@ -14,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Carrega o estoque ao abrir a página
     renderEstoque();
+    if (!isOperator()) document.getElementById('selecaoBar').hidden = false;
     if (!isOperator()) iaAtiva().then(ativa => { document.getElementById('iaNotaBox').hidden = !ativa; });
 });
 
@@ -49,6 +53,12 @@ async function renderEstoque() {
 
     const grid = document.getElementById('estoqueGrid');
 
+    // Esquece seleções de peças que não existem mais
+    const idsExistentes = new Set(estoqueAtual.map(p => p.id));
+    [...pecasMarcadas].forEach(id => { if (!idsExistentes.has(id)) pecasMarcadas.delete(id); });
+    pecasVisiveis = pecas;
+    atualizarSelecao();
+
     if (!pecas.length) {
         grid.innerHTML = `<div class="empty-state"><i class="fas fa-boxes"></i><p>Nenhuma peça encontrada.</p></div>`;
         return;
@@ -60,9 +70,10 @@ async function renderEstoque() {
         const st = getStatusEstoque(p);
         const alertaBaixa = p.qtd <= p.min;
         return `
-        <div class="estoque-card">
+        <div class="estoque-card${pecasMarcadas.has(p.id) ? ' selecionada' : ''}">
             <div class="estoque-card-header">
-                <div><h3>${escapeHTML(p.nome)}</h3><p>${escapeHTML(p.categoria || 'Sem categoria')} · ${escapeHTML(p.unidade || 'un')}</p></div>
+                ${isOperator() ? '' : `<label class="estoque-check" title="Selecionar para excluir"><input type="checkbox" aria-label="Selecionar ${escapeHTML(p.nome)}" onchange="marcarPeca(${p.id}, this.checked)" ${pecasMarcadas.has(p.id) ? 'checked' : ''}></label>`}
+                <div style="flex:1"><h3>${escapeHTML(p.nome)}</h3><p>${escapeHTML(p.categoria || 'Sem categoria')} · ${escapeHTML(p.unidade || 'un')}</p></div>
                 <span class="badge ${st.status==='ok'?'badge-success':st.status==='baixo'?'badge-warning':'badge-danger'}">${st.label}</span>
             </div>
             <div class="estoque-card-body">
@@ -186,6 +197,66 @@ async function deletePeca(id) {
 }
 
 // ==========================================
+// EXCLUIR VÁRIAS PEÇAS DE UMA VEZ
+// ==========================================
+function marcarPeca(id, marcada) {
+    if (marcada) pecasMarcadas.add(id); else pecasMarcadas.delete(id);
+    renderEstoque();
+}
+
+function atualizarSelecao() {
+    const total = pecasMarcadas.size;
+    document.getElementById('selecaoContagem').textContent = total
+        ? `${total} ${total === 1 ? 'peça selecionada' : 'peças selecionadas'}`
+        : 'Nenhuma selecionada';
+    const botao = document.getElementById('excluirSelecionadosBtn');
+    botao.disabled = total === 0;
+    botao.innerHTML = `<i class="fas fa-trash"></i> Excluir selecionadas${total ? ` (${total})` : ''}`;
+    const todos = document.getElementById('selecionarTodos');
+    const marcadasVisiveis = pecasVisiveis.filter(p => pecasMarcadas.has(p.id)).length;
+    todos.checked = pecasVisiveis.length > 0 && marcadasVisiveis === pecasVisiveis.length;
+    todos.indeterminate = marcadasVisiveis > 0 && marcadasVisiveis < pecasVisiveis.length;
+}
+
+// "Selecionar todas" respeita os filtros: marca só as peças que estão na lista
+document.getElementById('selecionarTodos').addEventListener('change', e => {
+    pecasVisiveis.forEach(p => { if (e.target.checked) pecasMarcadas.add(p.id); else pecasMarcadas.delete(p.id); });
+    renderEstoque();
+});
+
+document.getElementById('excluirSelecionadosBtn').addEventListener('click', async function() {
+    const ids = [...pecasMarcadas];
+    if (!ids.length) return;
+    const nomes = estoqueAtual.filter(p => pecasMarcadas.has(p.id)).map(p => p.nome);
+    const exemplo = nomes.slice(0, 5).join(', ') + (nomes.length > 5 ? ` e mais ${nomes.length - 5}` : '');
+    const tudo = ids.length === estoqueAtual.length;
+    const ok = await confirmar(
+        `${tudo ? 'Isso vai esvaziar o estoque inteiro' : `Excluir ${ids.length} ${ids.length === 1 ? 'peça' : 'peças'}`}: ${exemplo}. Essa ação não pode ser desfeita.`,
+        { titulo: tudo ? 'Esvaziar estoque' : 'Excluir peças', ok: `Excluir ${ids.length}`, perigo: true }
+    );
+    if (!ok) return;
+
+    this.disabled = true;
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/deletar-pecas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids })
+        });
+        const dados = await resposta.json().catch(() => ({}));
+        if (!resposta.ok) {
+            avisar(dados.erro || 'Erro ao excluir as peças.', 'erro');
+        } else {
+            pecasMarcadas.clear();
+            avisar(`${dados.excluidas} ${dados.excluidas === 1 ? 'peça excluída' : 'peças excluídas'}.`, 'sucesso');
+        }
+    } catch (erro) {
+        avisar('Erro ao comunicar com o servidor.', 'erro');
+    }
+    renderEstoque();
+});
+
+// ==========================================
 // ENTRADA PELA NOTA FISCAL (IA)
 // A IA lê a nota (foto, PDF ou XML) e sugere as entradas; a chefia confere.
 // ==========================================
@@ -243,53 +314,49 @@ document.getElementById('iaNotaBtn').addEventListener('click', async function() 
     const partes = [dados.fornecedor, dados.numero ? `NF ${dados.numero}` : ''].filter(Boolean);
     document.getElementById('iaNotaCabecalho').textContent = partes.length ? partes.join(' · ') : 'Itens encontrados na nota:';
 
+    // Lista fixa: o que a IA leu não pode ser alterado aqui. A chefia só
+    // confirma a entrada de tudo ou cancela.
     const corpoTabela = document.getElementById('iaNotaItens');
     corpoTabela.replaceChildren();
-    iaNotaItens.forEach((item, i) => {
+    iaNotaItens.forEach(item => {
         const tr = document.createElement('tr');
-
-        const tdMarcar = document.createElement('td');
-        const marcar = document.createElement('input');
-        marcar.type = 'checkbox';
-        marcar.checked = true;
-        marcar.id = `iaNotaItem${i}`;
-        tdMarcar.appendChild(marcar);
-
-        const tdDescricao = document.createElement('td');
-        tdDescricao.textContent = item.descricao;
-
+        const celula = texto => {
+            const td = document.createElement('td');
+            td.textContent = texto;
+            return td;
+        };
         const tdPeca = document.createElement('td');
         if (item.pecaId) {
-            tdPeca.textContent = `${item.nomeAtual} (tem ${item.quantidadeAtual})`;
+            tdPeca.textContent = `${item.nomeAtual} (tem ${item.quantidadeAtual}, soma)`;
         } else {
             const novo = document.createElement('span');
             novo.className = 'ia-novo';
             novo.textContent = 'NOVA ';
             tdPeca.append(novo, `${item.nomeSugerido} · ${item.categoria}`);
         }
-
-        const tdQtd = document.createElement('td');
-        const qtd = document.createElement('input');
-        qtd.type = 'number';
-        qtd.min = '1';
-        qtd.value = item.quantidade;
-        qtd.id = `iaNotaQtd${i}`;
-        tdQtd.append(qtd, ` ${item.unidade}`);
-
-        tr.append(tdMarcar, tdDescricao, tdPeca, tdQtd);
+        const descricao = celula(item.descricao);
+        descricao.className = 'nf-descricao';
+        tr.append(descricao, tdPeca, celula(String(item.quantidade)), celula(item.unidade));
         corpoTabela.appendChild(tr);
     });
     document.getElementById('iaNotaResultado').hidden = false;
+});
+
+document.getElementById('iaNotaCancelarBtn').addEventListener('click', () => {
+    iaNotaItens = [];
+    document.getElementById('iaNotaResultado').hidden = true;
+    document.getElementById('iaNotaArquivo').value = '';
+    document.getElementById('iaNotaNome').textContent = 'Escolher nota fiscal';
 });
 
 document.getElementById('iaNotaAplicarBtn').addEventListener('click', async function() {
     const caixaErro = document.getElementById('iaNotaErro');
     iaMostrarErro(caixaErro, '');
     const selecionados = iaNotaItens
-        .map((item, i) => ({ ...item, marcado: document.getElementById(`iaNotaItem${i}`).checked, qtd: parseInt(document.getElementById(`iaNotaQtd${i}`).value, 10) }))
-        .filter(item => item.marcado && item.qtd > 0);
+        .filter(item => item.quantidade > 0)
+        .map(item => ({ pecaId: item.pecaId, nome: item.nomeSugerido, categoria: item.categoria, unidade: item.unidade, qtd: item.quantidade }));
     if (!selecionados.length) {
-        iaMostrarErro(caixaErro, 'Marque ao menos um item com quantidade maior que zero.');
+        iaMostrarErro(caixaErro, 'Nenhum item para dar entrada.');
         return;
     }
 
@@ -306,10 +373,11 @@ document.getElementById('iaNotaAplicarBtn').addEventListener('click', async func
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ qtd: atual.qtd + item.qtd })
                 })
+                    .then(resp => { if (resp.ok) atual.qtd += item.qtd; return resp; })
                 : await fetch(`${API_BASE_URL}/cadastrar-peca`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome: item.nomeSugerido, categoria: item.categoria, qtd: item.qtd, min: 0, unidade: item.unidade })
+                    body: JSON.stringify({ nome: item.nome, categoria: item.categoria, qtd: item.qtd, min: 0, unidade: item.unidade })
                 });
             if (r.ok) feitos++;
         }

@@ -132,7 +132,7 @@
         <h2>Entrada pela nota fiscal</h2>
         <span class="ia-badge">IA</span>
       </div>
-      <p class="ia-intro">Envie a foto, o PDF ou o XML da nota fiscal de compra. A IA lista as peças e as quantidades; confira e dê entrada no estoque.</p>
+      <p class="ia-intro">Envie a foto, o PDF ou o XML da nota fiscal de compra. A IA lista as peças, as quantidades e as unidades exatamente como estão na nota. Confira e confirme a entrada de tudo, ou cancele.</p>
       <div class="ia-actions">
         <input type="file" id="iaNotaArquivo" accept="image/*,application/pdf,.xml,text/xml,application/xml" hidden>
         <label for="iaNotaArquivo" class="btn btn-outline ia-foto-btn"><i class="fas fa-file-invoice"></i> <span id="iaNotaNome">Escolher nota fiscal</span></label>
@@ -143,12 +143,13 @@
         <p id="iaNotaCabecalho"></p>
         <div class="ia-tabela-wrap">
           <table class="ia-tabela">
-            <thead><tr><th></th><th>Item da nota</th><th>Peça no estoque</th><th>Quantidade</th></tr></thead>
+            <thead><tr><th>Item da nota</th><th>Peça no estoque</th><th>Quantidade</th><th>Unidade</th></tr></thead>
             <tbody id="iaNotaItens"></tbody>
           </table>
         </div>
         <div class="ia-actions">
-          <button type="button" class="btn btn-success" id="iaNotaAplicarBtn"><i class="fas fa-check"></i> Dar entrada nas selecionadas</button>
+          <button type="button" class="btn btn-success" id="iaNotaAplicarBtn"><i class="fas fa-check"></i> Confirmar entrada de todos</button>
+          <button type="button" class="btn btn-cancel" id="iaNotaCancelarBtn"><i class="fas fa-xmark"></i> Cancelar</button>
         </div>
       </div>
       <div class="ia-ok" id="iaNotaOk" hidden></div>
@@ -172,6 +173,12 @@
         <option value="critico">Estoque Crítico</option>
       </select>
       <input type="text" id="filterBusca" placeholder="Buscar peça..." oninput="renderEstoque()">
+    </div>
+
+    <div class="selecao-bar" id="selecaoBar" hidden>
+      <label class="selecao-todos"><input type="checkbox" id="selecionarTodos"> Selecionar todas as peças da lista</label>
+      <span class="selecao-contagem" id="selecaoContagem">Nenhuma selecionada</span>
+      <button type="button" class="btn btn-danger btn-sm" id="excluirSelecionadosBtn" disabled><i class="fas fa-trash"></i> Excluir selecionadas</button>
     </div>
 
     <div class="grid-3" id="estoqueGrid"></div>
