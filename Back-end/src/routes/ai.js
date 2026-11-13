@@ -12,6 +12,7 @@
 // ==========================================
 
 const { preverFalhas, HORIZONTE_DIAS } = require('../previsao');
+const { CATEGORIAS_PECA, UNIDADES_PECA } = require('../categorias');
 
 // Gemini (Google AI Studio), que tem uso gratuito. Se o modelo principal
 // estiver sem cota ou fora do ar, tenta o reserva (mais leve).
@@ -26,7 +27,6 @@ const URL_GEMINI = process.env.GEMINI_BASE_URL || 'https://generativelanguage.go
 const TIPOS = ['Parada de máquina', 'Problema de qualidade', 'Falta de material', 'Manutenção preventiva', 'Outro'];
 const TURNOS = ['Manhã', 'Tarde', 'Noite'];
 const GRAVIDADES = ['Baixa', 'Média', 'Alta', 'Crítica'];
-const CATEGORIAS_PECA = ['Fixação', 'Elétrico', 'Mecânico', 'Hidráulico', 'Outro'];
 const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_TEXTO = 2000;
 const MAX_ARQUIVO_BYTES = 3 * 1024 * 1024;
@@ -99,6 +99,15 @@ function dataCurta(data) {
     return data ? new Date(data).toISOString().slice(0, 10) : null;
 }
 
+// Ajuste do "pensamento" do modelo para respostas rápidas. Só nos modelos
+// que sabemos aceitar; nos outros (ex.: apelidos "-latest") vai sem ajuste.
+function configPensamento(modelo, rapido) {
+    if (!rapido) return null;
+    if (/^gemini-2\.5-flash/.test(modelo)) return { thinkingBudget: 0 };
+    if (/^gemini-([3-9]|\d{2})/.test(modelo) && /flash/.test(modelo)) return { thinkingLevel: 'minimal' };
+    return null;
+}
+
 // Erro que já vem com a mensagem certa para a tela.
 class ErroIA extends Error {
     constructor(status, mensagem) {
@@ -146,6 +155,21 @@ function registerRoutes(app, { prisma, requireSupervisor }) {
 
     // Uma chamada ao Gemini pedindo JSON no formato do schema.
     async function chamarGemini(modelo, corpo, tempoMs) {
+        const pensamento = configPensamento(modelo, corpo.pensar);
+        const { pensar, ...envio } = corpo;
+        if (pensamento) envio.generationConfig = { ...envio.generationConfig, thinkingConfig: pensamento };
+        try {
+            return await enviarGemini(modelo, envio, tempoMs);
+        } catch (err) {
+            // Modelo que não aceita esse ajuste de "pensamento": repete sem ele.
+            if (pensamento && err instanceof ErroAPI && err.status === 400 && /think/i.test(err.message)) {
+                return enviarGemini(modelo, { ...envio, generationConfig: corpo.generationConfig }, tempoMs);
+            }
+            throw err;
+        }
+    }
+
+    async function enviarGemini(modelo, corpo, tempoMs) {
         const resposta = await fetch(`${URL_GEMINI}/${encodeURIComponent(modelo)}:generateContent`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chave },
@@ -161,8 +185,12 @@ function registerRoutes(app, { prisma, requireSupervisor }) {
 
     // Faz o pedido à IA e devolve o JSON já no formato do schema.
     // `conteudo` é uma lista de { type: 'text', text } ou blocos de arquivo.
-    async function pedirJSON({ system, conteudo, schema, maxTokens = 8192 }) {
+    // `rapido: true` pede para o modelo "pensar" o mínimo antes de responder.
+    // Nos modelos Flash isso derruba o tempo de resposta de 10-18 s para poucos
+    // segundos, e é o bastante para perguntas e resumos com os dados prontos.
+    async function pedirJSON({ system, conteudo, schema, maxTokens = 8192, rapido = false }) {
         const corpo = {
+            pensar: rapido,
             systemInstruction: { parts: [{ text: system }] },
             contents: [{ role: 'user', parts: conteudo.map(b => (b.type === 'text' ? { text: b.text } : b)) }],
             generationConfig: {
@@ -315,6 +343,7 @@ function registerRoutes(app, { prisma, requireSupervisor }) {
             conteudo.push({ type: 'text', text: `Relato do operador:\n<relato>\n${texto}\n</relato>` });
 
             const sugestao = await pedirJSON({
+                rapido: true,
                 conteudo,
                 schema: {
                     type: 'object',
@@ -372,6 +401,7 @@ ${listaMaquinas || '(nenhum setor cadastrado)'}`
         try {
             const dados = await retratoDaFabrica();
             const resultado = await pedirJSON({
+                rapido: true,
                 conteudo: [{ type: 'text', text: `Dados atuais da fábrica (JSON):\n${JSON.stringify(dados)}\n\nPergunta do gestor:\n<pergunta>\n${pergunta}\n</pergunta>` }],
                 schema: {
                     type: 'object',
@@ -398,6 +428,7 @@ Não use markdown além das listas com "- ".`
         try {
             const [dados, repetidas] = await Promise.all([retratoDaFabrica(), falhasRepetidas()]);
             const resumo = await pedirJSON({
+                rapido: true,
                 conteudo: [{ type: 'text', text: `Dados atuais da fábrica (JSON):\n${JSON.stringify(dados)}\n\nFalhas repetidas nos últimos 30 dias (calculadas pelo sistema):\n${JSON.stringify(repetidas)}` }],
                 schema: {
                     type: 'object',
@@ -463,6 +494,7 @@ Escreva em português, em frases curtas, sem markdown.`
             const idsPecas = pecas.map(p => p.id);
 
             const sugestao = await pedirJSON({
+                rapido: true,
                 conteudo: [{
                     type: 'text',
                     text: `Ocorrência a resolver:\n${JSON.stringify({
@@ -557,7 +589,7 @@ Escreva em português.`
                                 properties: {
                                     descricao: { type: 'string' },
                                     quantidade: { type: 'integer' },
-                                    unidade: { type: 'string', enum: ['un', 'kg', 'm', 'L', 'cx'] },
+                                    unidade: { type: 'string', enum: UNIDADES_PECA },
                                     pecaId: { type: 'integer', enum: [...idsPecas, 0] },
                                     nomeSugerido: { type: 'string' },
                                     categoria: { type: 'string', enum: CATEGORIAS_PECA }
@@ -572,7 +604,7 @@ Escreva em português.`
 Para cada produto da nota:
 - descricao: a descrição como está na nota.
 - quantidade: a quantidade comprada, em número inteiro (arredonde se precisar).
-- unidade: a unidade mais próxima entre un, kg, m, L e cx.
+- unidade: a unidade mais próxima entre ${UNIDADES_PECA.join(', ')}.
 - pecaId: o id da peça já cadastrada que é o mesmo produto, ou 0 se for um produto novo. Só associe quando tiver certeza.
 - nomeSugerido: um nome curto e claro para cadastrar a peça (use o nome da peça cadastrada quando houver associação).
 - categoria: a categoria que melhor se encaixa.
@@ -698,6 +730,7 @@ O inspetor vai confirmar cada item. Escreva em português.`
             }));
 
             const analise = await pedirJSON({
+                rapido: true,
                 conteudo: [{
                     type: 'text',
                     text: `Hoje: ${agoraNaBahia().data}\n\nRisco calculado pelo sistema para os próximos ${HORIZONTE_DIAS} dias (JSON):\n${JSON.stringify(alvo)}\n\nHistórico recente dessas máquinas:\n${JSON.stringify(historico)}\n\nPeças em estoque:\n${JSON.stringify(pecas.map(p => ({ nome: p.nome, categoria: p.categoria, quantidade: p.qtd, minimo: p.min })))}`

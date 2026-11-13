@@ -21,11 +21,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isOperator()) iaAtiva().then(ativa => { document.getElementById('iaNotaBox').hidden = !ativa; });
 });
 
+// Mesma lista de Back-end/src/categorias.js
+const CATEGORIAS_PECA = ['Fixação', 'Elétrico', 'Mecânico', 'Hidráulico', 'Pneumático', 'Lubrificação', 'Insumo', 'Outro'];
+
+// Busca sem diferenciar acento nem maiúscula ("oleo" acha "Óleo").
+function semAcento(texto) {
+    return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+// Categoria fora da lista conta como "Outro".
+function categoriaDaPeca(p) {
+    return CATEGORIAS_PECA.includes(p.categoria) ? p.categoria : 'Outro';
+}
+
+// Texto da quantidade conforme a unidade: "32 litros", "1 metro", "500 unidades".
+const NOMES_UNIDADE = {
+    un: ['unidade', 'unidades'], kg: ['kg', 'kg'], m: ['metro', 'metros'],
+    l: ['litro', 'litros'], cx: ['caixa', 'caixas']
+};
+function rotuloQuantidade(p) {
+    const nomes = NOMES_UNIDADE[String(p.unidade || 'un').toLowerCase()];
+    const texto = nomes ? nomes[p.qtd === 1 ? 0 : 1] : String(p.unidade);
+    return `${texto} ${p.qtd === 1 ? 'disponível' : 'disponíveis'}`;
+}
+
 function escapeHTML(valor) {
     return String(valor ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
 function getStatusEstoque(p) {
+    if (!(p.min > 0) && p.qtd > 0) return { label:'Sem mínimo', cls:'bar-ok', status:'sem-minimo' };
     if (p.qtd <= 0) return { label:'Sem estoque', cls:'bar-danger', status:'critico' };
     if (p.qtd <= p.min) return { label:'Estoque crítico', cls:'bar-danger', status:'critico' };
     if (p.qtd <= p.min * 1.5) return { label:'Estoque baixo', cls:'bar-warning', status:'baixo' };
@@ -45,11 +70,12 @@ async function renderEstoque() {
     let pecas = [...estoqueAtual];
     const fCat = document.getElementById('filterCategoria').value;
     const fStatus = document.getElementById('filterStatus').value;
-    const fBusca = document.getElementById('filterBusca').value.toLowerCase();
+    const fBusca = semAcento(document.getElementById('filterBusca').value);
 
-    if (fCat) pecas = pecas.filter(p => p.categoria === fCat);
-    if (fStatus) pecas = pecas.filter(p => getStatusEstoque(p).status === fStatus);
-    if (fBusca) pecas = pecas.filter(p => p.nome.toLowerCase().includes(fBusca));
+    if (fCat) pecas = pecas.filter(p => categoriaDaPeca(p) === fCat);
+    if (fStatus === 'sem-minimo') pecas = pecas.filter(p => !(p.min > 0));
+    else if (fStatus) pecas = pecas.filter(p => getStatusEstoque(p).status === fStatus);
+    if (fBusca) pecas = pecas.filter(p => semAcento(p.nome).includes(fBusca));
 
     const grid = document.getElementById('estoqueGrid');
 
@@ -64,34 +90,39 @@ async function renderEstoque() {
         return;
     }
 
-    const pct = p => Math.min(100, Math.round((p.qtd / (p.min * 2)) * 100));
+    const pct = p => (p.min > 0 ? Math.min(100, Math.round((p.qtd / (p.min * 2)) * 100)) : 100);
 
     grid.innerHTML = pecas.map(p => {
         const st = getStatusEstoque(p);
-        const alertaBaixa = p.qtd <= p.min;
+        const semMinimo = !(p.min > 0);
+        const alertaBaixa = !semMinimo && p.qtd <= p.min;
         return `
         <div class="estoque-card${pecasMarcadas.has(p.id) ? ' selecionada' : ''}">
             <div class="estoque-card-header">
                 ${isOperator() ? '' : `<label class="estoque-check" title="Selecionar para excluir"><input type="checkbox" aria-label="Selecionar ${escapeHTML(p.nome)}" onchange="marcarPeca(${p.id}, this.checked)" ${pecasMarcadas.has(p.id) ? 'checked' : ''}></label>`}
-                <div style="flex:1"><h3>${escapeHTML(p.nome)}</h3><p>${escapeHTML(p.categoria || 'Sem categoria')} · ${escapeHTML(p.unidade || 'un')}</p></div>
-                <span class="badge ${st.status==='ok'?'badge-success':st.status==='baixo'?'badge-warning':'badge-danger'}">${st.label}</span>
+                <div style="flex:1"><h3>${escapeHTML(p.nome)}</h3><p>${escapeHTML(categoriaDaPeca(p))} · ${escapeHTML(p.unidade || 'un')}</p></div>
+                <span class="badge ${st.status==='ok'?'badge-success':st.status==='baixo'||st.status==='sem-minimo'?'badge-warning':'badge-danger'}">${st.label}</span>
             </div>
             <div class="estoque-card-body">
                 <div class="estoque-qty">${p.qtd}</div>
-                <div class="estoque-qty-label">unidades disponíveis</div>
+                <div class="estoque-qty-label">${escapeHTML(rotuloQuantidade(p))}</div>
                 <div class="estoque-bar-wrap">
                     <div class="estoque-bar-bg"><div class="estoque-bar-fill ${st.cls}" style="width:${pct(p)}%"></div></div>
                 </div>
-                <div class="estoque-min">Mínimo: <strong>${p.min} ${escapeHTML(p.unidade || 'un')}</strong></div>
+                <div class="estoque-min">Mínimo: <strong>${semMinimo ? 'não definido' : `${p.min} ${escapeHTML(p.unidade || 'un')}`}</strong></div>
                 <div class="alerta-gerente ${alertaBaixa?'show':''}">
                     <i class="fas fa-exclamation-triangle"></i> Estoque abaixo do mínimo! Repor urgente.
+                </div>
+                <div class="alerta-gerente alerta-sem-minimo ${semMinimo?'show':''}">
+                    <i class="fas fa-bell-slash"></i> Sem estoque mínimo: esta peça nunca vai gerar alerta.${isOperator() ? '' : ' Defina o mínimo.'}
                 </div>
             </div>
             ${isOperator() ? '' : `
             <div class="estoque-card-footer">
                 <button class="btn btn-primary btn-sm" onclick="abrirUsar(${p.id})"><i class="fas fa-minus"></i> Usar Peça</button>
                 <button class="btn btn-success btn-sm" onclick="abrirRepor(${p.id})"><i class="fas fa-plus"></i> Repor</button>
-                <button class="btn-del" onclick="deletePeca(${p.id})" title="Excluir peça" aria-label="Excluir peça"><i class="fas fa-trash"></i></button>
+                <button class="btn-del btn-minimo" onclick="abrirMinimo(${p.id})" title="Definir estoque mínimo" aria-label="Definir estoque mínimo de ${escapeHTML(p.nome)}"><i class="fas fa-bell"></i></button>
+                <button class="btn-del" onclick="deletePeca(${p.id})" title="Excluir peça" aria-label="Excluir ${escapeHTML(p.nome)}"><i class="fas fa-trash"></i></button>
             </div>`}
         </div>`;
     }).join('');
@@ -106,6 +137,7 @@ async function addPeca() {
     const unidade = document.getElementById('pecaUnidade').value;
 
     if (!nome || isNaN(qtd) || isNaN(min)) { avisar('Preencha todos os campos obrigatórios.'); return; }
+    if (min < 1) { avisar('O estoque mínimo precisa ser pelo menos 1, senão a peça nunca gera alerta.'); return; }
 
     try {
         const resposta = await fetch(`${API_BASE_URL}/cadastrar-peca`, {
@@ -119,6 +151,9 @@ async function addPeca() {
             document.getElementById('pecaQtd').value = '';
             document.getElementById('pecaMin').value = '';
             renderEstoque(); // Recarrega a lista do banco
+        } else {
+            const dados = await resposta.json().catch(() => ({}));
+            avisar(dados.erro || 'Não foi possível cadastrar a peça.', 'erro');
         }
     } catch (erro) {
         avisar('Erro ao comunicar com o servidor.');
@@ -157,6 +192,40 @@ async function confirmarUso() {
             body: JSON.stringify({ qtd: novaQtd })
         });
         document.getElementById('modalUsar').classList.remove('open');
+        renderEstoque();
+    } catch (erro) {
+        avisar('Erro ao atualizar banco.');
+    }
+}
+
+// ESTOQUE MÍNIMO
+function abrirMinimo(id) {
+    pecaSelecionada = id;
+    const peca = estoqueAtual.find(p => p.id === id);
+    document.getElementById('minimoNome').textContent = peca ? peca.nome : '';
+    document.getElementById('qtdMinimo').value = peca && peca.min > 0 ? peca.min : '';
+    document.getElementById('erroMinimo').style.display = 'none';
+    document.getElementById('modalMinimo').classList.add('open');
+    document.getElementById('qtdMinimo').focus();
+}
+
+async function confirmarMinimo() {
+    const min = parseInt(document.getElementById('qtdMinimo').value);
+    const erroEl = document.getElementById('erroMinimo');
+    if (!(min >= 1)) { erroEl.textContent = 'Informe um mínimo de pelo menos 1.'; erroEl.style.display = 'block'; return; }
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/atualizar-peca/${pecaSelecionada}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ min })
+        });
+        if (!resposta.ok) {
+            const dados = await resposta.json().catch(() => ({}));
+            erroEl.textContent = dados.erro || 'Não foi possível salvar.';
+            erroEl.style.display = 'block';
+            return;
+        }
+        document.getElementById('modalMinimo').classList.remove('open');
         renderEstoque();
     } catch (erro) {
         avisar('Erro ao atualizar banco.');
@@ -261,6 +330,11 @@ document.getElementById('excluirSelecionadosBtn').addEventListener('click', asyn
 // A IA lê a nota (foto, PDF ou XML) e sugere as entradas; a chefia confere.
 // ==========================================
 let iaNotaItens = [];
+
+// Mínimo inicial das peças novas que entram pela nota: 20% do que chegou (pelo menos 1).
+function minimoSugerido(qtd) {
+    return Math.max(1, Math.ceil(qtd * 0.2));
+}
 
 async function lerArquivoNota(file) {
     if (/xml/i.test(file.type) || /\.xml$/i.test(file.name)) {
@@ -377,7 +451,7 @@ document.getElementById('iaNotaAplicarBtn').addEventListener('click', async func
                 : await fetch(`${API_BASE_URL}/cadastrar-peca`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome: item.nome, categoria: item.categoria, qtd: item.qtd, min: 0, unidade: item.unidade })
+                    body: JSON.stringify({ nome: item.nome, categoria: item.categoria, qtd: item.qtd, min: minimoSugerido(item.qtd), unidade: item.unidade })
                 });
             if (r.ok) feitos++;
         }
@@ -389,7 +463,7 @@ document.getElementById('iaNotaAplicarBtn').addEventListener('click', async func
     document.getElementById('iaNotaResultado').hidden = true;
     const ok = document.getElementById('iaNotaOk');
     ok.textContent = feitos === selecionados.length
-        ? `Entrada feita em ${feitos} peça(s). Peças novas foram cadastradas com estoque mínimo 0; ajuste se precisar.`
+        ? `Entrada feita em ${feitos} peça(s). Peças novas ganharam estoque mínimo de 20% da quantidade da nota; ajuste pelo sino de cada peça se precisar.`
         : `Entrada feita em ${feitos} de ${selecionados.length} peça(s). Confira o estoque abaixo.`;
     ok.hidden = false;
     renderEstoque();

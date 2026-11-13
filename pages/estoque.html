@@ -45,7 +45,7 @@
 <div class="modal-overlay" id="modalUsar">
   <div class="modal">
     <h3><i class="fas fa-minus-circle text-accent"></i> Usar Peça do Estoque</h3>
-    <p class="modal-text">Informe a quantidade que vai retirar:</p>
+    <label class="modal-text" for="qtdUsar">Informe a quantidade que vai retirar:</label>
     <input type="number" id="qtdUsar" placeholder="Quantidade" min="1">
     <div id="erroUsar" class="form-error"></div>
     <div class="modal-buttons">
@@ -55,11 +55,25 @@
   </div>
 </div>
 
+<!-- MODAL ESTOQUE MÍNIMO -->
+<div class="modal-overlay" id="modalMinimo">
+  <div class="modal">
+    <h3><i class="fas fa-bell text-accent"></i> Estoque mínimo</h3>
+    <label class="modal-text" for="qtdMinimo">Avisar quando a quantidade de <strong id="minimoNome"></strong> ficar neste valor ou abaixo:</label>
+    <input type="number" id="qtdMinimo" placeholder="Ex: 10" min="1">
+    <div id="erroMinimo" class="form-error"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-primary" onclick="confirmarMinimo()"><i class="fas fa-check"></i> Salvar</button>
+      <button class="btn btn-cancel" onclick="document.getElementById('modalMinimo').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL REPOR PEÇA -->
 <div class="modal-overlay" id="modalRepor">
   <div class="modal">
     <h3><i class="fas fa-plus-circle text-success"></i> Repor Estoque</h3>
-    <p class="modal-text">Informe a quantidade a adicionar:</p>
+    <label class="modal-text" for="qtdRepor">Informe a quantidade a adicionar:</label>
     <input type="number" id="qtdRepor" placeholder="Quantidade" min="1">
     <div class="modal-buttons">
       <button class="btn btn-success" onclick="confirmarReposicao()"><i class="fas fa-check"></i> Confirmar</button>
@@ -86,29 +100,32 @@
       </div>
       <div class="nova-peca-form">
         <div class="form-group">
-          <label>Nome da Peça *</label>
+          <label for="pecaNome">Nome da Peça *</label>
           <input type="text" id="pecaNome" placeholder="Ex: Parafuso M6">
         </div>
         <div class="form-group">
-          <label>Categoria</label>
+          <label for="pecaCategoria">Categoria</label>
           <select id="pecaCategoria">
             <option value="Fixação">Fixação</option>
             <option value="Elétrico">Elétrico</option>
             <option value="Mecânico">Mecânico</option>
             <option value="Hidráulico">Hidráulico</option>
+            <option value="Pneumático">Pneumático</option>
+            <option value="Lubrificação">Lubrificação</option>
+            <option value="Insumo">Insumo</option>
             <option value="Outro">Outro</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Quantidade Atual *</label>
+          <label for="pecaQtd">Quantidade Atual *</label>
           <input type="number" id="pecaQtd" placeholder="Ex: 100" min="0">
         </div>
         <div class="form-group">
           <label for="pecaMin">Estoque Mínimo *</label>
-          <input type="number" id="pecaMin" placeholder="Ex: 20" min="0" title="O sistema avisa quando a quantidade ficar abaixo deste valor">
+          <input type="number" id="pecaMin" placeholder="Ex: 20" min="1" title="O sistema avisa quando a quantidade ficar abaixo deste valor">
         </div>
         <div class="form-group">
-          <label>Unidade</label>
+          <label for="pecaUnidade">Unidade</label>
           <select id="pecaUnidade">
             <option value="un">Unidade (un)</option>
             <option value="kg">Quilograma (kg)</option>
@@ -158,21 +175,25 @@
     <!-- FILTROS -->
     <div class="filters">
       <label>Filtrar:</label>
-      <select id="filterCategoria" onchange="renderEstoque()">
+      <select id="filterCategoria" onchange="renderEstoque()" aria-label="Filtrar por categoria">
         <option value="">Todas as Categorias</option>
         <option value="Fixação">Fixação</option>
         <option value="Elétrico">Elétrico</option>
         <option value="Mecânico">Mecânico</option>
         <option value="Hidráulico">Hidráulico</option>
+        <option value="Pneumático">Pneumático</option>
+        <option value="Lubrificação">Lubrificação</option>
+        <option value="Insumo">Insumo</option>
         <option value="Outro">Outro</option>
       </select>
-      <select id="filterStatus" onchange="renderEstoque()">
+      <select id="filterStatus" onchange="renderEstoque()" aria-label="Filtrar por status">
         <option value="">Todos os Status</option>
         <option value="ok">Estoque OK</option>
         <option value="baixo">Estoque Baixo</option>
         <option value="critico">Estoque Crítico</option>
+        <option value="sem-minimo">Sem mínimo definido</option>
       </select>
-      <input type="text" id="filterBusca" placeholder="Buscar peça..." oninput="renderEstoque()">
+      <input type="search" id="filterBusca" placeholder="Buscar peça..." oninput="renderEstoque()" aria-label="Buscar peça pelo nome">
     </div>
 
     <div class="selecao-bar" id="selecaoBar" hidden>

@@ -155,7 +155,7 @@
         </div>
         <div class="hist-card-meta">
           <span><i class="fas fa-calendar"></i> ${dataFormatada}</span>
-          <span><i class="fas fa-user"></i> ${escapeHTML(o.usuario?.usuario ? `${o.operador} (@${o.usuario.usuario})` : o.operador)}</span>
+          <span><i class="fas fa-user"></i> ${escapeHTML(o.usuario?.usuario && o.usuario.usuario !== o.operador ? `${o.operador} (${o.usuario.usuario})` : o.operador)}</span>
           <span><i class="fas fa-clock"></i> Turno: ${escapeHTML(o.turno)}</span>
         </div>
         <div class="hist-card-desc">${escapeHTML(o.descricao)}</div>

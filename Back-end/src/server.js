@@ -11,6 +11,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('node:crypto');
 const path = require('node:path');
+const PAGINA_404 = require('./pagina404');
 
 const app = express();
 // Atrás do proxy da Vercel: faz o req.ip refletir o cliente real
@@ -87,6 +88,16 @@ app.get(['/favicon.svg', '/favicon.ico', '/apple-touch-icon.png'], (req, res) =>
 app.use('/css', express.static(path.join(frontendRoot, 'css'), { index: false }));
 app.use('/js', express.static(path.join(frontendRoot, 'js'), { index: false }));
 app.use('/pages', express.static(path.join(frontendRoot, 'pages'), { index: false }));
+// Endereço que não existe aberto no navegador: mostra a página "não
+// encontrada" (sem isso, caía na checagem de login e voltava 401 em branco).
+// Os pedidos da API (fetch) não pedem HTML, então seguem o caminho normal;
+// a API só funciona com o token, que o navegador não manda ao abrir um link.
+app.use((req, res, next) => {
+    if ((req.method === 'GET' || req.method === 'HEAD') && req.accepts(['json', 'html']) === 'html') {
+        return res.status(404).type('html').send(PAGINA_404);
+    }
+    next();
+});
 registerLoginRoute(app, { prisma, authSecret: AUTH_SECRET });
 app.use(createAuthenticate(prisma, AUTH_SECRET));
 registerUserRoutes(app, { prisma });
@@ -100,6 +111,7 @@ registerAiRoutes(app, { prisma, requireSupervisor });
 // ROTA 404 (Coringa)
 // ==========================================
 app.use((req, res) => {
+    if (req.accepts(['json', 'html']) === 'html') return res.status(404).type('html').send(PAGINA_404);
     res.status(404).json({ erro: `Rota não encontrada: ${req.method} ${req.originalUrl}` });
 });
 // Conecta ao banco e cria a conta inicial uma única vez por processo.

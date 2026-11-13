@@ -112,6 +112,6 @@ INSERT INTO maquinas (nome_maquina, setor_associado, numero_serie) VALUES
 
 INSERT INTO pecas (nome, categoria, qtd, min, unidade) VALUES
   ('Parafuso M6', 'Fixação', 500, 100, 'un'),
-  ('Correia Esteira A', 'Peça de máquina', 3, 2, 'un'),
-  ('Óleo Lubrificante', 'Insumo', 12, 5, 'l'),
-  ('Filtro de Ar Compressor', 'Manutenção', 1, 2, 'un');
+  ('Correia Esteira A', 'Mecânico', 3, 2, 'un'),
+  ('Óleo Lubrificante', 'Lubrificação', 12, 5, 'L'),
+  ('Filtro de Ar Compressor', 'Pneumático', 1, 2, 'un');
