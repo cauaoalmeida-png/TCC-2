@@ -42,6 +42,11 @@
       const params = new URLSearchParams(window.location.search);
       const setorParam = params.get('setor');
       const maquinaParam = params.get('maquina');
+      const tipoParam = params.get('tipo');
+      const tipoSelect = document.getElementById('tipoSelect');
+      if (tipoParam && [...tipoSelect.options].some(o => o.value === tipoParam)) {
+        tipoSelect.value = tipoParam;
+      }
       if (setorParam) {
         selSetor.value = setorParam;
         loadMaquinas();

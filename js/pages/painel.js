@@ -120,6 +120,7 @@
             <div class="painel-card-status ${st.cor}">
                 <span class="status-dot ${st.cor}"></span>
                 ${st.status}
+                <span class="prev-badge-slot" data-risco-maquina="${escapeHTML(maq.nome_maquina)}"></span>
             </div>
             <div class="painel-card-footer">
                 <a href="ocorrencia.html?setor=${encodeURIComponent(maq.setor_associado)}&maquina=${encodeURIComponent(maq.nome_maquina)}" class="btn btn-primary btn-sm">
@@ -139,6 +140,8 @@
     }
 
     grid.innerHTML = html;
+    // Previsão de falhas (js/pages/previsao.js): recalcula junto com o painel
+    if (typeof atualizarPrevisao === 'function') atualizarPrevisao();
   }
 
   // ==========================================
