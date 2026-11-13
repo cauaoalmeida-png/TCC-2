@@ -164,3 +164,22 @@
 @media (max-width: 600px) {
   .nova-peca-form { grid-template-columns: 1fr; }
 }
+
+/* Seleção para excluir várias peças */
+.selecao-bar {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  background: white; border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 0.7rem 1.2rem; margin-bottom: 1rem;
+}
+.selecao-bar[hidden] { display: none; }
+.selecao-todos { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; }
+.selecao-bar input[type="checkbox"], .estoque-check input { width: 18px; height: 18px; accent-color: var(--danger); cursor: pointer; }
+.selecao-contagem { color: var(--text-muted); font-size: 0.9rem; }
+.selecao-bar .btn { margin-left: auto; }
+.selecao-bar .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.estoque-card-header { gap: 0.7rem; }
+.estoque-check { display: flex; align-items: center; padding-top: 0.25rem; }
+.estoque-card.selecionada { outline: 2px solid var(--danger); outline-offset: -2px; }
+
+/* Itens lidos da nota fiscal (somente leitura) */
+.ia-tabela td.nf-descricao { max-width: 260px; font-size: 0.82rem; }

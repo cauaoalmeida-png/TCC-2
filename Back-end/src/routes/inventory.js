@@ -70,6 +70,21 @@ function registerRoutes(app, { prisma, requireSupervisor }) {
         }
     });
 
+    // Deletar várias peças de uma vez (ex.: esvaziar o estoque)
+    app.post('/deletar-pecas', requireSupervisor, async (req, res) => {
+        const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(Number) : [];
+        if (!ids.length || ids.length > 1000 || !ids.every(id => Number.isInteger(id) && id > 0)) {
+            return res.status(400).json({ erro: 'Lista de peças inválida.' });
+        }
+        try {
+            const { count } = await prisma.peca.deleteMany({ where: { id: { in: [...new Set(ids)] } } });
+            res.status(200).json({ mensagem: 'Peças deletadas!', excluidas: count });
+        } catch (err) {
+            console.error(' Erro ao deletar peças:', err.message);
+            res.status(500).json({ erro: 'Erro ao deletar peças.' });
+        }
+    });
+
     // ==========================================
 }
 
