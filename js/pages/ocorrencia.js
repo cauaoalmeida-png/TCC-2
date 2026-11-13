@@ -9,6 +9,7 @@
     document.getElementById('operadorIdentificado').value = getSessao().usuario.nome;
     try { clearNextUrl && clearNextUrl(); } catch (e) {}
     carregarFiltros();
+    iniciarRelatoIA();
   });
 
   // ==========================================
@@ -41,6 +42,11 @@
       const params = new URLSearchParams(window.location.search);
       const setorParam = params.get('setor');
       const maquinaParam = params.get('maquina');
+      const tipoParam = params.get('tipo');
+      const tipoSelect = document.getElementById('tipoSelect');
+      if (tipoParam && [...tipoSelect.options].some(o => o.value === tipoParam)) {
+        tipoSelect.value = tipoParam;
+      }
       if (setorParam) {
         selSetor.value = setorParam;
         loadMaquinas();
@@ -135,14 +141,77 @@
         document.getElementById('wppBox').classList.add('show');
         document.getElementById('ocorrenciaForm').style.display = 'none';
       } else {
-        alert('Erro ao salvar ocorrência no banco.');
+        avisar('Erro ao salvar ocorrência no banco.');
         btn.innerHTML = txtOriginal;
         btn.style.pointerEvents = 'auto';
       }
     } catch (erro) {
       console.error('Falha ao comunicar com o servidor:', erro);
-      alert('Erro na conexão com o servidor. O back-end está rodando?');
+      avisar('Erro na conexão com o servidor. O back-end está rodando?');
       btn.innerHTML = txtOriginal;
       btn.style.pointerEvents = 'auto';
     }
+  });
+
+  // ==========================================
+  // RELATO POR IA
+  // O operador escreve (ou dita) o problema e a IA preenche o formulário.
+  // ==========================================
+  let iaFoto = null;
+
+  async function iniciarRelatoIA() {
+    if (await iaAtiva()) document.getElementById('iaBox').hidden = false;
+  }
+
+  document.getElementById('iaFoto').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    const nome = document.getElementById('iaFotoNome');
+    iaFoto = null;
+    nome.textContent = 'Foto (opcional)';
+    if (!file) return;
+    try {
+      iaFoto = await iaReduzirFoto(file);
+      nome.textContent = 'Foto anexada';
+    } catch (erro) {
+      iaMostrarErro(document.getElementById('iaErro'), 'Não foi possível ler essa imagem. Tente outra foto.');
+    }
+  });
+
+  function preencherFormulario(sugestao) {
+    if (sugestao.setor) {
+      document.getElementById('setorSelect').value = sugestao.setor;
+      loadMaquinas();
+      if (sugestao.maquina) document.getElementById('maquinaSelect').value = sugestao.maquina;
+    }
+    if (sugestao.tipo) document.getElementById('tipoSelect').value = sugestao.tipo;
+    if (sugestao.turno) document.getElementById('turnoSelect').value = sugestao.turno;
+    document.getElementById('descricaoInput').value =
+      `${sugestao.descricao}\n\nCausa provável (sugestão da IA): ${sugestao.causaProvavel}\nPrimeiro passo sugerido: ${sugestao.acaoSugerida}`;
+
+    const gravidade = document.getElementById('iaGravidade');
+    gravidade.textContent = `Gravidade ${sugestao.gravidade}`;
+    gravidade.dataset.nivel = sugestao.gravidade;
+    document.getElementById('iaCausa').textContent = sugestao.causaProvavel;
+    document.getElementById('iaAcao').textContent = sugestao.acaoSugerida;
+    document.getElementById('iaResultado').hidden = false;
+  }
+
+  document.getElementById('iaBtn').addEventListener('click', async function() {
+    const texto = document.getElementById('iaTexto').value.trim();
+    const caixaErro = document.getElementById('iaErro');
+    iaMostrarErro(caixaErro, '');
+    if (texto.length < 5) {
+      iaMostrarErro(caixaErro, 'Escreva um pouco mais sobre o problema.');
+      return;
+    }
+
+    iaCarregando(this, true);
+    const { dados, erro } = await iaChamar('/ia/relato', { texto, foto: iaFoto });
+    iaCarregando(this, false);
+    if (erro) {
+      iaMostrarErro(caixaErro, erro);
+      return;
+    }
+    preencherFormulario(dados);
+    document.getElementById('ocorrenciaForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });

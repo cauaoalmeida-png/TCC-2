@@ -40,7 +40,7 @@ function requireRole(rolesAllowed) {
   }
   const cargo = sess.usuario.cargo;
   if (!rolesAllowed.includes(cargo)) {
-    alert('Acesso negado: permissões insuficientes.');
+    avisar('Acesso negado: você não tem permissão para esta tela.', 'erro', { depois: true });
     // Sem salvar next_url aqui: a pessoa está logada, apenas recebeu bloqueio por cargo.
     // Volta para a tela anterior quando possível.
     try {

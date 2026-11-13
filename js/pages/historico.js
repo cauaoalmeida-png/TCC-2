@@ -196,11 +196,11 @@
 // 🟢 Função de exclusão aprimorada com diagnóstico
 async function excluirRegistro(id) {
     if (!id) {
-        alert("Erro: ID do registro não foi encontrado.");
+        avisar("Erro: ID do registro não foi encontrado.");
         return;
     }
 
-    if (confirm(`Tem certeza que deseja excluir a ocorrência #${id}?`)) {
+    if (await confirmar(`Tem certeza que deseja excluir a ocorrência #${id}? Essa ação não pode ser desfeita.`, { titulo: 'Excluir ocorrência', ok: 'Excluir', perigo: true })) {
         try {
             // Garante o endereço correto do backend
             const baseUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:3000';
@@ -216,15 +216,15 @@ async function excluirRegistro(id) {
             });
 
             if (resposta.ok) {
-                alert("Ocorrência excluída com sucesso!");
+                avisar("Ocorrência excluída com sucesso!");
                 renderHistorico(); // Recarrega a tela do histórico
             } else {
                 const erroDados = await resposta.json().catch(() => ({}));
-                alert(`Erro (${resposta.status}): ${erroDados.erro || 'Servidor recusou a exclusão.'}`);
+                avisar(`Erro (${resposta.status}): ${erroDados.erro || 'Servidor recusou a exclusão.'}`);
             }
         } catch (erro) {
             console.error("Erro de conexão:", erro);
-            alert("Erro de conexão! Verifique se o servidor Node.js está rodando.");
+            avisar("Erro de conexão! Verifique se o servidor Node.js está rodando.");
         }
     }
 }
@@ -232,6 +232,8 @@ async function excluirRegistro(id) {
   function abrirModal(id) {
     resolvendoId = id;
     document.getElementById('resolucaoInput').value = '';
+    limparSugestaoIA();
+    iaAtiva().then(ativa => { document.getElementById('iaSolucaoBox').hidden = !ativa; });
     document.getElementById('modalOverlay').classList.add('open');
   }
 
@@ -243,7 +245,7 @@ async function excluirRegistro(id) {
   // ATUALIZAR STATUS NO BANCO
   async function confirmarResolucao() {
     const texto = document.getElementById('resolucaoInput').value.trim();
-    if (!texto) { alert('Por favor, descreva o que foi feito.'); return; }
+    if (!texto) { avisar('Por favor, descreva o que foi feito.'); return; }
     
     const dataAtual = new Date().toISOString();
 
@@ -255,13 +257,15 @@ async function excluirRegistro(id) {
         });
         if (!resposta.ok) {
             const erro = await resposta.json().catch(() => ({}));
-            alert(erro.erro || 'Não foi possível marcar como resolvido.');
+            avisar(erro.erro || 'Não foi possível marcar como resolvido.');
             return;
         }
+        const baixas = pecasMarcadasIA();
         fecharModal();
+        if (baixas.length) await darBaixaPecasIA(baixas);
         renderHistorico(); // Recarrega da base de dados
     } catch (erro) {
-        alert('Erro ao comunicar com o servidor.');
+        avisar('Erro ao comunicar com o servidor.');
     }
   }
 
@@ -331,7 +335,7 @@ async function confirmarExportacao() {
   const expEst = document.getElementById('expEstoque').checked;
   const expCad = document.getElementById('expCadastros').checked;
 
-  if (!expOc && !expEst && !expCad) { alert('Selecione pelo menos uma opção.'); return; }
+  if (!expOc && !expEst && !expCad) { avisar('Selecione pelo menos uma opção.'); return; }
 
   const btn = document.getElementById('btnExportar');
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
@@ -391,8 +395,82 @@ async function confirmarExportacao() {
       document.getElementById('exportModal').remove();
 
   } catch (error) {
-      alert("Erro ao buscar dados do servidor para a exportação!");
+      avisar("Erro ao buscar dados do servidor para a exportação!");
       btn.innerHTML = '<i class="fas fa-download"></i> Exportar';
       btn.style.pointerEvents = 'auto';
   }
 }
+
+  // ==========================================
+  // SUGESTÃO DE SOLUÇÃO COM IA (modal de resolução)
+  // A IA olha casos parecidos já resolvidos e sugere o texto e as peças usadas.
+  // ==========================================
+  let pecasSugeridasIA = [];
+
+  function limparSugestaoIA() {
+    pecasSugeridasIA = [];
+    iaMostrarErro(document.getElementById('iaSolucaoErro'), '');
+    document.getElementById('iaSolucaoResultado').hidden = true;
+    document.getElementById('iaSolucaoPecas').replaceChildren();
+  }
+
+  async function sugerirSolucaoIA() {
+    const botao = document.getElementById('iaSolucaoBtn');
+    const caixaErro = document.getElementById('iaSolucaoErro');
+    limparSugestaoIA();
+    iaCarregando(botao, true);
+    const { dados, erro } = await iaChamar('/ia/solucao', { ocorrenciaId: resolvendoId });
+    iaCarregando(botao, false);
+    if (erro) {
+      iaMostrarErro(caixaErro, erro);
+      return;
+    }
+
+    document.getElementById('resolucaoInput').value = dados.solucao;
+    document.getElementById('iaSolucaoBase').textContent = dados.baseadoEm;
+    pecasSugeridasIA = dados.pecas || [];
+
+    const lista = document.getElementById('iaSolucaoPecas');
+    if (pecasSugeridasIA.length) {
+      const titulo = document.createElement('h4');
+      titulo.textContent = 'Dar baixa no estoque ao confirmar:';
+      lista.appendChild(titulo);
+      pecasSugeridasIA.forEach((peca, i) => {
+        const linha = document.createElement('label');
+        linha.className = 'ia-peca';
+        const marcar = document.createElement('input');
+        marcar.type = 'checkbox';
+        marcar.checked = true;
+        marcar.id = `iaPeca${i}`;
+        const texto = document.createElement('span');
+        texto.textContent = `${peca.quantidade} ${peca.unidade || 'un'} de ${peca.nome} (há ${peca.disponivel} no estoque)`;
+        linha.append(marcar, texto);
+        lista.appendChild(linha);
+      });
+    }
+    document.getElementById('iaSolucaoResultado').hidden = false;
+  }
+
+  function pecasMarcadasIA() {
+    return pecasSugeridasIA.filter((_, i) => document.getElementById(`iaPeca${i}`)?.checked);
+  }
+
+  // Desconta as peças usando a quantidade atual do banco.
+  async function darBaixaPecasIA(pecas) {
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/pecas`);
+      const estoque = await resposta.json();
+      for (const peca of pecas) {
+        const atual = estoque.find(p => p.id === peca.pecaId);
+        if (!atual) continue;
+        await fetch(`${API_BASE_URL}/atualizar-peca/${peca.pecaId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ qtd: Math.max(0, atual.qtd - peca.quantidade) })
+        });
+      }
+    } catch (erro) {
+      console.error('Erro ao dar baixa nas peças:', erro);
+      avisar('A ocorrência foi resolvida, mas não foi possível dar baixa nas peças. Ajuste no Estoque.');
+    }
+  }

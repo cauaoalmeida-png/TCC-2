@@ -5,7 +5,8 @@
   "outputDirectory": "public",
   "functions": {
     "api/index.js": {
-      "includeFiles": "Back-end/node_modules/.prisma/client/**"
+      "includeFiles": "Back-end/node_modules/.prisma/client/**",
+      "maxDuration": 60
     }
   },
   "rewrites": [

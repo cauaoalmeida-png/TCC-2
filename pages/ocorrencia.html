@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="../css/header.css">
   <link rel="stylesheet" href="../css/forms.css">
   <link rel="stylesheet" href="../css/footer.css">
+  <link rel="stylesheet" href="../css/ia.css">
 </head>
 <body>
 
@@ -52,6 +53,30 @@
         <div class="success-msg" id="successMsg">
           <i class="fas fa-check-circle"></i> Ocorrência registrada com sucesso! Avisando supervisor...
         </div>
+
+        <section class="ia-box" id="iaBox" hidden>
+          <div class="ia-head">
+            <i class="fas fa-wand-magic-sparkles"></i>
+            <h2>Relatar com IA</h2>
+          </div>
+          <p class="ia-intro">Conte com suas palavras o que aconteceu. Pode usar o microfone do teclado do celular. A IA preenche o formulário e sugere a causa provável; confira tudo antes de registrar.</p>
+          <textarea id="iaTexto" maxlength="2000" placeholder="Ex.: a prensa 2 da estamparia parou do nada, deu um estalo e está vazando óleo embaixo dela"></textarea>
+          <div class="ia-actions">
+            <input type="file" id="iaFoto" accept="image/*" hidden>
+            <label for="iaFoto" class="btn btn-outline ia-foto-btn"><i class="fas fa-camera"></i> <span id="iaFotoNome">Foto (opcional)</span></label>
+            <button type="button" class="btn btn-primary" id="iaBtn"><i class="fas fa-wand-magic-sparkles"></i> Preencher com IA</button>
+          </div>
+          <div class="ia-erro" id="iaErro" role="alert" hidden></div>
+          <div class="ia-resultado" id="iaResultado" hidden>
+            <div class="ia-resultado-topo">
+              <strong>Sugestão da IA</strong>
+              <span class="ia-gravidade" id="iaGravidade"></span>
+            </div>
+            <p><b>Causa provável:</b> <span id="iaCausa"></span></p>
+            <p><b>Primeiro passo:</b> <span id="iaAcao"></span></p>
+            <small>O formulário abaixo foi preenchido. Revise e clique em Registrar Ocorrência.</small>
+          </div>
+        </section>
 
         <form id="ocorrenciaForm">
           <div class="form-row">
@@ -172,8 +197,10 @@
 <script src="../js/config.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/avisos.js"></script>
 <script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
+<script src="../js/ia.js"></script>
 <script src="../js/pages/ocorrencia.js"></script>
 </body>
 </html>

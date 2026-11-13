@@ -15,6 +15,8 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/header.css">
   <link rel="stylesheet" href="../css/footer.css">
+  <link rel="stylesheet" href="../css/ia.css">
+  <link rel="stylesheet" href="../css/previsao.css">
   <style>
     .painel-card {
       background: white;
@@ -131,6 +133,49 @@
 
   <div class="section">
     <div class="container">
+      <section class="ia-box" id="iaPainel" hidden>
+        <div class="ia-head">
+          <i class="fas fa-wand-magic-sparkles"></i>
+          <h2>Assistente da chefia</h2>
+          <span class="ia-badge">IA</span>
+        </div>
+        <p class="ia-intro">Pergunte sobre ocorrências, máquinas, estoque e guindastes, ou peça o resumo da semana. A IA responde com os dados do sistema.</p>
+        <div class="ia-pergunta">
+          <input type="text" id="iaPergunta" maxlength="500" placeholder="Ex.: Qual máquina mais parou este mês?">
+          <button type="button" class="btn btn-primary" id="iaPerguntarBtn"><i class="fas fa-paper-plane"></i> Perguntar</button>
+          <button type="button" class="btn btn-outline" id="iaResumoBtn"><i class="fas fa-file-lines"></i> Resumo da semana</button>
+        </div>
+        <div class="ia-chips">
+          <button type="button" class="ia-chip" data-pergunta="Qual máquina teve mais ocorrências nos últimos 30 dias e por quê?">Máquina com mais problemas</button>
+          <button type="button" class="ia-chip" data-pergunta="Quais ocorrências estão pendentes há mais tempo?">Pendências mais antigas</button>
+          <button type="button" class="ia-chip" data-pergunta="Quais peças preciso comprar agora?">O que comprar</button>
+          <button type="button" class="ia-chip" data-pergunta="Em qual turno acontecem mais paradas?">Turno com mais paradas</button>
+        </div>
+        <div class="ia-erro" id="iaErro" role="alert" hidden></div>
+        <div class="ia-resultado" id="iaResposta" hidden></div>
+      </section>
+
+      <section class="prev-box" id="previsaoFalhas" hidden>
+        <div class="prev-head">
+          <div>
+            <h2><i class="fas fa-heart-pulse"></i> Previsão de falhas</h2>
+            <p class="prev-sub">Chance de cada máquina falhar nos próximos 7 dias, calculada pelo histórico de ocorrências.</p>
+          </div>
+          <div class="prev-acoes">
+            <button type="button" class="btn btn-primary btn-sm" id="prevIaBtn" hidden><i class="fas fa-wand-magic-sparkles"></i> Explicar com IA</button>
+            <button type="button" class="btn btn-light btn-sm" id="prevTodasBtn" hidden><i class="fas fa-list"></i> Ver todas</button>
+          </div>
+        </div>
+        <div class="prev-resumo" id="prevResumo"></div>
+        <div class="ia-erro" id="prevErro" role="alert" hidden></div>
+        <div class="ia-resultado" id="prevVisaoIA" hidden></div>
+        <div class="prev-grid" id="prevGrid"></div>
+        <details class="prev-como">
+          <summary>Como o risco é calculado?</summary>
+          <p>O FactoryTrack soma as falhas de cada máquina nos últimos 180 dias, dando mais peso às recentes (paradas contam mais que problemas de qualidade; falta de material não conta). O risco sobe quando o mesmo problema se repete, quando as falhas estão aumentando, quando o intervalo entre falhas está encurtando ou quando a máquina chega no seu tempo médio entre falhas (MTBF). Uma manutenção preventiva recente reduz o risco. A chance de falha em 7 dias vem de um modelo estatístico (Poisson). O cálculo é do próprio sistema; a IA só explica o resultado e sugere a preventiva.</p>
+        </details>
+      </section>
+
       <div class="filters">
         <label>Filtrar:</label>
         <select id="filterSetor" onchange="renderPainel()">
@@ -190,8 +235,11 @@
 <script src="../js/config.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/avisos.js"></script>
 <script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
+<script src="../js/ia.js"></script>
 <script src="../js/pages/painel.js"></script>
+<script src="../js/pages/previsao.js"></script>
 </body>
 </html>

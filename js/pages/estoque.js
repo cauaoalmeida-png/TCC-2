@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Carrega o estoque ao abrir a página
     renderEstoque();
+    if (!isOperator()) iaAtiva().then(ativa => { document.getElementById('iaNotaBox').hidden = !ativa; });
 });
 
 function escapeHTML(valor) {
@@ -93,7 +94,7 @@ async function addPeca() {
     const categoria = document.getElementById('pecaCategoria').value;
     const unidade = document.getElementById('pecaUnidade').value;
 
-    if (!nome || isNaN(qtd) || isNaN(min)) { alert('Preencha todos os campos obrigatórios.'); return; }
+    if (!nome || isNaN(qtd) || isNaN(min)) { avisar('Preencha todos os campos obrigatórios.'); return; }
 
     try {
         const resposta = await fetch(`${API_BASE_URL}/cadastrar-peca`, {
@@ -109,7 +110,7 @@ async function addPeca() {
             renderEstoque(); // Recarrega a lista do banco
         }
     } catch (erro) {
-        alert('Erro ao comunicar com o servidor.');
+        avisar('Erro ao comunicar com o servidor.');
     }
 }
 
@@ -147,14 +148,14 @@ async function confirmarUso() {
         document.getElementById('modalUsar').classList.remove('open');
         renderEstoque();
     } catch (erro) {
-        alert('Erro ao atualizar banco.');
+        avisar('Erro ao atualizar banco.');
     }
 }
 
 // REPOR PEÇA (ATUALIZAR BANCO)
 async function confirmarReposicao() {
     const qtdAdicionada = parseInt(document.getElementById('qtdRepor').value);
-    if (!qtdAdicionada || qtdAdicionada <= 0) { alert('Quantidade inválida.'); return; }
+    if (!qtdAdicionada || qtdAdicionada <= 0) { avisar('Quantidade inválida.'); return; }
     
     const peca = estoqueAtual.find(p => p.id === pecaSelecionada);
     const novaQtd = peca.qtd + qtdAdicionada;
@@ -168,18 +169,160 @@ async function confirmarReposicao() {
         document.getElementById('modalRepor').classList.remove('open');
         renderEstoque();
     } catch (erro) {
-        alert('Erro ao atualizar banco.');
+        avisar('Erro ao atualizar banco.');
     }
 }
 
 // DELETAR PEÇA
 async function deletePeca(id) {
-    if (!confirm('Excluir esta peça do estoque?')) return;
+    if (!(await confirmar('Excluir esta peça do estoque?', { titulo: 'Excluir peça', ok: 'Excluir', perigo: true }))) return;
 
     try {
         await fetch(`${API_BASE_URL}/deletar-peca/${id}`, { method: 'DELETE' });
         renderEstoque();
     } catch (erro) {
-        alert('Erro ao deletar do servidor.');
+        avisar('Erro ao deletar do servidor.');
     }
 }
+
+// ==========================================
+// ENTRADA PELA NOTA FISCAL (IA)
+// A IA lê a nota (foto, PDF ou XML) e sugere as entradas; a chefia confere.
+// ==========================================
+let iaNotaItens = [];
+
+async function lerArquivoNota(file) {
+    if (/xml/i.test(file.type) || /\.xml$/i.test(file.name)) {
+        return { xml: await file.text() };
+    }
+    if (file.type === 'application/pdf') {
+        if (file.size > 3 * 1024 * 1024) throw new Error('PDF muito grande. Envie até 3 MB.');
+        return { arquivo: { mediaType: 'application/pdf', data: await iaLerBase64(file) } };
+    }
+    // Nota em foto precisa de mais resolução para os números ficarem legíveis.
+    return { arquivo: await iaReduzirFoto(file, 2000) };
+}
+
+document.getElementById('iaNotaArquivo').addEventListener('change', e => {
+    const file = e.target.files[0];
+    document.getElementById('iaNotaNome').textContent = file ? file.name : 'Escolher nota fiscal';
+});
+
+document.getElementById('iaNotaBtn').addEventListener('click', async function() {
+    const file = document.getElementById('iaNotaArquivo').files[0];
+    const caixaErro = document.getElementById('iaNotaErro');
+    iaMostrarErro(caixaErro, '');
+    document.getElementById('iaNotaOk').hidden = true;
+    document.getElementById('iaNotaResultado').hidden = true;
+    if (!file) {
+        iaMostrarErro(caixaErro, 'Escolha a foto, o PDF ou o XML da nota.');
+        return;
+    }
+
+    let corpo;
+    try {
+        corpo = await lerArquivoNota(file);
+    } catch (erro) {
+        iaMostrarErro(caixaErro, erro.message || 'Não foi possível ler esse arquivo.');
+        return;
+    }
+
+    iaCarregando(this, true, 'Lendo a nota...');
+    const { dados, erro } = await iaChamar('/ia/nota-fiscal', corpo);
+    iaCarregando(this, false);
+    if (erro) {
+        iaMostrarErro(caixaErro, erro);
+        return;
+    }
+    if (!dados.itens.length) {
+        iaMostrarErro(caixaErro, 'A IA não encontrou peças nessa nota.');
+        return;
+    }
+
+    iaNotaItens = dados.itens;
+    const partes = [dados.fornecedor, dados.numero ? `NF ${dados.numero}` : ''].filter(Boolean);
+    document.getElementById('iaNotaCabecalho').textContent = partes.length ? partes.join(' · ') : 'Itens encontrados na nota:';
+
+    const corpoTabela = document.getElementById('iaNotaItens');
+    corpoTabela.replaceChildren();
+    iaNotaItens.forEach((item, i) => {
+        const tr = document.createElement('tr');
+
+        const tdMarcar = document.createElement('td');
+        const marcar = document.createElement('input');
+        marcar.type = 'checkbox';
+        marcar.checked = true;
+        marcar.id = `iaNotaItem${i}`;
+        tdMarcar.appendChild(marcar);
+
+        const tdDescricao = document.createElement('td');
+        tdDescricao.textContent = item.descricao;
+
+        const tdPeca = document.createElement('td');
+        if (item.pecaId) {
+            tdPeca.textContent = `${item.nomeAtual} (tem ${item.quantidadeAtual})`;
+        } else {
+            const novo = document.createElement('span');
+            novo.className = 'ia-novo';
+            novo.textContent = 'NOVA ';
+            tdPeca.append(novo, `${item.nomeSugerido} · ${item.categoria}`);
+        }
+
+        const tdQtd = document.createElement('td');
+        const qtd = document.createElement('input');
+        qtd.type = 'number';
+        qtd.min = '1';
+        qtd.value = item.quantidade;
+        qtd.id = `iaNotaQtd${i}`;
+        tdQtd.append(qtd, ` ${item.unidade}`);
+
+        tr.append(tdMarcar, tdDescricao, tdPeca, tdQtd);
+        corpoTabela.appendChild(tr);
+    });
+    document.getElementById('iaNotaResultado').hidden = false;
+});
+
+document.getElementById('iaNotaAplicarBtn').addEventListener('click', async function() {
+    const caixaErro = document.getElementById('iaNotaErro');
+    iaMostrarErro(caixaErro, '');
+    const selecionados = iaNotaItens
+        .map((item, i) => ({ ...item, marcado: document.getElementById(`iaNotaItem${i}`).checked, qtd: parseInt(document.getElementById(`iaNotaQtd${i}`).value, 10) }))
+        .filter(item => item.marcado && item.qtd > 0);
+    if (!selecionados.length) {
+        iaMostrarErro(caixaErro, 'Marque ao menos um item com quantidade maior que zero.');
+        return;
+    }
+
+    iaCarregando(this, true, 'Dando entrada...');
+    let feitos = 0;
+    try {
+        const resposta = await fetch(`${API_BASE_URL}/pecas`);
+        const estoque = await resposta.json();
+        for (const item of selecionados) {
+            const atual = item.pecaId ? estoque.find(p => p.id === item.pecaId) : null;
+            const r = atual
+                ? await fetch(`${API_BASE_URL}/atualizar-peca/${atual.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ qtd: atual.qtd + item.qtd })
+                })
+                : await fetch(`${API_BASE_URL}/cadastrar-peca`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome: item.nomeSugerido, categoria: item.categoria, qtd: item.qtd, min: 0, unidade: item.unidade })
+                });
+            if (r.ok) feitos++;
+        }
+    } catch (erro) {
+        console.error('Erro ao dar entrada da nota:', erro);
+    }
+    iaCarregando(this, false);
+
+    document.getElementById('iaNotaResultado').hidden = true;
+    const ok = document.getElementById('iaNotaOk');
+    ok.textContent = feitos === selecionados.length
+        ? `Entrada feita em ${feitos} peça(s). Peças novas foram cadastradas com estoque mínimo 0; ajuste se precisar.`
+        : `Entrada feita em ${feitos} de ${selecionados.length} peça(s). Confira o estoque abaixo.`;
+    ok.hidden = false;
+    renderEstoque();
+});
