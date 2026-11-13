@@ -4,15 +4,122 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#111310" />
-  <meta name="description" content="FactoryTrack: sistema web que conecta o chão de fábrica à gestão. Ocorrências, manutenção e estoque em um só lugar, com alerta no WhatsApp e adaptado à sua indústria." />
-  <title>FactoryTrack — Gestão para a operação industrial</title>
+  <title>FactoryTrack | Sistema de gestão industrial e manutenção</title>
+  <meta name="description" content="Sistema web de gestão industrial: ocorrências, manutenção e estoque em um só lugar, com alerta no WhatsApp. Adaptado à sua fábrica. Peça uma demonstração." />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <link rel="canonical" href="https://factory-track-eight.vercel.app/" />
+
+  <!-- Prévia ao compartilhar o link (WhatsApp, LinkedIn, Facebook, X) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:site_name" content="FactoryTrack" />
+  <meta property="og:title" content="FactoryTrack: gestão industrial do chão de fábrica à gerência" />
+  <meta property="og:description" content="Ocorrências, manutenção e estoque em um só lugar, com alerta no WhatsApp de quem precisa agir. Configurado para a sua indústria." />
+  <meta property="og:url" content="https://factory-track-eight.vercel.app/" />
+  <meta property="og:image" content="https://factory-track-eight.vercel.app/og-image.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Logo do FactoryTrack, gestão industrial inteligente" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="FactoryTrack: gestão industrial do chão de fábrica à gerência" />
+  <meta name="twitter:description" content="Ocorrências, manutenção e estoque em um só lugar, com alerta no WhatsApp de quem precisa agir." />
+  <meta name="twitter:image" content="https://factory-track-eight.vercel.app/og-image.jpg" />
+
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+  <!-- Desempenho: conecta cedo aos servidores externos e baixa primeiro a foto principal -->
+  <link rel="preconnect" href="https://images.unsplash.com" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+  <link rel="preload" as="image" fetchpriority="high"
+    href="https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=1600&amp;q=80"
+    imagesrcset="https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=800&amp;q=75 800w, https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=1200&amp;q=80 1200w, https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=1600&amp;q=80 1600w, https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=2200&amp;q=80 2200w"
+    imagesizes="100vw" />
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Ícones carregam sem travar a primeira pintura da página -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" /></noscript>
+
+  <!-- Dados estruturados (Schema.org) para Google e buscadores com IA -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://factory-track-eight.vercel.app/#organizacao",
+        "name": "FactoryTrack",
+        "url": "https://factory-track-eight.vercel.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://factory-track-eight.vercel.app/logo-512.png",
+          "width": 512,
+          "height": 512
+        },
+        "description": "Equipe da Bahia que desenvolve o FactoryTrack, sistema web de gestão para a operação industrial.",
+        "email": "caua_oliveira1@hotmail.com",
+        "address": {
+          "@type": "PostalAddress",
+          "addressRegion": "BA",
+          "addressCountry": "BR"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "sales",
+          "telephone": "+55-71-98182-8080",
+          "email": "caua_oliveira1@hotmail.com",
+          "areaServed": "BR",
+          "availableLanguage": "Portuguese"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://factory-track-eight.vercel.app/#site",
+        "url": "https://factory-track-eight.vercel.app/",
+        "name": "FactoryTrack",
+        "inLanguage": "pt-BR",
+        "publisher": { "@id": "https://factory-track-eight.vercel.app/#organizacao" }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://factory-track-eight.vercel.app/#pagina",
+        "url": "https://factory-track-eight.vercel.app/",
+        "name": "FactoryTrack | Sistema de gestão industrial e manutenção",
+        "description": "Sistema web de gestão industrial: ocorrências, manutenção e estoque em um só lugar, com alerta no WhatsApp. Adaptado à sua fábrica. Peça uma demonstração.",
+        "inLanguage": "pt-BR",
+        "isPartOf": { "@id": "https://factory-track-eight.vercel.app/#site" },
+        "about": { "@id": "https://factory-track-eight.vercel.app/#software" },
+        "primaryImageOfPage": "https://factory-track-eight.vercel.app/og-image.jpg"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://factory-track-eight.vercel.app/#software",
+        "name": "FactoryTrack",
+        "url": "https://factory-track-eight.vercel.app/",
+        "applicationCategory": "BusinessApplication",
+        "applicationSubCategory": "Gestão industrial e manutenção",
+        "operatingSystem": "Web (navegador no computador, tablet ou celular)",
+        "inLanguage": "pt-BR",
+        "description": "Sistema web que conecta o chão de fábrica à gestão: registro de ocorrências com alerta no WhatsApp, checklist de manutenção, histórico por máquina, controle de estoque, guindastes e relatórios em Excel, com acesso por cargo.",
+        "featureList": [
+          "Registro de ocorrências com alerta no WhatsApp",
+          "Painel de status em tempo real",
+          "Checklist de manutenção",
+          "Histórico de cada máquina",
+          "Controle de estoque e recursos",
+          "Relatórios em Excel",
+          "Acesso por cargo (operador, gerente, chefe geral)"
+        ],
+        "image": "https://factory-track-eight.vercel.app/og-image.jpg",
+        "provider": { "@id": "https://factory-track-eight.vercel.app/#organizacao" }
+      }
+    ]
+  }
+  </script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/footer.css" />
   <link rel="stylesheet" href="css/landing.css" />
@@ -46,9 +153,14 @@
     <section class="hero" aria-labelledby="hero-title">
       <img
         class="hero-image"
-        src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=2200&amp;q=85"
+        src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=1600&amp;q=80"
+        srcset="https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=800&amp;q=75 800w, https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=1200&amp;q=80 1200w, https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=1600&amp;q=80 1600w, https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;w=2200&amp;q=80 2200w"
+        sizes="100vw"
+        width="2200"
+        height="1467"
         alt="Profissional acompanhando equipamentos em um ambiente industrial"
         fetchpriority="high"
+        decoding="async"
       />
       <div class="hero-shade"></div>
       <div class="hero-content">
@@ -113,9 +225,14 @@
     <section class="proposal" id="proposta" aria-labelledby="proposal-title">
       <div class="proposal-image-wrap">
         <img
-          src="https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&amp;fit=crop&amp;w=1500&amp;q=85"
+          src="https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"
+          srcset="https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&amp;fit=crop&amp;w=700&amp;q=75 700w, https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&amp;fit=crop&amp;w=1200&amp;q=80 1200w, https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&amp;fit=crop&amp;w=1500&amp;q=80 1500w"
+          sizes="(max-width: 900px) 100vw, 50vw"
+          width="1500"
+          height="1000"
           alt="Detalhe de uma equipe trabalhando junto a equipamentos industriais"
           loading="lazy"
+          decoding="async"
           data-parallax
         />
         <span class="image-caption">Pessoas, processos e informação.</span>
@@ -265,9 +382,14 @@
     <section class="roles" aria-labelledby="roles-title">
       <div class="roles-photo">
         <img
-          src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&amp;fit=crop&amp;w=1800&amp;q=85"
+          src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"
+          srcset="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&amp;fit=crop&amp;w=700&amp;q=75 700w, https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&amp;fit=crop&amp;w=1200&amp;q=80 1200w, https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&amp;fit=crop&amp;w=1800&amp;q=80 1800w"
+          sizes="(max-width: 900px) 100vw, 50vw"
+          width="1800"
+          height="1200"
           alt="Trabalhadora analisando informações em um ambiente técnico"
           loading="lazy"
+          decoding="async"
           data-parallax
         />
         <div class="roles-overlay"></div>
@@ -394,7 +516,7 @@
     </div>
   </footer>
 
-  <script src="js/navigation.js"></script>
-  <script src="js/landing.js"></script>
+  <script src="js/navigation.js" defer></script>
+  <script src="js/landing.js" defer></script>
 </body>
 </html>

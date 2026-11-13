@@ -146,7 +146,7 @@ async function addGuindaste() {
     const modelo = document.getElementById('guindasteModelo').value.trim();
     const identificacao = document.getElementById('guindasteIdentificacao').value.trim();
 
-    if (!modelo) { alert('Informe o modelo do guindaste.'); return; }
+    if (!modelo) { avisar('Informe o modelo do guindaste.'); return; }
 
     try {
         const resposta = await fetch(`${API_BASE_URL}/cadastrar-guindaste`, {
@@ -160,11 +160,11 @@ async function addGuindaste() {
             document.getElementById('guindasteIdentificacao').value = '';
             renderGuindastes();
         } else {
-            alert('Erro ao cadastrar guindaste.');
+            avisar('Erro ao cadastrar guindaste.');
         }
     } catch (erro) {
         console.error(erro);
-        alert('Erro de conexão com o servidor.');
+        avisar('Erro de conexão com o servidor.');
     }
 }
 
@@ -220,26 +220,26 @@ async function confirmarAluguel() {
 
 // DEVOLVER GUINDASTE
 async function devolverGuindaste(aluguelId) {
-    if (!aluguelId) { alert('Não foi possível localizar o registro de aluguel deste guindaste.'); return; }
-    if (!confirm('Confirmar a devolução deste guindaste?')) return;
+    if (!aluguelId) { avisar('Não foi possível localizar o registro de aluguel deste guindaste.'); return; }
+    if (!(await confirmar('Confirmar a devolução deste guindaste?', { titulo: 'Devolver guindaste', ok: 'Confirmar devolução' }))) return;
 
     try {
         await fetch(`${API_BASE_URL}/devolver-aluguel/${aluguelId}`, { method: 'PUT' });
         renderGuindastes();
         renderHistorico();
     } catch (erro) {
-        alert('Erro ao registrar devolução no servidor.');
+        avisar('Erro ao registrar devolução no servidor.');
     }
 }
 
 // DELETAR GUINDASTE
 async function deleteGuindaste(id) {
-    if (!confirm('Excluir este guindaste do cadastro?')) return;
+    if (!(await confirmar('Excluir este guindaste do cadastro?', { titulo: 'Excluir guindaste', ok: 'Excluir', perigo: true }))) return;
 
     try {
         await fetch(`${API_BASE_URL}/deletar-guindaste/${id}`, { method: 'DELETE' });
         renderGuindastes();
     } catch (erro) {
-        alert('Erro ao deletar guindaste no servidor.');
+        avisar('Erro ao deletar guindaste no servidor.');
     }
 }

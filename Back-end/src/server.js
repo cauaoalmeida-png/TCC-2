@@ -5,6 +5,7 @@ const registerMachineRoutes = require('./routes/machines');
 const registerOccurrenceRoutes = require('./routes/occurrences');
 const registerInventoryRoutes = require('./routes/inventory');
 const registerRentalRoutes = require('./routes/rentals');
+const registerAiRoutes = require('./routes/ai');
 
 const express = require('express');
 const cors = require('cors');
@@ -15,7 +16,10 @@ const app = express();
 // Atrás do proxy da Vercel: faz o req.ip refletir o cliente real
 // (usado pelo limite de tentativas de login).
 app.set('trust proxy', true);
-app.use(express.json());
+// As rotas de IA que recebem foto ou nota fiscal aceitam corpo maior; as demais não.
+const jsonPadrao = express.json();
+const jsonComArquivo = express.json({ limit: '4mb' });
+app.use((req, res, next) => (registerAiRoutes.ROTAS_COM_ARQUIVO.includes(req.path) ? jsonComArquivo : jsonPadrao)(req, res, next));
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 const allowedOrigins = new Set(
@@ -91,6 +95,7 @@ registerMachineRoutes(app, { prisma, requireSupervisor });
 registerOccurrenceRoutes(app, { prisma, requireSupervisor });
 registerInventoryRoutes(app, { prisma, requireSupervisor });
 registerRentalRoutes(app, { prisma, requireSupervisor });
+registerAiRoutes(app, { prisma, requireSupervisor });
 
 // ROTA 404 (Coringa)
 // ==========================================

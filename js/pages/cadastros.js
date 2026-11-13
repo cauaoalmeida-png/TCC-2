@@ -70,7 +70,7 @@
     const nome = document.getElementById('setorNome').value.trim();
     const resp = document.getElementById('setorResp').value.trim();
 
-    if (!nome || !resp) { alert('Preencha nome e responsável.'); return; }
+    if (!nome || !resp) { avisar('Preencha nome e responsável.'); return; }
 
     try {
       const resposta = await fetch(`${API_BASE_URL}/cadastrar-setor`, {
@@ -85,22 +85,22 @@
         renderSetores();
         renderMaquinas();
       } else {
-        alert('Erro ao salvar setor no banco de dados.');
+        avisar('Erro ao salvar setor no banco de dados.');
       }
     } catch (erro) {
       console.error('Erro na comunicação com o servidor:', erro);
-      alert('Erro de conexão. O servidor está rodando?');
+      avisar('Erro de conexão. O servidor está rodando?');
     }
   }
 
   async function deleteSetor(id) {
-    if (!confirm('Excluir este setor?')) return;
+    if (!(await confirmar('Excluir este setor?', { titulo: 'Excluir setor', ok: 'Excluir', perigo: true }))) return;
     try {
       await fetch(`${API_BASE_URL}/deletar-setor/${id}`, { method: 'DELETE' });
       renderSetores();
     } catch (erro) {
       console.error(erro);
-      alert('Erro ao excluir setor no servidor.');
+      avisar('Erro ao excluir setor no servidor.');
     }
   }
 
@@ -140,7 +140,7 @@
     const setor = document.getElementById('maqSetor').value;
     const serie = document.getElementById('maqSerie').value.trim();
 
-    if (!nome || !setor) { alert('Preencha nome e setor.'); return; }
+    if (!nome || !setor) { avisar('Preencha nome e setor.'); return; }
 
     try {
       const resposta = await fetch(`${API_BASE_URL}/cadastrar-maquina`, {
@@ -155,22 +155,22 @@
         document.getElementById('maqSerie').value = '';
         renderMaquinas();
       } else {
-        alert('Erro ao salvar máquina no banco de dados.');
+        avisar('Erro ao salvar máquina no banco de dados.');
       }
     } catch (erro) {
       console.error('Erro na comunicação com o servidor:', erro);
-      alert('Erro de conexão. O servidor está rodando?');
+      avisar('Erro de conexão. O servidor está rodando?');
     }
   }
 
   async function deleteMaquina(id) {
-    if (!confirm('Excluir esta máquina?')) return;
+    if (!(await confirmar('Excluir esta máquina?', { titulo: 'Excluir máquina', ok: 'Excluir', perigo: true }))) return;
     try {
       await fetch(`${API_BASE_URL}/deletar-maquina/${id}`, { method: 'DELETE' });
       renderMaquinas();
     } catch (erro) {
       console.error(erro);
-      alert('Erro ao excluir máquina no servidor.');
+      avisar('Erro ao excluir máquina no servidor.');
     }
   }
 
@@ -232,7 +232,7 @@
       cargo: document.getElementById('usuarioCargo').value
     };
     if (!dados.nome || !dados.usuario || !document.getElementById('usuarioLogin').validity.valid || dados.senha.length < 8) {
-      alert('Informe nome, um e-mail corporativo válido e uma senha com ao menos 8 caracteres.');
+      avisar('Informe nome, um e-mail corporativo válido e uma senha com ao menos 8 caracteres.');
       return;
     }
     try {
@@ -248,7 +248,7 @@
       document.getElementById('usuarioSenha').value = '';
       await renderUsuarios();
     } catch (erro) {
-      alert(erro.message);
+      avisar(erro.message);
     }
   }
 
@@ -263,7 +263,7 @@
       if (!resposta.ok) throw new Error(resultado.erro || 'Não foi possível atualizar o cargo.');
       await renderUsuarios();
     } catch (erro) {
-      alert(erro.message);
+      avisar(erro.message);
       await renderUsuarios();
     }
   }
@@ -279,6 +279,6 @@
       if (!resposta.ok) throw new Error(resultado.erro || 'Não foi possível atualizar a conta.');
       await renderUsuarios();
     } catch (erro) {
-      alert(erro.message);
+      avisar(erro.message);
     }
   }

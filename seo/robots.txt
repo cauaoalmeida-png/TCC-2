@@ -1,0 +1,9 @@
+# FactoryTrack
+# A página pública (/) pode ser lida por todos os buscadores, inclusive os de IA
+# (Google, Bing, ChatGPT, Perplexity, Claude, Gemini).
+# O sistema interno (/sistema e /pages/) NÃO é bloqueado aqui de propósito:
+# ele leva a marca "noindex", e o Google só enxerga essa marca se puder abrir a página.
+User-agent: *
+Allow: /
+
+Sitemap: https://factory-track-eight.vercel.app/sitemap.xml

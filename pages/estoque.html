@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>Estoque de Peças - FactoryTrack</title>
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="icon" href="../favicon.ico" sizes="any">
@@ -15,6 +16,7 @@
   <link rel="stylesheet" href="../css/header.css">
   <link rel="stylesheet" href="../css/estoque.css">
   <link rel="stylesheet" href="../css/footer.css">
+  <link rel="stylesheet" href="../css/ia.css">
 </head>
 <body>
 
@@ -123,6 +125,35 @@
       </div>
     </div>
 
+    <!-- ENTRADA PELA NOTA FISCAL (IA) -->
+    <section class="ia-box" id="iaNotaBox" hidden>
+      <div class="ia-head">
+        <i class="fas fa-wand-magic-sparkles"></i>
+        <h2>Entrada pela nota fiscal</h2>
+        <span class="ia-badge">IA</span>
+      </div>
+      <p class="ia-intro">Envie a foto, o PDF ou o XML da nota fiscal de compra. A IA lista as peças e as quantidades; confira e dê entrada no estoque.</p>
+      <div class="ia-actions">
+        <input type="file" id="iaNotaArquivo" accept="image/*,application/pdf,.xml,text/xml,application/xml" hidden>
+        <label for="iaNotaArquivo" class="btn btn-outline ia-foto-btn"><i class="fas fa-file-invoice"></i> <span id="iaNotaNome">Escolher nota fiscal</span></label>
+        <button type="button" class="btn btn-primary" id="iaNotaBtn"><i class="fas fa-wand-magic-sparkles"></i> Ler nota com IA</button>
+      </div>
+      <div class="ia-erro" id="iaNotaErro" role="alert" hidden></div>
+      <div class="ia-resultado" id="iaNotaResultado" hidden>
+        <p id="iaNotaCabecalho"></p>
+        <div class="ia-tabela-wrap">
+          <table class="ia-tabela">
+            <thead><tr><th></th><th>Item da nota</th><th>Peça no estoque</th><th>Quantidade</th></tr></thead>
+            <tbody id="iaNotaItens"></tbody>
+          </table>
+        </div>
+        <div class="ia-actions">
+          <button type="button" class="btn btn-success" id="iaNotaAplicarBtn"><i class="fas fa-check"></i> Dar entrada nas selecionadas</button>
+        </div>
+      </div>
+      <div class="ia-ok" id="iaNotaOk" hidden></div>
+    </section>
+
     <!-- FILTROS -->
     <div class="filters">
       <label>Filtrar:</label>
@@ -184,8 +215,10 @@
 <script src="../js/config.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/avisos.js"></script>
 <script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
+<script src="../js/ia.js"></script>
 <script src="../js/pages/estoque.js"></script>
 </body>
 </html>

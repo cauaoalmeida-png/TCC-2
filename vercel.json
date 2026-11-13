@@ -1,11 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd Back-end && npm install",
-  "buildCommand": "cd Back-end && npm run db:setup && cd .. && rm -rf public && mkdir public && cp -r apresentacao.html css js pages favicon.svg favicon.ico apple-touch-icon.png public/ && cp index.html public/sistema.html && cp apresentacao.html public/index.html",
+  "buildCommand": "bash build-vercel.sh",
   "outputDirectory": "public",
   "functions": {
     "api/index.js": {
-      "includeFiles": "Back-end/node_modules/.prisma/client/**"
+      "includeFiles": "Back-end/node_modules/.prisma/client/**",
+      "maxDuration": 60
     }
   },
   "rewrites": [
@@ -16,6 +17,53 @@
     {
       "source": "/(.*)",
       "destination": "/api"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/sistema",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/sistema.html",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/pages/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(og-image.jpg|logo-512.png|favicon.svg|favicon.ico|apple-touch-icon.png)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
     }
   ]
 }
