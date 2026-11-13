@@ -7,7 +7,11 @@
 //   POST /ia/solucao         chefia pede sugestão de solução e peças ao resolver
 //   POST /ia/nota-fiscal     chefia manda a nota fiscal, IA lista as peças
 //   POST /ia/checklist-foto  chefia manda a foto da máquina, IA aponta itens
+//   GET  /previsao-falhas    risco de falha de cada máquina (cálculo do sistema, sem IA)
+//   POST /ia/previsao        IA explica as máquinas com mais risco e sugere a preventiva
 // ==========================================
+
+const { preverFalhas, HORIZONTE_DIAS } = require('../previsao');
 
 // Gemini (Google AI Studio), que tem uso gratuito. Se o modelo principal
 // estiver sem cota ou fora do ar, tenta o reserva (mais leve).
@@ -622,6 +626,111 @@ O inspetor vai confirmar cada item. Escreva em português.`
             res.status(200).json(analise);
         } catch (err) {
             responderErro(res, err, 'checklist');
+        }
+    });
+
+    // ==========================================
+    // PREVISÃO DE FALHAS (tela Painel)
+    // O cálculo é do sistema e funciona mesmo sem a IA configurada.
+    // ==========================================
+    async function calcularPrevisao() {
+        const desde = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000);
+        const [maquinas, ocorrencias] = await Promise.all([
+            prisma.maquina.findMany({ select: { nomeMaquina: true, setorAssociado: true, criadoEm: true } }),
+            prisma.ocorrencia.findMany({
+                where: { data: { gte: desde } },
+                select: { id: true, maquina: true, tipo: true, data: true, status: true, itensChecklist: true, descricao: true, resolucao: true }
+            })
+        ]);
+        return { previsao: preverFalhas(maquinas, ocorrencias), ocorrencias };
+    }
+
+    app.get('/previsao-falhas', requireSupervisor, async (req, res) => {
+        try {
+            const { previsao } = await calcularPrevisao();
+            res.status(200).json({ horizonteDias: HORIZONTE_DIAS, geradoEm: new Date().toISOString(), maquinas: previsao });
+        } catch (err) {
+            console.error(' Erro na previsão de falhas:', err.message);
+            res.status(500).json({ erro: 'Erro ao calcular a previsão de falhas.' });
+        }
+    });
+
+    app.post('/ia/previsao', requireSupervisor, prepararPedido, async (req, res) => {
+        try {
+            const [{ previsao, ocorrencias }, pecas] = await Promise.all([
+                calcularPrevisao(),
+                prisma.peca.findMany({ orderBy: { nome: 'asc' } })
+            ]);
+            // Explica as máquinas de risco médio ou alto (até 5). Se nenhuma
+            // estiver em risco, explica as 3 primeiras para a chefia ver o porquê.
+            let alvo = previsao.filter(p => p.nivel !== 'Baixo').slice(0, 5);
+            if (!alvo.length) alvo = previsao.slice(0, 3);
+            if (!alvo.length) {
+                return res.status(200).json({ visaoGeral: 'Nenhuma máquina cadastrada para analisar.', maquinas: [] });
+            }
+            const nomes = alvo.map(p => p.maquina);
+            const historico = nomes.map(nome => ({
+                maquina: nome,
+                ocorrencias: ocorrencias
+                    .filter(o => o.maquina === nome)
+                    .sort((a, b) => new Date(b.data) - new Date(a.data))
+                    .slice(0, 12)
+                    .map(o => ({ data: dataCurta(o.data), tipo: o.tipo, status: o.status, descricao: corta(o.descricao, 250), resolucao: corta(o.resolucao, 200) || undefined }))
+            }));
+
+            const analise = await pedirJSON({
+                conteudo: [{
+                    type: 'text',
+                    text: `Hoje: ${agoraNaBahia().data}\n\nRisco calculado pelo sistema para os próximos ${HORIZONTE_DIAS} dias (JSON):\n${JSON.stringify(alvo)}\n\nHistórico recente dessas máquinas:\n${JSON.stringify(historico)}\n\nPeças em estoque:\n${JSON.stringify(pecas.map(p => ({ nome: p.nome, categoria: p.categoria, quantidade: p.qtd, minimo: p.min })))}`
+                }],
+                schema: {
+                    type: 'object',
+                    additionalProperties: false,
+                    required: ['visaoGeral', 'maquinas'],
+                    properties: {
+                        visaoGeral: { type: 'string' },
+                        maquinas: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                additionalProperties: false,
+                                required: ['maquina', 'explicacao', 'causaProvavel', 'acaoPreventiva', 'prazo', 'pecas'],
+                                properties: {
+                                    maquina: { type: 'string', enum: nomes },
+                                    explicacao: { type: 'string' },
+                                    causaProvavel: { type: 'string' },
+                                    acaoPreventiva: { type: 'string' },
+                                    prazo: { type: 'string', enum: ['Hoje', 'Esta semana', 'Este mês'] },
+                                    pecas: { type: 'array', items: { type: 'string' } }
+                                }
+                            }
+                        }
+                    }
+                },
+                system: `Você é o especialista em manutenção preditiva do FactoryTrack.
+O sistema já calculou o risco de falha de cada máquina com base no histórico. Não recalcule nem mude os números: explique-os para a chefia e diga o que fazer.
+- visaoGeral: 1 ou 2 frases com o quadro geral (quantas máquinas em risco alto e qual a mais urgente).
+- maquinas: uma entrada para cada máquina recebida, na mesma ordem.
+  - explicacao: 1 ou 2 frases em linguagem simples dizendo por que o risco está assim, citando os fatos do histórico (ex.: "parou 3 vezes em 30 dias por superaquecimento").
+  - causaProvavel: a causa mais provável das falhas, com base nas descrições e resoluções. Deixe claro que é hipótese.
+  - acaoPreventiva: a manutenção preventiva recomendada, em 1 ou 2 frases práticas.
+  - prazo: "Hoje" se a máquina está parada ou o risco é muito alto, "Esta semana" para risco alto ou médio, "Este mês" para os demais.
+  - pecas: nomes de peças do estoque que vale separar para essa preventiva (só nomes da lista; lista vazia se nenhuma fizer sentido). Se uma peça está abaixo do mínimo, diga isso na acaoPreventiva.
+Use só os dados fornecidos. Escreva em português, em frases curtas, sem markdown.`
+            });
+
+            // Junta a explicação da IA com o cálculo do sistema e confere as peças.
+            const nomesPecas = new Set(pecas.map(p => p.nome));
+            const porMaquina = new Map((analise.maquinas || []).filter(m => nomes.includes(m.maquina)).map(m => [m.maquina, m]));
+            res.status(200).json({
+                visaoGeral: analise.visaoGeral,
+                maquinas: alvo.filter(p => porMaquina.has(p.maquina)).map(p => {
+                    const ia = porMaquina.get(p.maquina);
+                    return { ...p, ...ia, pecas: (ia.pecas || []).filter(n => nomesPecas.has(n)) };
+                })
+            });
+        } catch (err) {
+            responderErro(res, err, 'previsão');
         }
     });
 
