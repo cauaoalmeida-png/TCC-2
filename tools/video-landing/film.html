@@ -10,16 +10,20 @@ canvas{position:absolute;left:0;top:0;width:1440px;height:1152px}
 #badge img{width:30px;height:30px;border-radius:8px}
 .line{position:absolute;left:0;right:0;text-align:center;white-space:nowrap}
 #l1{top:96px;font:500 74px/1 Geist;letter-spacing:-0.035em}
+html.vert #stage,html.vert canvas{width:1080px;height:1920px}
+html.vert #badge{top:430px} html.vert #l1{top:520px;font-size:78px} html.vert #l2{top:606px;font-size:74px}
 #l2{top:176px;font:italic 400 82px/1 'Instrument Serif';color:#8b8b92;letter-spacing:-0.01em}
 .w{display:inline-block;opacity:0;will-change:transform,filter}
 </style></head>
-<body><div id="stage"><canvas id="c" width="1440" height="1152"></canvas>
+<body><script>if(/[?&]v=1/.test(location.search))document.documentElement.classList.add('vert');</script><div id="stage"><canvas id="c" width="1440" height="1152"></canvas><script>if(/[?&]v=1/.test(location.search)){const c=document.getElementById("c");c.width=1080;c.height=1920;}</script>
 <div id="ov"><div id="badge"><img src="cap/factorytrack-icone.png"><span>FactoryTrack</span></div>
 <div class="line" id="l1"></div><div class="line" id="l2"></div></div></div>
 <script>
 'use strict';
 const LINE1='Cada parada conta.', LINE2='agora você pode ver todas.';
-const FW=1440, FH=1152, F=1880, TILT0=56*Math.PI/180;
+const VERT=/[?&]v=1/.test(location.search);
+const FW=VERT?1080:1440, FH=VERT?1920:1152, F=VERT?1410:1880, TILT0=56*Math.PI/180;
+const CARD_W=VERT?960:1018, CARD_TOP=VERT?760:283;
 const FLOOR_C=[0xf9/255,0xfb/255,0xfb/255], FLOOR_E=[0xf2/255,0xf3/255,0xf6/255];
 const HERO_H=919;
 let DATA, PH, PW=1440;
@@ -39,7 +43,7 @@ function share(t){
 const DT=1/2400; let SPOS=[]; // integrated positions
 function integ(){SPOS=[0];let s=0;for(let i=1;i*DT<=15;i++){const t=(i-.5)*DT;s+=share(t)*DT;SPOS.push(s);}}
 const sAt=t=>{const i=clamp(t/DT,0,SPOS.length-1);const i0=Math.floor(i);return lerp(SPOS[i0],SPOS[Math.min(i0+1,SPOS.length-1)],i-i0)};
-let LY0=400, CRUISE=1660;
+let LY0=VERT?640:400, CRUISE=1660;
 
 // ---------- camera ----------
 function uForScreen(sy,D,th){const k=(sy-FH/2)/F;return k*D/(Math.cos(th)+k*Math.sin(th));}
@@ -63,15 +67,15 @@ function camAt(t){
     const p=ss(9.25,9.47,t); D=D_ov/(1+0.035*p); th=0; ly=PH/2;
   } else if(t<9.97){
     th=0; const p=(t-9.47)/0.5, e=eio(p);
-    const D0=D_ov/1.035, D1=F/(1018/1440);
+    const D0=D_ov/1.035, D1=F/(CARD_W/1440);
     D=Math.exp(lerp(Math.log(D0),Math.log(D1),e));
     const top0=FH/2-(PH/2)*F/D0;
-    const T=lerp(lerp(top0,0,ss(0,0.3,p)),283,ss(0.62,1,p));
+    const T=lerp(lerp(top0,0,ss(0,0.3,p)),CARD_TOP,ss(0.62,1,p));
     ly=0-uForScreen(T,D,0);
   } else {
-    th=0; const D1=F/(1018/1440); const p=ss(9.97,14.5,t);
+    th=0; const D1=F/(CARD_W/1440); const p=ss(9.97,14.5,t);
     D=D1/(1+0.02*p);
-    const cy=HERO_H/2, sy=283+HERO_H/2*F/D1; ly=cy-(sy-FH/2)*D/F;
+    const cy=HERO_H/2, sy=CARD_TOP+HERO_H/2*F/D1; ly=cy-(sy-FH/2)*D/F;
   }
   const L=[720,ly,0];
   const C=[720,ly+D*Math.sin(th),D*Math.cos(th)];
@@ -103,12 +107,12 @@ out vec2 vUV; out float vDepth; out vec2 vLocal;
 void main(){ vUV=q; vec2 l=(q-0.5)*uSize; vLocal=l;
   vec3 P=vec3(uCenter.x+uOff.x+l.x, uCenter.y+uOff.y+l.y*cos(uAng), uZ - l.y*sin(uAng));
   vec3 d=P-uC; float xc=dot(d,uR), yc=dot(d,uU), zc=dot(d,uF);
-  vDepth=zc; gl_Position=vec4(uFoc*xc/720.0, uFoc*yc/576.0, 0.0, zc); }`;
+  vDepth=zc; gl_Position=vec4(uFoc*xc/${FW/2}.0, uFoc*yc/${FH/2}.0, 0.0, zc); }`;
 const HDR=`#version 300 es
 precision highp float; in vec2 vUV; in float vDepth; in vec2 vLocal;
 layout(location=0) out vec4 o0; layout(location=1) out vec4 o1;
 uniform vec3 uFloorC, uFloorE;
-vec3 floorCol(){ vec2 p=gl_FragCoord.xy/vec2(1440.,1152.)-0.5; float r=clamp(length(p*vec2(1.25,1.0))*1.45,0.,1.); return mix(uFloorC,uFloorE,r*r);}
+vec3 floorCol(){ vec2 p=gl_FragCoord.xy/vec2(${FW}.,${FH}.)-0.5; float r=clamp(length(p*vec2(1.25,1.0))*1.45,0.,1.); return mix(uFloorC,uFloorE,r*r);}
 void emit(vec3 c,float a){ o0=vec4(c*a,a); o1=vec4(vDepth*a,0,0,a); }
 void emitP(vec3 cp,float a){ o0=vec4(cp,a); o1=vec4(vDepth*a,0,0,a); }
 `;
@@ -142,7 +146,7 @@ precision highp float; in vec2 uv; out vec4 o;
 uniform sampler2D uCol, uDep; uniform float uFocus, uW;
 float coc(float z){ float r = z<uFocus ? 75.0*(uFocus-z)/z : 6.0*(z-uFocus)/z; return min(r,120.0); }
 void main(){
-  vec2 px=vec2(1.0/1440.0,1.0/1152.0);
+  vec2 px=vec2(1.0/${FW}.0,1.0/${FH}.0);
   float z=texture(uDep,uv).r; float c0=coc(z);
   // near-field dilation: a blurred foreground nearby spreads over sharper pixels
   float zn=textureLod(uDep,uv,4.5).r; float cn=coc(min(zn,z)); float r=max(c0, z<uFocus?c0:0.0);
@@ -322,7 +326,7 @@ function seek(tReal,sub){ const t=filmTime(tReal);
   textAt(t); gl.finish();
   return true;
 }
-init().then(()=>{ const cam=camAt(5.4); TILE54=worldFromScreen(cam,70,1010,330);
+init().then(()=>{ const cam=camAt(5.4); TILE54=worldFromScreen(cam,70,FH-142,330);
   const ce=camAt(10.5); const S=(sx,sy,z,px)=>{const w=worldFromScreen(ce,sx,sy,z); const dep=ce.D-z; return [w[0],w[1],z,px*dep/F];};
-  END=[S(118,292,70,96),S(1318,300,90,84),S(1262,560,8,70),S(150,1120,1950,620),S(1330,1100,1900,560)]; }).catch(e=>{window.ERR=String(e);console.error(e);});
+  const cl=FW/2-CARD_W/2, cr=FW/2+CARD_W/2; END=[S(Math.max(cl-93,cl+40),VERT?CARD_TOP-40:CARD_TOP+9,70,96),S(Math.min(cr+89,cr-40),VERT?CARD_TOP-30:CARD_TOP+17,90,84),S(Math.min(cr+33,FW-50),CARD_TOP+277,8,70),S(150,FH-32,1950,620),S(FW-110,FH-52,1900,560)]; }).catch(e=>{window.ERR=String(e);console.error(e);});
 </script></body></html>
