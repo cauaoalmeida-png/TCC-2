@@ -22,7 +22,7 @@ html.vert #badge{top:430px} html.vert #l1{top:520px;font-size:78px} html.vert #l
 'use strict';
 const LINE1='Cada parada conta.', LINE2='agora você pode ver todas.';
 const VERT=/[?&]v=1/.test(location.search);
-const FW=VERT?1080:1440, FH=VERT?1920:1152, F=VERT?1410:1880, TILT0=56*Math.PI/180;
+const FW=VERT?1080:1440, FH=VERT?1920:1152, F=VERT?1080:1880, TILT0=(VERT?42:56)*Math.PI/180;
 const CARD_W=VERT?960:1018, CARD_TOP=VERT?760:283;
 const FLOOR_C=[0xf9/255,0xfb/255,0xfb/255], FLOOR_E=[0xf2/255,0xf3/255,0xf6/255];
 const HERO_H=919;
@@ -144,7 +144,7 @@ in vec2 q; out vec2 uv; void main(){uv=q; gl_Position=vec4(q*2.-1.,0,1);}`;
 const FS_DOF=`#version 300 es
 precision highp float; in vec2 uv; out vec4 o;
 uniform sampler2D uCol, uDep; uniform float uFocus, uW;
-float coc(float z){ float r = z<uFocus ? 75.0*(uFocus-z)/z : 6.0*(z-uFocus)/z; return min(r,120.0); }
+float coc(float z){ float r = z<uFocus ? ${VERT?38:75}.0*(uFocus-z)/z : 6.0*(z-uFocus)/z; return min(r,120.0); }
 void main(){
   vec2 px=vec2(1.0/${FW}.0,1.0/${FH}.0);
   float z=texture(uDep,uv).r; float c0=coc(z);
@@ -220,6 +220,9 @@ function layerState(L,t,cam){
   else if(L.kind==='card'){ z=lerp(10,L.z,app); ang=26*app; }
   else if(L.kind==='title'){ z=lerp(4,L.z,app); ang=32*app; }
   else { z=lerp(4,L.z,app); ang=0; }
+  if(VERT){ // celular: peças sobem pouco e quase não giram, para não cobrir títulos nem sair da tela
+    if(L.kind==='photo'||L.kind==='chip'){ z=Math.min(z,24); ang=Math.min(ang,8); ox=0; }
+    else { z=Math.min(z*0.45,36); ang=Math.min(ang,14); } }
   return {z:z*settle, ang:ang*settle*Math.PI/180, ox:ox*settle};
 }
 // logo tiles: [time-varying world pos, size, opacity]
@@ -293,7 +296,7 @@ function drawScene(t){
     const texPerPx=it.logo?1024/it.w:2; gl.uniform1f(P_SPR.u.uLod,Math.min(5,Math.log2(Math.max(1,bl*texPerPx*0.9))));
     quad(P_SPR,it.cx,it.cy,it.w*Math.max(Math.cos(it.ang),0.4),it.h,0.3,0,it.ox+0.10*z,4+0.36*z); }
   for(const it of items){ gl.bindTexture(gl.TEXTURE_2D,it.tex); gl.uniform1f(P_SPR.u.uShadow,0); gl.uniform1f(P_SPR.u.uOp,it.op); gl.uniform1f(P_SPR.u.uHaze,it.haze);
-    let lod=0; if(it.logo){ const P=[it.cx,it.cy,it.z]; const pr=project(cam,P); const dep=pr[2]; const r=dep<cam.focus?Math.min(220,75*(cam.focus-dep)/dep):0;
+    let lod=0; if(it.logo){ const P=[it.cx,it.cy,it.z]; const pr=project(cam,P); const dep=pr[2]; const r=dep<cam.focus?Math.min(220,(VERT?38:75)*(cam.focus-dep)/dep):0;
       const texPerScreen=(it.w/1024)>0? (1024/it.w)*dep/F : 1; lod=Math.log2(Math.max(1,r*0.7*texPerScreen)); }
     gl.uniform1f(P_SPR.u.uLod,lod);
     quad(P_SPR,it.cx,it.cy,it.w,it.h,it.z+1,it.ang,it.ox,0); }
