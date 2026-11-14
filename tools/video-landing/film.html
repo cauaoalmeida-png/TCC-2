@@ -80,7 +80,7 @@ function camAt(t){
   const L=[720,ly,0];
   const C=[720,ly+D*Math.sin(th),D*Math.cos(th)];
   const f=[0,-Math.sin(th),-Math.cos(th)], up=[0,-Math.cos(th),Math.sin(th)], right=[1,0,0];
-  return {t,D,th,ly,L,C,f,up,right,focus:D};
+  return {t,D,th,ly,L,C,f,up,right,focus:D,shift:VERT?560*(1-ss(0.2,2.8,t)):0};
 }
 function project(cam,P){const d=[P[0]-cam.C[0],P[1]-cam.C[1],P[2]-cam.C[2]];
   const xc=d[0]*cam.right[0]+d[1]*cam.right[1]+d[2]*cam.right[2],yc=d[0]*cam.up[0]+d[1]*cam.up[1]+d[2]*cam.up[2],zc=d[0]*cam.f[0]+d[1]*cam.f[1]+d[2]*cam.f[2];
@@ -102,12 +102,12 @@ function prog(vs,fs){const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_S
 // scene vertex shader: quad in local space (0..1), mapped to world via uniforms
 const VS=`#version 300 es
 in vec2 q; uniform vec3 uC,uR,uU,uF; uniform float uFoc;
-uniform vec2 uCenter, uSize; uniform float uZ, uAng; uniform vec2 uOff;
+uniform vec2 uCenter, uSize; uniform float uZ, uAng; uniform vec2 uOff; uniform float uShift;
 out vec2 vUV; out float vDepth; out vec2 vLocal;
 void main(){ vUV=q; vec2 l=(q-0.5)*uSize; vLocal=l;
   vec3 P=vec3(uCenter.x+uOff.x+l.x, uCenter.y+uOff.y+l.y*cos(uAng), uZ - l.y*sin(uAng));
   vec3 d=P-uC; float xc=dot(d,uR), yc=dot(d,uU), zc=dot(d,uF);
-  vDepth=zc; gl_Position=vec4(uFoc*xc/${FW/2}.0, uFoc*yc/${FH/2}.0, 0.0, zc); }`;
+  vDepth=zc; gl_Position=vec4(uFoc*xc/${FW/2}.0, (uFoc*yc+uShift*zc)/${FH/2}.0, 0.0, zc); }`;
 const HDR=`#version 300 es
 precision highp float; in vec2 vUV; in float vDepth; in vec2 vLocal;
 layout(location=0) out vec4 o0; layout(location=1) out vec4 o1;
@@ -185,7 +185,7 @@ gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tCol,0
 gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);
 const fbAcc=gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER,fbAcc); gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tAcc,0);
 
-function setCam(P,cam){gl.uniform3fv(P.u.uC,cam.C);gl.uniform3fv(P.u.uR,cam.right);gl.uniform3fv(P.u.uU,cam.up);gl.uniform3fv(P.u.uF,cam.f);gl.uniform1f(P.u.uFoc,F);
+function setCam(P,cam){gl.uniform3fv(P.u.uC,cam.C);gl.uniform3fv(P.u.uR,cam.right);gl.uniform3fv(P.u.uU,cam.up);gl.uniform3fv(P.u.uF,cam.f);gl.uniform1f(P.u.uFoc,F); if(P.u.uShift) gl.uniform1f(P.u.uShift,cam.shift||0);
   if(P.u.uFloorC){gl.uniform3fv(P.u.uFloorC,FLOOR_C);gl.uniform3fv(P.u.uFloorE,FLOOR_E);}}
 function quad(P,cx,cy,w,h,z,ang,ox,oy){gl.uniform2f(P.u.uCenter,cx,cy);gl.uniform2f(P.u.uSize,w,h);gl.uniform1f(P.u.uZ,z);gl.uniform1f(P.u.uAng,ang||0);gl.uniform2f(P.u.uOff,ox||0,oy||0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
 
@@ -328,5 +328,5 @@ function seek(tReal,sub){ const t=filmTime(tReal);
 }
 init().then(()=>{ const cam=camAt(5.4); TILE54=worldFromScreen(cam,70,FH-142,330);
   const ce=camAt(10.5); const S=(sx,sy,z,px)=>{const w=worldFromScreen(ce,sx,sy,z); const dep=ce.D-z; return [w[0],w[1],z,px*dep/F];};
-  const cl=FW/2-CARD_W/2, cr=FW/2+CARD_W/2; END=[S(Math.max(cl-93,cl+40),VERT?CARD_TOP-40:CARD_TOP+9,70,96),S(Math.min(cr+89,cr-40),VERT?CARD_TOP-30:CARD_TOP+17,90,84),S(Math.min(cr+33,FW-50),CARD_TOP+277,8,70),S(150,FH-32,1950,620),S(FW-110,FH-52,1900,560)]; }).catch(e=>{window.ERR=String(e);console.error(e);});
+  const cl=FW/2-CARD_W/2, cr=FW/2+CARD_W/2; END=[S(Math.max(cl-93,cl+40),VERT?CARD_TOP-40:CARD_TOP+9,70,96),S(Math.min(cr+89,cr-40),VERT?CARD_TOP-30:CARD_TOP+17,90,84),S(VERT?cl+40:Math.min(cr+33,FW-50),VERT?CARD_TOP+600:CARD_TOP+277,8,70),S(150,FH-32,1950,620),S(FW-110,FH-52,1900,560)]; }).catch(e=>{window.ERR=String(e);console.error(e);});
 </script></body></html>
