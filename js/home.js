@@ -1,17 +1,36 @@
 // home.js — lógica da página inicial (contadores, painel pessoal e pendências)
 
-const CHEFIA = ['gerente', 'chefe_geral'];
-
-// Atalhos do Início; "cargos" diz quem vê cada um
+// Atalhos do Início; "grupo" diz quem vê cada um e "textos" troca a frase por cargo
 const ATALHOS = [
-  { href: 'ocorrencia.html', icone: 'fa-triangle-exclamation', titulo: 'Registrar ocorrência', texto: 'Avise um problema em uma máquina', destaque: true },
+  { href: 'ocorrencia.html', icone: 'fa-triangle-exclamation', titulo: 'Registrar ocorrência', texto: 'Avise um problema em uma máquina', textos: { operario: 'A máquina parou? Avise em segundos' }, destaque: true },
   { href: 'painel.html', icone: 'fa-th-large', titulo: 'Painel de status', texto: 'Veja como estão as máquinas agora' },
-  { href: 'historico.html', icone: 'fa-history', titulo: 'Histórico', texto: 'Consulte as ocorrências registradas', textoChefia: 'Consulte e resolva ocorrências' },
-  { href: 'estoque.html', icone: 'fa-boxes', titulo: 'Estoque', texto: 'Confira as peças disponíveis', textoChefia: 'Controle as peças de manutenção' },
-  { href: 'checklist.html', icone: 'fa-clipboard-check', titulo: 'Checklist', texto: 'Faça uma inspeção de manutenção', cargos: CHEFIA },
-  { href: 'guindastes.html', icone: 'fa-truck-pickup', titulo: 'Guindastes', texto: 'Controle os aluguéis', cargos: CHEFIA },
-  { href: 'cadastros.html', icone: 'fa-database', titulo: 'Cadastros', texto: 'Setores e máquinas', textoChefe: 'Setores, máquinas e contas', cargos: CHEFIA }
+  { href: 'historico.html', icone: 'fa-history', titulo: 'Ocorrências', texto: 'Acompanhe as ocorrências registradas', textos: { operador_linha: 'Confirme paradas e designe o engenheiro', engenheiro: 'Suas ordens de conserto', admin: 'Acompanhe e resolva ocorrências' } },
+  { href: 'estoque.html', icone: 'fa-boxes', titulo: 'Estoque', texto: 'Controle as peças de manutenção', grupo: 'gestao' },
+  { href: 'checklist.html', icone: 'fa-clipboard-check', titulo: 'Checklist', texto: 'Faça uma inspeção de manutenção', grupo: 'gestao' },
+  { href: 'guindastes.html', icone: 'fa-truck-pickup', titulo: 'Guindastes', texto: 'Controle os aluguéis', grupo: 'coordenacao' },
+  { href: 'cadastros.html', icone: 'fa-database', titulo: 'Cadastros', texto: 'Setores e máquinas', textos: { admin: 'Setores, máquinas, contas e cargos' }, grupo: 'coordenacao' }
 ];
+
+// O que cada cargo vê em "pendências" no Início
+function pendenciasDoCargo(ocorrencias, usuario) {
+  const cargo = normalizarCargo(usuario.cargo);
+  const abertas = ocorrencias.filter(o => o.status === 'Pendente');
+  if (cargo === 'operario') {
+    return { titulo: 'Suas ocorrências em aberto', lista: abertas.filter(o => o.usuarioId === usuario.id) };
+  }
+  if (cargo === 'operador_linha') {
+    return { titulo: 'Aguardando sua confirmação', lista: abertas.filter(o => o.fase === 'aberta') };
+  }
+  if (cargo === 'engenheiro') {
+    return {
+      titulo: 'Suas ordens de conserto',
+      lista: abertas.filter(o => o.fase !== 'aberta' && (!o.responsavelId || o.responsavelId === usuario.id))
+    };
+  }
+  return { titulo: 'Pendências recentes', lista: abertas };
+}
+
+const FASE_TEXTO = { aberta: 'Aguardando confirmação', confirmada: 'Aguardando conserto', em_conserto: 'Em conserto' };
 
 const ICONE_TIPO = {
   'Parada de máquina': 'fa-stop-circle',
@@ -44,11 +63,11 @@ function renderPainelPessoal(usuario) {
   });
   document.getElementById('dashCargo').textContent = cargoLabel(usuario.cargo);
 
-  const ehChefia = CHEFIA.includes(usuario.cargo);
+  const cargo = normalizarCargo(usuario.cargo);
   document.getElementById('atalhos').innerHTML = ATALHOS
-    .filter(a => !a.cargos || a.cargos.includes(usuario.cargo))
+    .filter(a => !a.grupo || temCargo(a.grupo))
     .map(a => {
-      const texto = (usuario.cargo === 'chefe_geral' && a.textoChefe) || (ehChefia && a.textoChefia) || a.texto;
+      const texto = (a.textos && a.textos[cargo]) || a.texto;
       return `
         <a href="${a.href}" class="atalho${a.destaque ? ' atalho-destaque' : ''}">
           <span class="atalho-icone"><i class="fas ${a.icone}"></i></span>
@@ -59,7 +78,10 @@ function renderPainelPessoal(usuario) {
 
 function renderPendencias(ocorrencias) {
   const lista = document.getElementById('pendenciasList');
-  const pendentes = ocorrencias.filter(o => o.status === 'Pendente').slice(0, 5);
+  const { titulo, lista: doCargo } = pendenciasDoCargo(ocorrencias, getSessao().usuario);
+  const tituloEl = document.getElementById('pendenciasTitulo');
+  if (tituloEl) tituloEl.innerHTML = `<i class="fas fa-clock"></i> ${escapeHTML(titulo)}`;
+  const pendentes = doCargo.slice(0, 5);
   if (!pendentes.length) {
     lista.innerHTML = '<li class="pendencias-vazio"><i class="fas fa-circle-check"></i> Nenhuma pendência. Tudo funcionando!</li>';
     return;
@@ -70,7 +92,7 @@ function renderPendencias(ocorrencias) {
         <i class="fas ${ICONE_TIPO[o.tipo] || 'fa-circle-exclamation'}"></i>
         <span>
           <strong>${escapeHTML(o.tipo)} — ${escapeHTML(o.maquina)}</strong>
-          <small>${escapeHTML(o.setor)} · ${tempoAtras(o.data)}</small>
+          <small>${escapeHTML(o.setor)} · ${tempoAtras(o.data)}${FASE_TEXTO[o.fase] ? ` · ${FASE_TEXTO[o.fase]}` : ''}</small>
         </span>
       </a>
     </li>`).join('');

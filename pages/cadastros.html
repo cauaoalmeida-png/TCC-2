@@ -163,11 +163,7 @@
               </div>
               <div class="form-group">
                 <label for="usuarioCargo">Cargo *</label>
-                <select id="usuarioCargo" required>
-                  <option value="operador">Operador</option>
-                  <option value="gerente">Gerente</option>
-                  <option value="chefe_geral">Chefe Geral</option>
-                </select>
+                <select id="usuarioCargo" required></select>
               </div>
             </div>
             <button class="btn btn-primary" type="button" onclick="criarUsuario()">
@@ -175,6 +171,20 @@
             </button>
           </div>
           <div class="cad-list" id="usuarioList"></div>
+        </div>
+
+        <div class="cad-panel cad-panel-full" id="cargosPanel" style="display:none">
+          <div class="cad-panel-header">
+            <i class="fas fa-id-badge"></i>
+            <h2>Nomes dos Cargos</h2>
+          </div>
+          <div class="cad-panel-form">
+            <p class="cad-panel-note">Cada fábrica chama os cargos de um jeito. Troque o nome que aparece na tela; as permissões continuam as mesmas. Deixe em branco para usar o nome padrão.</p>
+            <div class="form-row" id="cargosNomes"></div>
+            <button class="btn btn-primary" type="button" onclick="salvarNomesCargos()">
+              <i class="fas fa-floppy-disk"></i> Salvar nomes
+            </button>
+          </div>
         </div>
 
       </div>

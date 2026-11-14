@@ -17,6 +17,15 @@
   <link rel="stylesheet" href="../css/forms.css">
   <link rel="stylesheet" href="../css/footer.css">
   <link rel="stylesheet" href="../css/ia.css">
+  <style>
+    /* Registro rápido do operário: toca no problema em vez de escrever */
+    .form-label-like { display: block; margin-bottom: 0.45rem; font-weight: 600; }
+    .problemas-rapidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; }
+    .problema-chip { display: flex; align-items: center; gap: 0.5rem; min-height: 52px; padding: 0.6rem 0.8rem; border: 2px solid var(--border); border-radius: 12px; background: white; color: var(--text); font: 600 0.98rem 'DM Sans', sans-serif; text-align: left; cursor: pointer; }
+    .problema-chip i { color: var(--accent); width: 1.2em; text-align: center; }
+    .problema-chip[aria-pressed="true"] { border-color: var(--accent); background: #fff7ed; }
+    .problema-chip:focus-visible { outline: 3px solid rgba(255,140,66,0.5); outline-offset: 2px; }
+  </style>
 </head>
 <body>
 
@@ -46,12 +55,12 @@
     <div class="form-container">
       <div class="form-header">
         <h1><i class="fas fa-exclamation-triangle"></i> Registrar Ocorrência</h1>
-        <p>Preencha os dados da ocorrência. O supervisor será avisado automaticamente pelo WhatsApp.</p>
+        <p id="ocorrenciaIntro">Preencha os dados da ocorrência. O operador da linha recebe o alerta para confirmar a parada.</p>
       </div>
 
       <div class="form-body">
         <div class="success-msg" id="successMsg">
-          <i class="fas fa-check-circle"></i> Ocorrência registrada com sucesso! Avisando supervisor...
+          <i class="fas fa-check-circle"></i> Ocorrência registrada com sucesso! O operador da linha foi avisado no sistema.
         </div>
 
         <section class="ia-box" id="iaBox" hidden>
@@ -122,8 +131,13 @@
             <input type="text" id="operadorIdentificado" readonly>
           </div>
 
+          <div class="form-group" id="problemasRapidos" hidden>
+            <span class="form-label-like">Qual o problema? <span class="label-hint">(toque em um)</span></span>
+            <div class="problemas-rapidos" role="group" aria-label="Problemas mais comuns"></div>
+          </div>
+
           <div class="form-group">
-            <label for="descricaoInput">Descrição da Ocorrência *</label>
+            <label for="descricaoInput" id="descricaoLabel">Descrição da Ocorrência *</label>
             <textarea id="descricaoInput" required placeholder="Descreva o que aconteceu, sintomas observados, impacto na produção..."></textarea>
           </div>
 
@@ -150,8 +164,8 @@
         </form>
 
         <div class="wpp-alert-box" id="wppBox">
-          <h4><i class="fab fa-whatsapp"></i> Avisar Supervisor pelo WhatsApp</h4>
-          <p>Clique no botão abaixo para enviar o alerta direto para o supervisor do setor:</p>
+          <h4><i class="fab fa-whatsapp"></i> Avisar o operador da linha pelo WhatsApp</h4>
+          <p>Se precisar de rapidez, envie o alerta também pelo WhatsApp:</p>
           <a id="wppLink" href="#" target="_blank" class="btn btn-success btn-large">
             <i class="fab fa-whatsapp"></i> Enviar Alerta no WhatsApp
           </a>

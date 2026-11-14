@@ -77,10 +77,13 @@
 
     if (fStatus === 'Resolvido') listaVisivel = resolvidos.sort((a,b) => new Date(b.data)-new Date(a.data));
     if (fStatus === 'Pendente')  listaVisivel = pendentes.sort((a,b) => new Date(b.data)-new Date(a.data));
+    if (FASES[fStatus]) listaVisivel = pendentes.filter(o => o.fase === fStatus).sort((a,b) => new Date(b.data)-new Date(a.data));
 
     document.getElementById('summaryBar').innerHTML = `
       ${maquinaURL ? `<a class="summary-pill summary-filtro" href="historico.html" title="Mostrar todas as máquinas"><i class="fas fa-filter"></i> ${escapeHTML(maquinaURL)} <i class="fas fa-xmark"></i></a>` : ''}
-      <div class="summary-pill"><span class="num pendente">${todas.filter(o=>o.status==='Pendente').length}</span> Pendentes</div>
+      <div class="summary-pill"><span class="num pendente">${todas.filter(o=>o.fase==='aberta').length}</span> Aguardando confirmação</div>
+      <div class="summary-pill"><span class="num aguardando">${todas.filter(o=>o.fase==='confirmada').length}</span> Aguardando conserto</div>
+      <div class="summary-pill"><span class="num conserto">${todas.filter(o=>o.fase==='em_conserto').length}</span> Em conserto</div>
       <div class="summary-pill"><span class="num resolvida">${todas.filter(o=>o.status==='Resolvido').length}</span> Resolvidas</div>
       <div class="summary-pill"><span class="num total">${todas.length}</span> Total</div>
       ${resolvidosOcultos.length > 0 ? `
@@ -140,16 +143,14 @@
     const dataFormatada = o.data ? new Date(o.data).toLocaleString('pt-BR') : '-';
 
     return `
-      <div class="hist-card ${isPendente ? 'pendente' : 'resolvido'}">
+      <div class="hist-card ${isPendente ? 'pendente' : 'resolvido'} fase-${o.fase}">
         <div class="hist-card-header">
           <div>
             <h3><i class="fas ${tipoIcon(o.tipo)}"></i> ${escapeHTML(o.tipo)} — ${escapeHTML(o.maquina)}</h3>
             <p>${escapeHTML(o.setor)}</p>
           </div>
           <div class="hist-badges">
-            ${isPendente
-              ? '<span class="badge badge-danger"><i class="fas fa-clock"></i> Pendente</span>'
-              : '<span class="badge badge-success"><i class="fas fa-check"></i> Resolvido</span>'}
+            <span class="badge ${FASES[o.fase]?.badge || 'badge-success'}"><i class="fas ${FASES[o.fase]?.icone || 'fa-check'}"></i> ${FASES[o.fase]?.texto || 'Resolvido'}</span>
             ${mostrandoTimer ? `<span id="timer-${o.id}" class="hist-timer"><i class="fas fa-hourglass-half"></i> Sumindo em ${formatarTimer(resto)}</span>` : ''}
           </div>
         </div>
@@ -159,24 +160,169 @@
           <span><i class="fas fa-clock"></i> Turno: ${escapeHTML(o.turno)}</span>
         </div>
         <div class="hist-card-desc">${escapeHTML(o.descricao)}</div>
-        ${o.resolucao ? `<div class="hist-card-resolucao"><i class="fas fa-check-circle"></i> <strong>Resolução:</strong> ${escapeHTML(o.resolucao)}</div>` : ''}
-        ${isOperator() ? '' : `
-        <div class="hist-card-footer">
-            ${isPendente ? `
-                <button class="btn btn-success btn-sm" onclick="abrirModal(${o.id})">
-                    <i class="fas fa-check"></i> Marcar como Resolvido
-                </button>
-                <a href="checklist.html?setor=${encodeURIComponent(o.setor)}&amp;maquina=${encodeURIComponent(o.maquina)}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Novo Checklist
-                </a>
-            ` : ''}
-            <button onclick="excluirRegistro(${o.id})" class="btn btn-danger btn-sm btn-push-right">
-                <i class="fas fa-trash"></i> Excluir
-            </button>
-        </div>`}
+        ${renderFases(o)}
+        ${renderOrdem(o)}
+        ${o.resolucao ? `<div class="hist-card-resolucao"><i class="fas fa-check-circle"></i> <strong>Resolução:</strong> ${escapeHTML(o.resolucao)}${o.concluidoPor ? ` <small>(por ${escapeHTML(o.concluidoPor)})</small>` : ''}</div>` : ''}
+        ${o.pecasUsadas?.length ? `<div class="hist-pecas"><i class="fas fa-boxes"></i> <strong>Peças usadas:</strong> ${o.pecasUsadas.map(p => `${escapeHTML(p.quantidade)} ${escapeHTML(p.unidade || 'un')} de ${escapeHTML(p.nome)}`).join(', ')}</div>` : ''}
+        ${renderAcoes(o, isPendente)}
       </div>
     `;
 }
+
+  // ==========================================
+  // FASES DA OCORRÊNCIA
+  // aberta (operário avisou) → confirmada (operador confirmou e designou)
+  // → em_conserto (engenheiro começou) → resolvida
+  // ==========================================
+  const FASES = {
+    aberta: { texto: 'Aguardando confirmação', badge: 'badge-danger', icone: 'fa-bell' },
+    confirmada: { texto: 'Aguardando conserto', badge: 'badge-warning', icone: 'fa-user-gear' },
+    em_conserto: { texto: 'Em conserto', badge: 'badge-info', icone: 'fa-screwdriver-wrench' }
+  };
+
+  function duracao(inicio, fim) {
+    if (!inicio || !fim) return '';
+    const min = Math.max(0, Math.round((new Date(fim) - new Date(inicio)) / 60000));
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `${h} h ${min % 60} min`;
+    return `${Math.floor(h / 24)} d ${h % 24} h`;
+  }
+
+  function hora(data) {
+    return data ? new Date(data).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+  }
+
+  // Linha do tempo com o tempo gasto em cada fase (aviso, atendimento e conserto)
+  function renderFases(o) {
+    if (o.itensChecklist) return '';
+    const agora = new Date().toISOString();
+    const fim = o.dataResolucao;
+    const etapas = [
+      { nome: 'Aviso', quando: o.data, quem: o.operador, feita: true },
+      { nome: 'Confirmação', quando: o.dataConfirmacao, quem: o.confirmadoPor,
+        dur: duracao(o.data, o.dataConfirmacao || (o.fase === 'aberta' ? agora : null)),
+        feita: !!o.dataConfirmacao, atual: o.fase === 'aberta' },
+      { nome: 'Início do conserto', quando: o.dataInicioConserto, quem: o.dataInicioConserto ? o.responsavelNome : '',
+        dur: duracao(o.dataConfirmacao || o.data, o.dataInicioConserto || (o.fase === 'confirmada' ? agora : null)),
+        feita: !!o.dataInicioConserto, atual: o.fase === 'confirmada' },
+      { nome: 'Resolvida', quando: fim, quem: o.concluidoPor,
+        dur: duracao(o.dataInicioConserto || o.dataConfirmacao || o.data, fim || (o.fase === 'em_conserto' ? agora : null)),
+        feita: !!fim, atual: o.fase === 'em_conserto' }
+    ];
+    const total = duracao(o.data, fim || agora);
+    return `
+      <ul class="hist-fases" aria-label="Fases da ocorrência">
+        ${etapas.map(e => `
+          <li class="hist-fase${e.feita ? ' feita' : ''}${e.atual ? ' atual' : ''}">
+            <strong>${e.nome}</strong>
+            <span>${e.quando ? hora(e.quando) : (e.atual ? 'aguardando…' : '—')}</span>
+            ${e.dur ? `<span class="dur">${e.atual ? 'há ' : ''}${e.dur}</span>` : ''}
+            ${e.quem ? `<span>${escapeHTML(e.quem)}</span>` : ''}
+          </li>`).join('')}
+        <li class="hist-fase${fim ? ' feita' : ''}"><strong>Tempo total</strong><span class="dur">${total}</span><span>${fim ? 'máquina liberada' : 'ainda parada'}</span></li>
+      </ul>`;
+  }
+
+  function renderOrdem(o) {
+    if (!o.responsavelNome && !o.orientacao) return '';
+    return `
+      <div class="hist-ordem">
+        ${o.responsavelNome ? `<p><i class="fas fa-user-gear"></i> <strong>Engenheiro:</strong> ${escapeHTML(o.responsavelNome)}</p>` : ''}
+        ${o.orientacao ? `<p><i class="fas fa-comment-dots"></i> <strong>Orientação do operador:</strong> ${escapeHTML(o.orientacao)}</p>` : ''}
+      </div>`;
+  }
+
+  // Botões de cada cargo, conforme a fase
+  function renderAcoes(o, isPendente) {
+    if (isOperator()) return '';
+    const eu = getSessao().usuario.id;
+    const ordemMinha = !o.responsavelId || o.responsavelId === eu || temCargo('admin');
+    const botoes = [];
+    if (isPendente && o.fase === 'aberta' && temCargo('coordenacao')) {
+      botoes.push(`<button class="btn btn-primary btn-sm" onclick="abrirModalConfirmar(${o.id})"><i class="fas fa-clipboard-check"></i> Confirmar parada</button>`);
+    }
+    if (isPendente && o.fase !== 'em_conserto' && temCargo('manutencao') && ordemMinha) {
+      botoes.push(`<button class="btn btn-outline btn-sm" onclick="iniciarConserto(${o.id})"><i class="fas fa-screwdriver-wrench"></i> Iniciar conserto</button>`);
+    }
+    if (isPendente && temCargo('manutencao') && ordemMinha) {
+      botoes.push(`<button class="btn btn-success btn-sm" onclick="abrirModal(${o.id})"><i class="fas fa-check"></i> Concluir conserto</button>`);
+    }
+    if (isPendente) {
+      botoes.push(`<a href="checklist.html?setor=${encodeURIComponent(o.setor)}&amp;maquina=${encodeURIComponent(o.maquina)}" class="btn btn-outline btn-sm"><i class="fas fa-plus"></i> Novo Checklist</a>`);
+    }
+    if (temCargo('coordenacao')) {
+      botoes.push(`<button onclick="excluirRegistro(${o.id})" class="btn btn-danger btn-sm btn-push-right"><i class="fas fa-trash"></i> Excluir</button>`);
+    }
+    return botoes.length ? `<div class="hist-card-footer">${botoes.join('')}</div>` : '';
+  }
+
+  // Operador da linha: confirma a parada e escolhe o engenheiro
+  let confirmandoId = null;
+
+  async function abrirModalConfirmar(id) {
+    confirmandoId = id;
+    const o = historicoAtual.find(x => x.id === id);
+    document.getElementById('confirmarResumo').textContent = o ? `${o.tipo} — ${o.maquina} (${o.setor}), avisado por ${o.operador}.` : '';
+    document.getElementById('confirmarOrientacao').value = '';
+    const sel = document.getElementById('confirmarEngenheiro');
+    sel.innerHTML = '<option value="">Carregando…</option>';
+    document.getElementById('modalConfirmar').classList.add('open');
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/usuarios/engenheiros`);
+      const engenheiros = resposta.ok ? await resposta.json() : [];
+      sel.replaceChildren();
+      const vazio = document.createElement('option');
+      vazio.value = '';
+      vazio.textContent = engenheiros.length ? 'Qualquer engenheiro disponível' : 'Nenhum engenheiro cadastrado';
+      sel.appendChild(vazio);
+      engenheiros.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.id;
+        opt.textContent = e.nome;
+        sel.appendChild(opt);
+      });
+    } catch (erro) {
+      sel.innerHTML = '<option value="">Qualquer engenheiro disponível</option>';
+    }
+  }
+
+  function fecharModalConfirmar() {
+    document.getElementById('modalConfirmar').classList.remove('open');
+    confirmandoId = null;
+  }
+
+  async function enviarConfirmacao() {
+    const responsavelId = document.getElementById('confirmarEngenheiro').value;
+    const orientacao = document.getElementById('confirmarOrientacao').value.trim();
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/ocorrencias/${confirmandoId}/confirmar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ responsavelId: responsavelId ? Number(responsavelId) : null, orientacao })
+      });
+      const dados = await resposta.json().catch(() => ({}));
+      if (!resposta.ok) { avisar(dados.erro || 'Não foi possível confirmar.', 'erro'); return; }
+      fecharModalConfirmar();
+      avisar(dados.mensagem || 'Parada confirmada.', 'sucesso');
+      renderHistorico();
+    } catch (erro) {
+      avisar('Erro ao comunicar com o servidor.', 'erro');
+    }
+  }
+
+  // Engenheiro: recebe a ordem e começa o conserto
+  async function iniciarConserto(id) {
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/ocorrencias/${id}/iniciar-conserto`, { method: 'PUT' });
+      const dados = await resposta.json().catch(() => ({}));
+      if (!resposta.ok) { avisar(dados.erro || 'Não foi possível iniciar o conserto.', 'erro'); return; }
+      avisar('Conserto iniciado. O tempo de conserto está contando.', 'sucesso');
+      renderHistorico();
+    } catch (erro) {
+      avisar('Erro ao comunicar com o servidor.', 'erro');
+    }
+  }
 
   function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({
@@ -232,6 +378,9 @@ async function excluirRegistro(id) {
   function abrirModal(id) {
     resolvendoId = id;
     document.getElementById('resolucaoInput').value = '';
+    pecasUsadas = [];
+    renderPecasUsadas();
+    carregarPecasEstoque();
     limparSugestaoIA();
     iaAtiva().then(ativa => { document.getElementById('iaSolucaoBox').hidden = !ativa; });
     document.getElementById('modalOverlay').classList.add('open');
@@ -253,16 +402,20 @@ async function excluirRegistro(id) {
         const resposta = await fetch(`${API_BASE_URL}/resolver-ocorrencia/${resolvendoId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resolucao: texto, dataResolucao: dataAtual })
+            body: JSON.stringify({
+              resolucao: texto,
+              dataResolucao: dataAtual,
+              // As peças saem do estoque no servidor, junto com o fechamento
+              pecasUsadas: pecasUsadas.map(p => ({ pecaId: p.pecaId, quantidade: p.quantidade }))
+            })
         });
         if (!resposta.ok) {
             const erro = await resposta.json().catch(() => ({}));
-            avisar(erro.erro || 'Não foi possível marcar como resolvido.');
+            avisar(erro.erro || 'Não foi possível marcar como resolvido.', 'erro');
             return;
         }
-        const baixas = pecasMarcadasIA();
         fecharModal();
-        if (baixas.length) await darBaixaPecasIA(baixas);
+        avisar('Conserto concluído e ocorrência fechada.', 'sucesso');
         renderHistorico(); // Recarrega da base de dados
     } catch (erro) {
         avisar('Erro ao comunicar com o servidor.');
@@ -357,6 +510,16 @@ async function confirmarExportacao() {
           'Turno': o.turno,
           'Descrição': o.descricao,
           'Status': o.status,
+          'Fase': o.fase === 'resolvida' ? 'Resolvida' : (FASES[o.fase]?.texto || '-'),
+          'Confirmada em': o.dataConfirmacao ? new Date(o.dataConfirmacao).toLocaleString('pt-BR') : '-',
+          'Confirmada por': o.confirmadoPor || '-',
+          'Engenheiro': o.responsavelNome || '-',
+          'Início do conserto': o.dataInicioConserto ? new Date(o.dataInicioConserto).toLocaleString('pt-BR') : '-',
+          'Resolvida em': o.dataResolucao ? new Date(o.dataResolucao).toLocaleString('pt-BR') : '-',
+          'Tempo até confirmar': duracao(o.data, o.dataConfirmacao) || '-',
+          'Tempo de conserto': duracao(o.dataInicioConserto, o.dataResolucao) || '-',
+          'Tempo total parado': duracao(o.data, o.dataResolucao) || '-',
+          'Peças usadas': (o.pecasUsadas || []).map(p => `${p.quantidade} ${p.unidade || 'un'} ${p.nome}`).join('; ') || '-',
           'Resolução': o.resolucao || '-'
         }));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ocPlanilha), 'Ocorrências');
@@ -430,47 +593,81 @@ async function confirmarExportacao() {
     document.getElementById('iaSolucaoBase').textContent = dados.baseadoEm;
     pecasSugeridasIA = dados.pecas || [];
 
-    const lista = document.getElementById('iaSolucaoPecas');
+    // As peças sugeridas entram na lista de peças usadas (dá para tirar antes de concluir)
+    pecasSugeridasIA.forEach(p => {
+      if (Number.isInteger(p.pecaId) && p.quantidade > 0) adicionarPeca(p.pecaId, p.nome, p.quantidade, p.unidade);
+    });
     if (pecasSugeridasIA.length) {
-      const titulo = document.createElement('h4');
-      titulo.textContent = 'Dar baixa no estoque ao confirmar:';
-      lista.appendChild(titulo);
-      pecasSugeridasIA.forEach((peca, i) => {
-        const linha = document.createElement('label');
-        linha.className = 'ia-peca';
-        const marcar = document.createElement('input');
-        marcar.type = 'checkbox';
-        marcar.checked = true;
-        marcar.id = `iaPeca${i}`;
-        const texto = document.createElement('span');
-        texto.textContent = `${peca.quantidade} ${peca.unidade || 'un'} de ${peca.nome} (há ${peca.disponivel} no estoque)`;
-        linha.append(marcar, texto);
-        lista.appendChild(linha);
-      });
+      const aviso = document.createElement('p');
+      aviso.textContent = 'As peças sugeridas foram adicionadas em "Peças usadas" abaixo.';
+      document.getElementById('iaSolucaoPecas').appendChild(aviso);
     }
     document.getElementById('iaSolucaoResultado').hidden = false;
   }
 
-  function pecasMarcadasIA() {
-    return pecasSugeridasIA.filter((_, i) => document.getElementById(`iaPeca${i}`)?.checked);
-  }
+  // ==========================================
+  // PEÇAS USADAS NO CONSERTO
+  // ==========================================
+  let pecasUsadas = [];
+  let pecasEstoque = [];
 
-  // Desconta as peças usando a quantidade atual do banco.
-  async function darBaixaPecasIA(pecas) {
+  async function carregarPecasEstoque() {
+    const sel = document.getElementById('pecaUsadaSelect');
     try {
       const resposta = await fetch(`${API_BASE_URL}/pecas`);
-      const estoque = await resposta.json();
-      for (const peca of pecas) {
-        const atual = estoque.find(p => p.id === peca.pecaId);
-        if (!atual) continue;
-        await fetch(`${API_BASE_URL}/atualizar-peca/${peca.pecaId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ qtd: Math.max(0, atual.qtd - peca.quantidade) })
-        });
-      }
+      pecasEstoque = resposta.ok ? await resposta.json() : [];
     } catch (erro) {
-      console.error('Erro ao dar baixa nas peças:', erro);
-      avisar('A ocorrência foi resolvida, mas não foi possível dar baixa nas peças. Ajuste no Estoque.');
+      pecasEstoque = [];
     }
+    sel.replaceChildren();
+    const vazio = document.createElement('option');
+    vazio.value = '';
+    vazio.textContent = pecasEstoque.length ? 'Escolha a peça' : 'Nenhuma peça no estoque';
+    sel.appendChild(vazio);
+    pecasEstoque.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = `${p.nome} (${p.qtd} ${p.unidade || 'un'})`;
+      sel.appendChild(opt);
+    });
+  }
+
+  function adicionarPeca(pecaId, nome, quantidade, unidade) {
+    const existente = pecasUsadas.find(p => p.pecaId === pecaId);
+    if (existente) existente.quantidade += quantidade;
+    else pecasUsadas.push({ pecaId, nome, quantidade, unidade: unidade || 'un' });
+    renderPecasUsadas();
+  }
+
+  function adicionarPecaUsada() {
+    const pecaId = Number(document.getElementById('pecaUsadaSelect').value);
+    const quantidade = Number(document.getElementById('pecaUsadaQtd').value);
+    const peca = pecasEstoque.find(p => p.id === pecaId);
+    if (!peca) { avisar('Escolha a peça usada.'); return; }
+    if (!Number.isInteger(quantidade) || quantidade < 1) { avisar('Informe uma quantidade válida.'); return; }
+    adicionarPeca(peca.id, peca.nome, quantidade, peca.unidade);
+    document.getElementById('pecaUsadaQtd').value = 1;
+  }
+
+  function removerPecaUsada(pecaId) {
+    pecasUsadas = pecasUsadas.filter(p => p.pecaId !== pecaId);
+    renderPecasUsadas();
+  }
+
+  function renderPecasUsadas() {
+    const lista = document.getElementById('pecasUsadasLista');
+    lista.replaceChildren();
+    pecasUsadas.forEach(p => {
+      const li = document.createElement('li');
+      const texto = document.createElement('span');
+      texto.textContent = `${p.quantidade} ${p.unidade} de ${p.nome}`;
+      const remover = document.createElement('button');
+      remover.type = 'button';
+      remover.title = `Remover ${p.nome}`;
+      remover.setAttribute('aria-label', `Remover ${p.nome}`);
+      remover.innerHTML = '<i class="fas fa-xmark"></i>';
+      remover.addEventListener('click', () => removerPecaUsada(p.pecaId));
+      li.append(texto, remover);
+      lista.appendChild(li);
+    });
   }
