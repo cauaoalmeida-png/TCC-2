@@ -3,10 +3,12 @@ const { chromium } = require('playwright'); const fs=require('fs');
 const URL=process.env.FT_URL||'https://factory-track-eight.vercel.app/';
 const LAYERS=[
  ['.hero-cta','button',30],['.round-link','chip',70],
- ['.challenge-line','card',24],
+ ['.challenge-line','card',55],
  ['.proposal-image-wrap','photo',110],['.proposal-note','chip',200],['.image-caption','chip',200],
- ['.workflow-step','card',26],['.module-row','card',20],['.segment-card','card',30],['.benefit','card',24],
+ ['.workflow-step','card',60],['.module-row','card',45],['.segment-card','card',65],['.benefit','card',55],
  ['.role-list','testimonial',112],['.closing-cta','button',30],
+ ['.display-title','title',80],['#contact-title','title',80],['.closing-copy','card',50],
+ ['.faq-list details','card',45],['.team-names p','card',45],['.project-details','card',55],
 ];
 (async()=>{
  fs.mkdirSync('cap/layers',{recursive:true}); fs.mkdirSync('cap/tiles',{recursive:true});

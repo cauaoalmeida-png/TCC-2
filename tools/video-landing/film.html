@@ -198,7 +198,7 @@ async function init(){
   LOGO=texFromImg(await load('cap/logo-pad.png'));
   for(const L of DATA.layers){const im=await load('cap/'+L.file);L.tex=texFromImg(im);L.cx=L.clip.x+L.clip.width/2;L.cy=L.clip.y+L.clip.height/2;LAYERS.push(L);}
   buildText(); await document.fonts.ready;
-  window.FILM={seek,duration:14.5,cruise:CRUISE,camAt};
+  buildTimeMap(); window.FILM={seek,duration:REAL_DUR,cruise:CRUISE/SLOW,camAt,filmTime};
   window.READY=true;
 }
 
@@ -207,13 +207,14 @@ function layerState(L,t,cam){
   const lyNow=cam.ly; const dy=L.cy-(LY0+CRUISE*sAt(Math.min(t,7.75))); // relative to glide
   let z=0,ang=0,ox=0;
   const settle=1-ss(7.8,9.0,t); // everything lays back down for the overhead
-  const app=ss(1250,350,dy); // 0 when far below, 1 by the time it nears the centre
+  const app=ss(1300,250,dy); // 0 when far below, 1 by the time it nears the centre
   if(L.kind==='button'&&L.cy<1000){ const p=ss(0.1,1.35,t); z=lerp(2,64,p); ang=30*p; }
   else if(L.kind==='chip'&&L.cy<1000){ const p=ss(0.1,1.35,t); z=lerp(2,78,p); ang=30*p; }
   else if(L.kind==='photo'){ const p=ss(1.35,2.7,t); z=lerp(10,118,p); ang=46*p; }
   else if(L.kind==='chip'){ const p=ss(1.35,2.5,t); z=lerp(6,200,p); ang=54*p; ox=(L.cx<720?-1:1)*220*p; }
   else if(L.kind==='testimonial'){ const p=ss(5.45,6.3,t); z=lerp(22,112,p); ang=30*p; }
-  else if(L.kind==='card'){ z=lerp(10,L.z,app); }
+  else if(L.kind==='card'){ z=lerp(10,L.z,app); ang=26*app; }
+  else if(L.kind==='title'){ z=lerp(4,L.z,app); ang=32*app; }
   else { z=lerp(4,L.z,app); ang=0; }
   return {z:z*settle, ang:ang*settle*Math.PI/180, ox:ox*settle};
 }
@@ -297,11 +298,18 @@ function drawScene(t){
   gl.bindTexture(gl.TEXTURE_2D,tDep); gl.generateMipmap(gl.TEXTURE_2D);
   return cam;
 }
-function seek(t,sub){
+// --- slow-down: real time runs SLOW x slower through the flight, then eases back to 1x before the rise ---
+const SLOW=2.2, SLOW_END0=6.9, SLOW_END1=7.7; let TMAP=[], REAL_DUR=14.5;
+function buildTimeMap(){ // integrate d(film)/d(real) = rate(film)
+  TMAP=[]; let tf=0, tr=0; const h=1/1200;
+  while(tf<14.5){ TMAP.push([tr,tf]); const rate=lerp(1/SLOW,1,ss(SLOW_END0,SLOW_END1,tf)); tf+=rate*h; tr+=h; }
+  TMAP.push([tr,14.5]); REAL_DUR=tr; }
+function filmTime(tr){ if(tr<=0) return 0; if(tr>=REAL_DUR) return 14.5; const i=Math.min(TMAP.length-2,Math.floor(tr*1200)); const a=TMAP[i],b=TMAP[i+1]; return lerp(a[1],b[1],(tr-a[0])/Math.max(b[0]-a[0],1e-9)); }
+function seek(tReal,sub){ const t=filmTime(tReal);
   sub=sub||1; const span=(0.7/60);
   gl.bindFramebuffer(gl.FRAMEBUFFER,fbAcc); gl.viewport(0,0,FW,FH); gl.clearBufferfv(gl.COLOR,0,[0,0,0,0]);
   for(let i=0;i<sub;i++){
-    const ts=sub>1? t-span/2+span*(i+0.5)/sub : t;
+    const ts=sub>1? filmTime(tReal-span/2+span*(i+0.5)/sub) : t;
     const cam=drawScene(ts);
     gl.bindFramebuffer(gl.FRAMEBUFFER,fbAcc); gl.viewport(0,0,FW,FH);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE);

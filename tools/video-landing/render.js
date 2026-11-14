@@ -13,9 +13,9 @@ const srv=http.createServer((q,r)=>{const f=path.join(__dirname,decodeURICompone
  console.log('GPU:',await p.evaluate(()=>{const g=document.getElementById('c').getContext('webgl2');const e=g.getExtension('WEBGL_debug_renderer_info');return e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):'?';}));
  const out=path.join(__dirname,'saida'); fs.mkdirSync(out,{recursive:true});
  if(mode==='stills'){
-   for(const t of [0,1.6,2.5,5,6.5,9.3,11]){await p.evaluate(t=>FILM.seek(t,16),t);await p.screenshot({path:path.join(out,`quadro-${t}s.png`),timeout:0});console.log('quadro',t);}
+   const STL=(process.env.FT_STILLS||'0,1.6,2.5,5,6.5,9.3,11').split(',').map(Number); for(const tf of STL){const t=await p.evaluate(x=>{let lo=0,hi=FILM.duration;for(let k=0;k<50;k++){const m=(lo+hi)/2;if(FILM.filmTime(m)<x)lo=m;else hi=m;}return hi;},tf); await p.evaluate(t=>FILM.seek(t,16),t);await p.screenshot({path:path.join(out,`quadro-${t.toFixed(1)}s.png`),timeout:0});console.log('quadro',t);}
  } else {
-   const fps=mode==='preview'?30:60, sub=mode==='preview'?1:16, N=Math.round(14.5*fps);
+   const fps=mode==='preview'?30:60, sub=mode==='preview'?1:16, DUR=await p.evaluate(()=>FILM.duration), N=Math.round(DUR*fps);
    const fdir=path.join(out,'frames-'+mode); fs.rmSync(fdir,{recursive:true,force:true}); fs.mkdirSync(fdir,{recursive:true});
    const t0=Date.now();
    for(let i=0;i<N;i++){ await p.evaluate(([t,s])=>FILM.seek(t,s),[i/fps,sub]); await p.screenshot({path:path.join(fdir,String(i).padStart(4,'0')+'.png'),timeout:0});
