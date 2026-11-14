@@ -2,7 +2,7 @@ const crypto = require('node:crypto');
 const { promisify } = require('node:util');
 
 const {
-    CARGOS, NOMES_PADRAO, normalizeRole, requireGestao, requireAdmin, lerNomesCargos
+    CARGOS, NOMES_PADRAO, PODE_GRAVAR_CARGOS, normalizeRole, requireGestao, requireAdmin, lerNomesCargos
 } = require('./cargos');
 
 const scrypt = promisify(crypto.scrypt);
@@ -143,12 +143,12 @@ function registerLoginRoute(app, { prisma, authSecret }) {
             }
 
             const cargo = normalizeRole(user.cargo || user.tipo);
-            if (!user.senha.startsWith('scrypt:') || user.cargo !== cargo) {
+            if (!user.senha.startsWith('scrypt:') || (PODE_GRAVAR_CARGOS && user.cargo !== cargo)) {
                 await prisma.usuario.update({
                     where: { id: user.id },
                     data: {
                         senha: user.senha.startsWith('scrypt:') ? user.senha : await hashPassword(senhaInput),
-                        cargo
+                        ...(PODE_GRAVAR_CARGOS ? { cargo } : {})
                     }
                 });
             }

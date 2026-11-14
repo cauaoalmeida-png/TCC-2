@@ -44,7 +44,8 @@ async function createInitialAdmin(prisma, hashPassword) {
 // gerente → operador_linha, chefe_geral → admin). Os códigos novos não se
 // confundem com os antigos, então rodar de novo não muda nada.
 async function migrateLegacyRoles(prisma) {
-    const { MIGRACAO_LEGADO } = require('./cargos');
+    const { MIGRACAO_LEGADO, PODE_GRAVAR_CARGOS } = require('./cargos');
+    if (!PODE_GRAVAR_CARGOS) return;
     for (const [antigo, novo] of MIGRACAO_LEGADO) {
         const { count } = await prisma.usuario.updateMany({ where: { cargo: antigo }, data: { cargo: novo } });
         if (count) console.log(`Cargos atualizados: ${count} conta(s) de "${antigo}" para "${novo}".`);

@@ -47,6 +47,11 @@ const MIGRACAO_LEGADO = [
     ['operador', 'operario']
 ];
 
+// Na prévia da Vercel (PR ainda não mergeado) o banco pode ser o mesmo da
+// produção, que ainda roda o código antigo. Lá não gravamos os cargos novos,
+// senão a produção leria "operador_linha" como cargo desconhecido.
+const PODE_GRAVAR_CARGOS = process.env.VERCEL_ENV !== 'preview';
+
 function requireCargos(cargos, mensagem) {
     return function (req, res, next) {
         if (!cargos.includes(req.user?.cargo)) {
@@ -82,6 +87,7 @@ module.exports = {
     NOMES_PADRAO,
     GRUPOS,
     MIGRACAO_LEGADO,
+    PODE_GRAVAR_CARGOS,
     normalizeRole,
     requireCargos,
     requireGestao,
