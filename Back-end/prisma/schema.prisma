@@ -46,6 +46,18 @@ model Ocorrencia {
   resolucao      String?   @db.Text
   itensChecklist String?   @db.Text
   dataResolucao  DateTime?
+  // Fases: aberta (operário avisou) → confirmada (operador confirmou e
+  // designou o engenheiro) → em_conserto → resolvida. O "status" continua
+  // Pendente/Resolvido para o resto do sistema funcionar como antes.
+  fase               String?   @db.VarChar(20)
+  dataConfirmacao    DateTime?
+  confirmadoPor      String?   @db.VarChar(100)
+  orientacao         String?   @db.Text
+  responsavelId      Int?
+  responsavelNome    String?   @db.VarChar(100)
+  dataInicioConserto DateTime?
+  concluidoPor       String?   @db.VarChar(100)
+  pecasUsadas        String?   @db.Text
   usuario        Usuario?  @relation(fields: [usuarioId], references: [id], onDelete: SetNull, map: "fk_ocorrencia_usuario")
 
   @@map("ocorrencias")
@@ -74,6 +86,14 @@ model Usuario {
   ocorrencias Ocorrencia[]
 
   @@map("usuarios")
+}
+
+// Configurações gerais (ex.: nomes dos cargos exibidos na tela)
+model Configuracao {
+  chave String @id @db.VarChar(50)
+  valor String @db.Text
+
+  @@map("configuracoes")
 }
 
 model Guindaste {

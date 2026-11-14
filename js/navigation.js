@@ -1,7 +1,18 @@
 /* NAVIGATION */
 
-// Páginas que o operador não pode abrir (o servidor também bloqueia)
-const PAGINAS_SO_CHEFIA = ['checklist.html', 'guindastes.html', 'cadastros.html'];
+// Quem pode abrir cada tela (o servidor também bloqueia).
+// Telas fora da lista ficam abertas para todos os cargos.
+const PERMISSAO_PAGINAS = {
+  'checklist.html': 'gestao',
+  'estoque.html': 'gestao',
+  'guindastes.html': 'coordenacao',
+  'cadastros.html': 'coordenacao'
+};
+
+function podeAbrirPagina(href) {
+  const pagina = Object.keys(PERMISSAO_PAGINAS).find(p => String(href || '').split(/[?#]/)[0].endsWith(p));
+  return !pagina || temCargo(PERMISSAO_PAGINAS[pagina]);
+}
 
 // Menu lateral escondido ou não (telas grandes). A escolha fica salva no navegador.
 const CHAVE_MENU_RECOLHIDO = 'ft_menu_recolhido';
@@ -78,15 +89,13 @@ document.addEventListener('DOMContentLoaded', function () {
   const container = document.querySelector('.header .container');
   if (!sessao || !container) return;
 
-  // Operador não vê links para áreas que não pode acessar
-  if (sessao.usuario.cargo === 'operador') {
-    document.querySelectorAll('.nav a, .footer a, .cta a').forEach(link => {
-      const href = link.getAttribute('href') || '';
-      if (PAGINAS_SO_CHEFIA.some(pagina => href.endsWith(pagina))) {
-        (link.closest('li') || link).remove();
-      }
-    });
-  }
+  // Cada cargo só vê os links das telas que pode abrir
+  document.querySelectorAll('.nav a, .footer a, .cta a').forEach(link => {
+    if (!podeAbrirPagina(link.getAttribute('href'))) (link.closest('li') || link).remove();
+  });
+  document.querySelectorAll('.footer-section').forEach(secao => {
+    if (secao.querySelector('ul') && !secao.querySelector('li')) secao.remove();
+  });
 
   const actions = document.createElement('div');
   actions.className = 'header-actions';
@@ -113,4 +122,13 @@ document.addEventListener('DOMContentLoaded', function () {
   actions.appendChild(sair);
   if (toggle) actions.appendChild(toggle);
   container.appendChild(actions);
+
+  // Atualiza cargo e nomes dos cargos sem precisar sair e entrar de novo
+  fetch(`${API_BASE_URL}/me`).then(r => r.ok ? r.json() : null).then(dados => {
+    if (!dados?.usuario) return;
+    const atual = getSessao();
+    if (!atual) return;
+    saveSessao({ ...atual, usuario: { ...atual.usuario, ...dados.usuario }, nomesCargos: dados.nomesCargos || atual.nomesCargos });
+    usuario.querySelector('.header-user-role').textContent = cargoLabel(dados.usuario.cargo);
+  }).catch(() => {});
 });

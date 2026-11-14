@@ -21,7 +21,7 @@ async function createInitialAdmin(prisma, hashPassword) {
     const { INITIAL_ADMIN_NAME, INITIAL_ADMIN_USERNAME, INITIAL_ADMIN_PASSWORD } = process.env;
     if (existingUsers > 0) return;
     if (!INITIAL_ADMIN_NAME && !INITIAL_ADMIN_USERNAME && !INITIAL_ADMIN_PASSWORD) {
-        throw new Error('Não há contas cadastradas. Configure INITIAL_ADMIN_NAME, INITIAL_ADMIN_USERNAME e INITIAL_ADMIN_PASSWORD para criar o primeiro Chefe Geral.');
+        throw new Error('Não há contas cadastradas. Configure INITIAL_ADMIN_NAME, INITIAL_ADMIN_USERNAME e INITIAL_ADMIN_PASSWORD para criar o primeiro administrador.');
     }
     const nome = INITIAL_ADMIN_NAME?.trim() || '';
     const username = INITIAL_ADMIN_USERNAME?.trim().toLowerCase() || '';
@@ -33,11 +33,23 @@ async function createInitialAdmin(prisma, hashPassword) {
             nome,
             usuario: username,
             senha: await hashPassword(INITIAL_ADMIN_PASSWORD),
-            cargo: 'chefe_geral',
+            cargo: 'admin',
             ativo: true
         }
     });
-    console.log(`Conta inicial de chefe criada para "${username}". Remova as variáveis INITIAL_ADMIN_* após o primeiro acesso.`);
+    console.log(`Conta inicial de administrador criada para "${username}". Remova as variáveis INITIAL_ADMIN_* após o primeiro acesso.`);
 }
 
-module.exports = { createDatabase, createInitialAdmin };
+// Troca os cargos antigos pelos novos direto no banco (operador → operario,
+// gerente → operador_linha, chefe_geral → admin). Os códigos novos não se
+// confundem com os antigos, então rodar de novo não muda nada.
+async function migrateLegacyRoles(prisma) {
+    const { MIGRACAO_LEGADO, PODE_GRAVAR_CARGOS } = require('./cargos');
+    if (!PODE_GRAVAR_CARGOS) return;
+    for (const [antigo, novo] of MIGRACAO_LEGADO) {
+        const { count } = await prisma.usuario.updateMany({ where: { cargo: antigo }, data: { cargo: novo } });
+        if (count) console.log(`Cargos atualizados: ${count} conta(s) de "${antigo}" para "${novo}".`);
+    }
+}
+
+module.exports = { createDatabase, createInitialAdmin, migrateLegacyRoles };

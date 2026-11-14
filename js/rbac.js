@@ -1,7 +1,7 @@
 /* ============================================
    RBAC / Controle de Acesso — FactoryTrack
    - sessionStorage: ft_sessao
-   - cargos: chefe_geral, gerente, operador
+   - cargos: operario, operador_linha, engenheiro, admin (ver js/auth.js)
    ============================================ */
 
 function setNextUrl() {
@@ -38,7 +38,7 @@ function requireRole(rolesAllowed) {
     goBackOrLogin();
     return false;
   }
-  const cargo = sess.usuario.cargo;
+  const cargo = normalizarCargo(sess.usuario.cargo);
   if (!rolesAllowed.includes(cargo)) {
     avisar('Acesso negado: você não tem permissão para esta tela.', 'erro', { depois: true });
     // Sem salvar next_url aqui: a pessoa está logada, apenas recebeu bloqueio por cargo.
@@ -57,11 +57,13 @@ function requireRole(rolesAllowed) {
 
 
 function requireSupervisor() {
-  // Supervisor/chef/gerente
-  return requireRole(['chefe_geral', 'gerente']);
+  // Operador da linha, engenheiro e administrador (telas de gestão)
+  return requireRole(GRUPOS_CARGOS.gestao);
 }
 
+// Operário: quem está na máquina. Só registra e consulta, sem botões de gestão.
+// (O nome isOperator ficou do tempo em que esse cargo se chamava "operador".)
 function isOperator() {
-  const sess = getSessao && getSessao();
-  return !!sess && sess.usuario.cargo === 'operador';
+  return cargoAtual() === 'operario';
 }
+const isOperario = isOperator;

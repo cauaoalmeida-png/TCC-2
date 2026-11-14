@@ -82,7 +82,7 @@ function renderChecklist() {
                 </span>
               </label>
               <small>${item.desc}</small>
-              <textarea class="check-item-obs" id="obs-${item.id}" placeholder="Observação sobre este item..."></textarea>
+              <textarea class="check-item-obs" id="obs-${item.id}" aria-label="Observação sobre: ${String(item.label).replace(/"/g, '&quot;')}" placeholder="Observação sobre este item..."></textarea>
             </div>
           </div>
         `).join('')}

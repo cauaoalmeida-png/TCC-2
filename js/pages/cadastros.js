@@ -1,5 +1,5 @@
   document.addEventListener('DOMContentLoaded', () => {
-    const ok = requireSupervisor();
+    const ok = requireRole(GRUPOS_CARGOS.coordenacao);
     if (!ok) {
       document.body.innerHTML = '';
       goBackOrLogin();
@@ -8,10 +8,12 @@
     try { clearNextUrl && clearNextUrl(); } catch (e) {}
     renderSetores();
     renderMaquinas();
-    const sessao = getSessao();
-    if (sessao?.usuario?.cargo === 'chefe_geral') {
+    if (temCargo('admin')) {
       document.getElementById('usuariosPanel').style.display = '';
+      document.getElementById('cargosPanel').style.display = '';
+      preencherSelectCargos(document.getElementById('usuarioCargo'), 'operario');
       renderUsuarios();
+      renderNomesCargos();
     }
   });
 
@@ -202,13 +204,7 @@
         acoes.className = 'cad-item-actions';
         const cargo = document.createElement('select');
         cargo.setAttribute('aria-label', `Cargo de ${usuario.nome}`);
-        [['operador', 'Operador'], ['gerente', 'Gerente'], ['chefe_geral', 'Chefe Geral']].forEach(([value, label]) => {
-          const option = document.createElement('option');
-          option.value = value;
-          option.textContent = label;
-          option.selected = usuario.cargo === value;
-          cargo.appendChild(option);
-        });
+        preencherSelectCargos(cargo, usuario.cargo);
         cargo.addEventListener('change', () => atualizarCargo(usuario.id, cargo.value));
         const status = document.createElement('button');
         status.className = usuario.ativo ? 'btn-del' : 'btn btn-success btn-sm';
@@ -278,6 +274,81 @@
       const resultado = await resposta.json();
       if (!resposta.ok) throw new Error(resultado.erro || 'Não foi possível atualizar a conta.');
       await renderUsuarios();
+    } catch (erro) {
+      avisar(erro.message);
+    }
+  }
+
+  // ==========================================
+  // CARGOS — opções do select e nomes exibidos
+  // ==========================================
+  function preencherSelectCargos(select, selecionado) {
+    select.replaceChildren();
+    CARGOS.forEach(codigo => {
+      const option = document.createElement('option');
+      option.value = codigo;
+      option.textContent = cargoLabel(codigo);
+      option.selected = codigo === selecionado;
+      select.appendChild(option);
+    });
+  }
+
+  const DESCRICAO_CARGOS = {
+    operario: 'Está na máquina. Avisa que ela parou e qual o problema.',
+    operador_linha: 'Coordena a linha. Confirma a parada e designa o engenheiro.',
+    engenheiro: 'Conserta. Registra o que fez e as peças usadas e fecha a ocorrência.',
+    admin: 'Administra o sistema e as contas.'
+  };
+
+  async function renderNomesCargos() {
+    const container = document.getElementById('cargosNomes');
+    let nomes = { ...NOMES_CARGOS_PADRAO };
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/config/cargos`);
+      if (resposta.ok) nomes = (await resposta.json()).nomes;
+    } catch (erro) {
+      console.error('Erro ao carregar nomes dos cargos:', erro);
+    }
+    container.replaceChildren();
+    CARGOS.forEach(codigo => {
+      const grupo = document.createElement('div');
+      grupo.className = 'form-group';
+      const label = document.createElement('label');
+      label.htmlFor = `nomeCargo_${codigo}`;
+      label.textContent = NOMES_CARGOS_PADRAO[codigo];
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = `nomeCargo_${codigo}`;
+      input.maxLength = 40;
+      input.value = nomes[codigo] || '';
+      input.placeholder = NOMES_CARGOS_PADRAO[codigo];
+      const dica = document.createElement('small');
+      dica.className = 'label-hint';
+      dica.textContent = DESCRICAO_CARGOS[codigo];
+      grupo.append(label, input, dica);
+      container.appendChild(grupo);
+    });
+  }
+
+  async function salvarNomesCargos() {
+    const nomes = {};
+    CARGOS.forEach(codigo => { nomes[codigo] = document.getElementById(`nomeCargo_${codigo}`).value.trim(); });
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/config/cargos`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nomes })
+      });
+      const resultado = await resposta.json();
+      if (!resposta.ok) throw new Error(resultado.erro || 'Não foi possível salvar os nomes.');
+      const sessao = getSessao();
+      if (sessao) saveSessao({ ...sessao, nomesCargos: resultado.nomes });
+      avisar('Nomes dos cargos salvos.', 'sucesso');
+      await renderNomesCargos();
+      preencherSelectCargos(document.getElementById('usuarioCargo'), document.getElementById('usuarioCargo').value);
+      await renderUsuarios();
+      const papel = document.querySelector('.header-user-role');
+      if (papel) papel.textContent = cargoLabel(sessao.usuario.cargo);
     } catch (erro) {
       avisar(erro.message);
     }
