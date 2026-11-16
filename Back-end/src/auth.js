@@ -1,14 +1,11 @@
 const crypto = require('node:crypto');
 const { promisify } = require('node:util');
 
-const scrypt = promisify(crypto.scrypt);
+const {
+    CARGOS, NOMES_PADRAO, PODE_GRAVAR_CARGOS, normalizeRole, requireGestao, requireAdmin, lerNomesCargos
+} = require('./cargos');
 
-function normalizeRole(role) {
-    const normalized = String(role || '').toLowerCase();
-    if (['chefe_geral', 'administrador', 'admin'].includes(normalized)) return 'chefe_geral';
-    if (['gerente', 'supervisor'].includes(normalized)) return 'gerente';
-    return 'operador';
-}
+const scrypt = promisify(crypto.scrypt);
 
 async function hashPassword(password) {
     const salt = crypto.randomBytes(16).toString('hex');
@@ -84,26 +81,16 @@ function createAuthenticate(prisma, authSecret) {
     };
 }
 
-function requireSupervisor(req, res, next) {
-    if (!['chefe_geral', 'gerente'].includes(req.user.cargo)) {
-        return res.status(403).json({ erro: 'Acesso permitido somente à chefia.' });
-    }
-    next();
-}
-
-function requireChief(req, res, next) {
-    if (req.user.cargo !== 'chefe_geral') {
-        return res.status(403).json({ erro: 'Somente o Chefe Geral pode gerenciar contas.' });
-    }
-    next();
-}
+// Nomes antigos mantidos para não quebrar quem já importa daqui
+const requireSupervisor = requireGestao;
+const requireChief = requireAdmin;
 
 async function countActiveChiefs(prisma) {
     const users = await prisma.usuario.findMany({
         where: { ativo: true },
         select: { cargo: true, tipo: true }
     });
-    return users.filter(user => normalizeRole(user.cargo || user.tipo) === 'chefe_geral').length;
+    return users.filter(user => normalizeRole(user.cargo || user.tipo) === 'admin').length;
 }
 
 // Limite simples de tentativas de login por IP, em memória.
@@ -156,17 +143,18 @@ function registerLoginRoute(app, { prisma, authSecret }) {
             }
 
             const cargo = normalizeRole(user.cargo || user.tipo);
-            if (!user.senha.startsWith('scrypt:') || user.cargo !== cargo) {
+            if (!user.senha.startsWith('scrypt:') || (PODE_GRAVAR_CARGOS && user.cargo !== cargo)) {
                 await prisma.usuario.update({
                     where: { id: user.id },
                     data: {
                         senha: user.senha.startsWith('scrypt:') ? user.senha : await hashPassword(senhaInput),
-                        cargo
+                        ...(PODE_GRAVAR_CARGOS ? { cargo } : {})
                     }
                 });
             }
             const usuario = { id: user.id, nome: user.nome || user.usuario, usuario: user.usuario, cargo };
-            return res.json({ sucesso: true, token: createToken(usuario, authSecret), usuario });
+            const nomesCargos = await lerNomesCargos(prisma);
+            return res.json({ sucesso: true, token: createToken(usuario, authSecret), usuario, nomesCargos });
         } catch (err) {
             console.error('Erro no banco durante o login:', err.message);
             return res.status(500).json({ erro: 'Erro interno no servidor de banco de dados.' });
@@ -175,15 +163,62 @@ function registerLoginRoute(app, { prisma, authSecret }) {
 }
 
 function registerUserRoutes(app, { prisma }) {
-    app.get('/me', (req, res) => res.json({ usuario: req.user }));
+    app.get('/me', async (req, res) => res.json({ usuario: req.user, nomesCargos: await lerNomesCargos(prisma) }));
+
+    // Nomes dos cargos exibidos na tela (cada fábrica pode usar os seus)
+    app.get('/config/cargos', async (req, res) => {
+        res.json({ nomes: await lerNomesCargos(prisma), padrao: NOMES_PADRAO });
+    });
+
+    app.put('/config/cargos', requireAdmin, async (req, res) => {
+        const recebidos = req.body?.nomes;
+        if (!recebidos || typeof recebidos !== 'object') {
+            return res.status(400).json({ erro: 'Envie os nomes dos cargos.' });
+        }
+        const nomes = {};
+        for (const cargo of CARGOS) {
+            const nome = typeof recebidos[cargo] === 'string' ? recebidos[cargo].trim() : '';
+            if (nome.length > 40) return res.status(400).json({ erro: 'Cada nome de cargo pode ter até 40 caracteres.' });
+            if (nome) nomes[cargo] = nome;
+        }
+        try {
+            const valor = JSON.stringify(nomes);
+            await prisma.configuracao.upsert({
+                where: { chave: 'nomes_cargos' },
+                update: { valor },
+                create: { chave: 'nomes_cargos', valor }
+            });
+            res.json({ nomes: await lerNomesCargos(prisma) });
+        } catch (err) {
+            console.error('Erro ao salvar nomes dos cargos:', err.message);
+            res.status(500).json({ erro: 'Erro ao salvar os nomes dos cargos.' });
+        }
+    });
+
+    // Engenheiros ativos, para o operador designar quem vai consertar
+    app.get('/usuarios/engenheiros', requireGestao, async (req, res) => {
+        try {
+            const usuarios = await prisma.usuario.findMany({
+                where: { ativo: true },
+                orderBy: { nome: 'asc' },
+                select: { id: true, nome: true, usuario: true, cargo: true, tipo: true }
+            });
+            res.json(usuarios
+                .filter(u => normalizeRole(u.cargo || u.tipo) === 'engenheiro')
+                .map(u => ({ id: u.id, nome: u.nome || u.usuario })));
+        } catch (err) {
+            console.error('Erro ao listar engenheiros:', err.message);
+            res.status(500).json({ erro: 'Erro ao listar engenheiros.' });
+        }
+    });
 
     app.get('/usuarios', requireChief, async (req, res) => {
         try {
             const usuarios = await prisma.usuario.findMany({
                 orderBy: { nome: 'asc' },
-                select: { id: true, nome: true, usuario: true, cargo: true, ativo: true }
+                select: { id: true, nome: true, usuario: true, cargo: true, tipo: true, ativo: true }
             });
-            res.json(usuarios.map(user => ({ ...user, cargo: normalizeRole(user.cargo) })));
+            res.json(usuarios.map(({ tipo, ...user }) => ({ ...user, cargo: normalizeRole(user.cargo || tipo) })));
         } catch (err) {
             console.error('Erro ao listar usuários:', err.message);
             res.status(500).json({ erro: 'Erro ao listar usuários.' });
@@ -196,7 +231,7 @@ function registerUserRoutes(app, { prisma }) {
         const senha = typeof req.body.senha === 'string' ? req.body.senha : '';
         const cargo = req.body.cargo;
         const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(usuario);
-        if (!nome || nome.length > 100 || !emailValido || usuario.length > 100 || senha.length < 8 || senha.length > 256 || !['operador', 'gerente', 'chefe_geral'].includes(cargo)) {
+        if (!nome || nome.length > 100 || !emailValido || usuario.length > 100 || senha.length < 8 || senha.length > 256 || !CARGOS.includes(cargo)) {
             return res.status(400).json({ erro: 'Informe nome, e-mail corporativo válido, senha de 8 a 256 caracteres e um cargo válido.' });
         }
 
@@ -226,9 +261,9 @@ function registerUserRoutes(app, { prisma }) {
         try {
             const target = await prisma.usuario.findUnique({ where: { id } });
             if (!target) return res.status(404).json({ erro: 'Usuário não encontrado.' });
-            if (!ativo && normalizeRole(target.cargo || target.tipo) === 'chefe_geral') {
+            if (!ativo && normalizeRole(target.cargo || target.tipo) === 'admin') {
                 const chiefs = await countActiveChiefs(prisma);
-                if (chiefs <= 1) return res.status(409).json({ erro: 'Não é possível desativar o último chefe ativo.' });
+                if (chiefs <= 1) return res.status(409).json({ erro: 'Não é possível desativar o último administrador ativo.' });
             }
             await prisma.usuario.update({ where: { id }, data: { ativo } });
             res.json({ mensagem: ativo ? 'Conta ativada.' : 'Conta desativada.' });
@@ -241,19 +276,19 @@ function registerUserRoutes(app, { prisma }) {
     app.put('/usuarios/:id/cargo', requireChief, async (req, res) => {
         const id = Number(req.params.id);
         const cargo = req.body.cargo;
-        if (!Number.isInteger(id) || !['operador', 'gerente', 'chefe_geral'].includes(cargo)) {
+        if (!Number.isInteger(id) || !CARGOS.includes(cargo)) {
             return res.status(400).json({ erro: 'Identificador ou cargo inválido.' });
         }
-        if (id === req.user.id && cargo !== 'chefe_geral') {
-            return res.status(400).json({ erro: 'Não é possível remover o próprio cargo de Chefe Geral.' });
+        if (id === req.user.id && cargo !== 'admin') {
+            return res.status(400).json({ erro: 'Não é possível remover o próprio cargo de administrador.' });
         }
 
         try {
             const target = await prisma.usuario.findUnique({ where: { id } });
             if (!target) return res.status(404).json({ erro: 'Usuário não encontrado.' });
-            if (cargo !== 'chefe_geral' && normalizeRole(target.cargo || target.tipo) === 'chefe_geral' && target.ativo) {
+            if (cargo !== 'admin' && normalizeRole(target.cargo || target.tipo) === 'admin' && target.ativo) {
                 const chiefs = await countActiveChiefs(prisma);
-                if (chiefs <= 1) return res.status(409).json({ erro: 'Não é possível remover o cargo do último chefe ativo.' });
+                if (chiefs <= 1) return res.status(409).json({ erro: 'Não é possível remover o cargo do último administrador ativo.' });
             }
             await prisma.usuario.update({ where: { id }, data: { cargo, tipo: null } });
             res.json({ mensagem: 'Cargo atualizado.' });

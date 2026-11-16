@@ -136,12 +136,12 @@
       <section class="ia-box" id="iaPainel" hidden>
         <div class="ia-head">
           <i class="fas fa-wand-magic-sparkles"></i>
-          <h2>Assistente da chefia</h2>
+          <h2>Assistente de gestão</h2>
           <span class="ia-badge">IA</span>
         </div>
         <p class="ia-intro">Pergunte sobre ocorrências, máquinas, estoque e guindastes, ou peça o resumo da semana. A IA responde com os dados do sistema.</p>
         <div class="ia-pergunta">
-          <input type="text" id="iaPergunta" maxlength="500" placeholder="Ex.: Qual máquina mais parou este mês?">
+          <input type="text" id="iaPergunta" maxlength="500" aria-label="Pergunta para o assistente de IA" placeholder="Ex.: Qual máquina mais parou este mês?">
           <button type="button" class="btn btn-primary" id="iaPerguntarBtn"><i class="fas fa-paper-plane"></i> Perguntar</button>
           <button type="button" class="btn btn-outline" id="iaResumoBtn"><i class="fas fa-file-lines"></i> Resumo da semana</button>
         </div>
@@ -178,10 +178,10 @@
 
       <div class="filters">
         <label>Filtrar:</label>
-        <select id="filterSetor" onchange="renderPainel()">
+        <select id="filterSetor" onchange="renderPainel()" aria-label="Filtrar por setor">
           <option value="">Todos os Setores</option>
         </select>
-        <select id="filterStatus" onchange="renderPainel()">
+        <select id="filterStatus" onchange="renderPainel()" aria-label="Filtrar por status">
           <option value="">Todos os Status</option>
           <option value="Funcionando">Funcionando</option>
           <option value="Atenção">Atenção</option>

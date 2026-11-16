@@ -34,7 +34,7 @@ async function loginUsuario(usuario, senha) {
     });
     const resultado = await resposta.json();
     if (!resposta.ok) return { ok: false, msg: resultado.erro || 'Não foi possível entrar.' };
-    saveSessao({ token: resultado.token, usuario: resultado.usuario });
+    saveSessao({ token: resultado.token, usuario: resultado.usuario, nomesCargos: resultado.nomesCargos || null });
     return { ok: true, user: resultado.usuario };
   } catch (erro) {
     console.error('Erro ao conectar para autenticação:', erro);
@@ -42,18 +42,57 @@ async function loginUsuario(usuario, senha) {
   }
 }
 
+/* Cargos (iguais aos do servidor, em Back-end/src/cargos.js)
+   operario        → está na máquina e avisa quando ela para
+   operador_linha  → coordena a linha, confirma a parada e designa o engenheiro
+   engenheiro      → conserta, registra peças usadas e fecha a ocorrência
+   admin           → administrador do sistema (tudo + contas) */
+const CARGOS = ['operario', 'operador_linha', 'engenheiro', 'admin'];
+const NOMES_CARGOS_PADRAO = {
+  operario: 'Operário',
+  operador_linha: 'Operador',
+  engenheiro: 'Engenheiro de produção',
+  admin: 'Administrador'
+};
+const GRUPOS_CARGOS = {
+  gestao: ['operador_linha', 'engenheiro', 'admin'],
+  coordenacao: ['operador_linha', 'admin'],
+  manutencao: ['engenheiro', 'admin'],
+  admin: ['admin']
+};
+
+// Converte cargos antigos guardados no navegador (sessões abertas antes da troca)
+function normalizarCargo(cargo) {
+  if (CARGOS.includes(cargo)) return cargo;
+  return { chefe_geral: 'admin', gerente: 'operador_linha', operador: 'operario' }[cargo] || 'operario';
+}
+
+function cargoAtual() {
+  const sessao = getSessao();
+  return sessao ? normalizarCargo(sessao.usuario.cargo) : null;
+}
+
+// Ex.: temCargo('coordenacao') ou temCargo(['engenheiro'])
+function temCargo(grupoOuLista) {
+  const lista = Array.isArray(grupoOuLista) ? grupoOuLista : (GRUPOS_CARGOS[grupoOuLista] || []);
+  return lista.includes(cargoAtual());
+}
+
+// Nome do cargo na tela; cada fábrica pode personalizar em Cadastros
 function cargoLabel(cargo) {
-  const map = { chefe_geral: 'Chefe Geral', gerente: 'Gerente', operador: 'Operador' };
-  return map[cargo] || cargo;
+  const codigo = normalizarCargo(cargo);
+  const nomes = getSessao()?.nomesCargos || {};
+  return nomes[codigo] || NOMES_CARGOS_PADRAO[codigo] || cargo;
 }
 
 function cargoBadgeStyle(cargo) {
   const map = {
-    chefe_geral: 'background:#fce7f3;color:#9d174d',
-    gerente: 'background:#dbeafe;color:#1d4ed8',
-    operador: 'background:#dcfce7;color:#16a34a'
+    admin: 'background:#fce7f3;color:#9d174d',
+    engenheiro: 'background:#ede9fe;color:#6d28d9',
+    operador_linha: 'background:#dbeafe;color:#1d4ed8',
+    operario: 'background:#dcfce7;color:#16a34a'
   };
-  return map[cargo] || '';
+  return map[normalizarCargo(cargo)] || '';
 }
 
 const fetchFactoryTrack = window.fetch.bind(window);

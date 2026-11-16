@@ -1,4 +1,5 @@
-const { createDatabase, createInitialAdmin } = require('./database');
+const { createDatabase, createInitialAdmin, migrateLegacyRoles } = require('./database');
+const { requireCoordenacao, requireManutencao } = require('./cargos');
 const { hashPassword, createAuthenticate, requireSupervisor, registerLoginRoute, registerUserRoutes } = require('./auth');
 const registerSectorRoutes = require('./routes/sectors');
 const registerMachineRoutes = require('./routes/machines');
@@ -11,6 +12,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('node:crypto');
 const path = require('node:path');
+const PAGINA_404 = require('./pagina404');
 
 const app = express();
 // Atrás do proxy da Vercel: faz o req.ip refletir o cliente real
@@ -87,19 +89,34 @@ app.get(['/favicon.svg', '/favicon.ico', '/apple-touch-icon.png'], (req, res) =>
 app.use('/css', express.static(path.join(frontendRoot, 'css'), { index: false }));
 app.use('/js', express.static(path.join(frontendRoot, 'js'), { index: false }));
 app.use('/pages', express.static(path.join(frontendRoot, 'pages'), { index: false }));
+// Endereço que não existe aberto no navegador: mostra a página "não
+// encontrada" (sem isso, caía na checagem de login e voltava 401 em branco).
+// Os pedidos da API (fetch) não pedem HTML, então seguem o caminho normal;
+// a API só funciona com o token, que o navegador não manda ao abrir um link.
+app.use((req, res, next) => {
+    if ((req.method === 'GET' || req.method === 'HEAD') && req.accepts(['json', 'html']) === 'html') {
+        return res.status(404).type('html').send(PAGINA_404);
+    }
+    next();
+});
 registerLoginRoute(app, { prisma, authSecret: AUTH_SECRET });
 app.use(createAuthenticate(prisma, AUTH_SECRET));
 registerUserRoutes(app, { prisma });
-registerSectorRoutes(app, { prisma, requireSupervisor });
-registerMachineRoutes(app, { prisma, requireSupervisor });
+// Setores e máquinas: operador da linha e administrador
+registerSectorRoutes(app, { prisma, requireSupervisor: requireCoordenacao });
+registerMachineRoutes(app, { prisma, requireSupervisor: requireCoordenacao });
 registerOccurrenceRoutes(app, { prisma, requireSupervisor });
 registerInventoryRoutes(app, { prisma, requireSupervisor });
-registerRentalRoutes(app, { prisma, requireSupervisor });
+// Guindastes ficam com o operador da linha e o administrador
+registerRentalRoutes(app, { prisma, requireSupervisor: requireCoordenacao });
+// Previsão de falhas é do engenheiro de produção (e do administrador)
+app.use(['/previsao-falhas', '/ia/previsao'], requireManutencao);
 registerAiRoutes(app, { prisma, requireSupervisor });
 
 // ROTA 404 (Coringa)
 // ==========================================
 app.use((req, res) => {
+    if (req.accepts(['json', 'html']) === 'html') return res.status(404).type('html').send(PAGINA_404);
     res.status(404).json({ erro: `Rota não encontrada: ${req.method} ${req.originalUrl}` });
 });
 // Conecta ao banco e cria a conta inicial uma única vez por processo.
@@ -109,6 +126,7 @@ function ready() {
     if (!readyPromise) {
         readyPromise = (async () => {
             await prisma.$connect();
+            await migrateLegacyRoles(prisma);
             await createInitialAdmin(prisma, hashPassword);
             console.log('✅ Conectado ao banco de dados com sucesso!');
         })().catch((err) => {
