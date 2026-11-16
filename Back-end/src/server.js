@@ -82,10 +82,15 @@ app.get(['/', '/apresentacao.html'], (req, res) => {
 app.get(['/sistema', '/index.html'], (req, res) => {
     res.sendFile(path.join(frontendRoot, 'index.html'));
 });
-// Ícones da aba do navegador (só esses arquivos, para não expor a raiz e o .env)
-app.get(['/favicon.svg', '/favicon.ico', '/apple-touch-icon.png'], (req, res) => {
-    res.sendFile(path.join(frontendRoot, req.path));
+// Imagens do site (ícones, logo, imagem de compartilhamento) ficam em img/.
+// Navegadores pedem /favicon.ico na raiz; os endereços antigos redirecionam.
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(frontendRoot, 'img', 'favicon.ico'));
 });
+app.get(['/favicon.svg', '/apple-touch-icon.png', '/og-image.jpg', '/logo-512.png'], (req, res) => {
+    res.redirect(301, '/img' + req.path);
+});
+app.use('/img', express.static(path.join(frontendRoot, 'img'), { index: false }));
 app.use('/css', express.static(path.join(frontendRoot, 'css'), { index: false }));
 app.use('/js', express.static(path.join(frontendRoot, 'js'), { index: false }));
 app.use('/pages', express.static(path.join(frontendRoot, 'pages'), { index: false }));

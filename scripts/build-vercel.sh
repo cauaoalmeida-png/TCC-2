@@ -3,12 +3,16 @@
 # Fica num arquivo porque a Vercel só aceita até 256 caracteres no buildCommand.
 set -euo pipefail
 
+# Roda sempre a partir da raiz do repositório, mesmo chamado de outra pasta.
+cd "$(dirname "$0")/.."
+
 (cd Back-end && npm run db:setup)
 
 rm -rf public
 mkdir public
-cp -r apresentacao.html css js pages \
-  favicon.svg favicon.ico apple-touch-icon.png og-image.jpg logo-512.png public/
+cp -r apresentacao.html css js pages img public/
+# Navegadores e o Google procuram /favicon.ico na raiz do site.
+cp img/favicon.ico public/favicon.ico
 cp seo/robots.txt seo/sitemap.xml public/
 cp index.html public/sistema.html
 cp apresentacao.html public/index.html
