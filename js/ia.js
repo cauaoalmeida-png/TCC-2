@@ -62,15 +62,24 @@ async function iaChamar(rota, corpo) {
   }
 }
 
-// Mostra "Analisando..." no botão enquanto a IA trabalha.
+// Mostra "Analisando..." no botão enquanto a IA trabalha, com os segundos
+// passando, para a pessoa ver que o pedido está andando.
 function iaCarregando(botao, carregando, texto = 'Analisando...') {
+  clearInterval(Number(botao.dataset.iaTimer));
   if (carregando) {
     botao.dataset.textoOriginal = botao.innerHTML;
     botao.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${texto}`;
     botao.disabled = true;
+    botao.setAttribute('aria-busy', 'true');
+    const inicio = Date.now();
+    botao.dataset.iaTimer = String(setInterval(() => {
+      const segundos = Math.round((Date.now() - inicio) / 1000);
+      if (segundos >= 3) botao.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${texto} ${segundos}s`;
+    }, 1000));
   } else {
     botao.innerHTML = botao.dataset.textoOriginal || botao.innerHTML;
     botao.disabled = false;
+    botao.removeAttribute('aria-busy');
   }
 }
 

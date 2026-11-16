@@ -1,5 +1,5 @@
 /* ============================================
-   PREVISÃO DE FALHAS (tela Painel, só chefia)
+   PREVISÃO DE FALHAS (tela Painel, só engenheiro e administrador)
    O risco vem do servidor (GET /previsao-falhas), calculado pelo histórico.
    O botão "Explicar com IA" pede à IA a explicação e a preventiva sugerida.
    ============================================ */
@@ -26,7 +26,8 @@ function prevDataBR(iso) {
 }
 
 async function atualizarPrevisao() {
-  if (typeof isOperator === 'function' && isOperator()) return;
+  // Previsão de falhas é do engenheiro de produção e do administrador
+  if (typeof temCargo === 'function' && !temCargo('manutencao')) return;
   if (previsaoCarregando) return;
   previsaoCarregando = true;
   try {
