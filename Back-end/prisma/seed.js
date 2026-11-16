@@ -32,6 +32,17 @@ async function padronizarPecas(prisma) {
     if (alteradas) console.log(`Categoria/unidade padronizada em ${alteradas} peça(s).`);
 }
 
+// Peças antigas sem estoque mínimo (min 0) nunca geram alerta. Dá a elas o
+// mesmo mínimo que as peças novas da nota fiscal recebem: 20% da quantidade
+// atual, no mínimo 1. Só mexe em quem está sem mínimo; o resto fica como está.
+async function preencherMinimos(prisma) {
+    const semMinimo = await prisma.peca.findMany({ where: { min: { lt: 1 } }, select: { id: true, qtd: true } });
+    for (const p of semMinimo) {
+        await prisma.peca.update({ where: { id: p.id }, data: { min: Math.max(1, Math.ceil(Math.max(0, p.qtd) * 0.2)) } });
+    }
+    if (semMinimo.length) console.log(`Estoque mínimo preenchido em ${semMinimo.length} peça(s).`);
+}
+
 async function main() {
     const { prisma } = createDatabase();
     try {
@@ -72,6 +83,7 @@ async function main() {
             console.log('Peças de exemplo criadas.');
         }
         await padronizarPecas(prisma);
+        await preencherMinimos(prisma);
     } finally {
         await prisma.$disconnect();
     }
