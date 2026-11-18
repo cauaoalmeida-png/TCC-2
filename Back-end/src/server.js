@@ -1,18 +1,27 @@
-const { createDatabase, createInitialAdmin } = require('./database');
+const { createDatabase, createInitialAdmin, migrateLegacyRoles } = require('./database');
+const { requireCoordenacao, requireManutencao } = require('./cargos');
 const { hashPassword, createAuthenticate, requireSupervisor, registerLoginRoute, registerUserRoutes } = require('./auth');
 const registerSectorRoutes = require('./routes/sectors');
 const registerMachineRoutes = require('./routes/machines');
 const registerOccurrenceRoutes = require('./routes/occurrences');
 const registerInventoryRoutes = require('./routes/inventory');
 const registerRentalRoutes = require('./routes/rentals');
+const registerAiRoutes = require('./routes/ai');
 
 const express = require('express');
 const cors = require('cors');
 const crypto = require('node:crypto');
 const path = require('node:path');
+const PAGINA_404 = require('./pagina404');
 
 const app = express();
-app.use(express.json());
+// Atrás do proxy da Vercel: faz o req.ip refletir o cliente real
+// (usado pelo limite de tentativas de login).
+app.set('trust proxy', true);
+// As rotas de IA que recebem foto ou nota fiscal aceitam corpo maior; as demais não.
+const jsonPadrao = express.json();
+const jsonComArquivo = express.json({ limit: '4mb' });
+app.use((req, res, next) => (registerAiRoutes.ROTAS_COM_ARQUIVO.includes(req.path) ? jsonComArquivo : jsonPadrao)(req, res, next));
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 const allowedOrigins = new Set(
@@ -49,10 +58,16 @@ app.use(cors((req, callback) => {
     return callback(new Error('Origem não autorizada pelo CORS.'));
 }));
 const PORT = process.env.PORT || 3000;
-const AUTH_SECRET = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
+const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
 if (!process.env.AUTH_SECRET) {
-    console.warn('AUTH_SECRET não definido; sessões serão invalidadas quando o servidor reiniciar.');
+    if (isProduction) {
+        // Em produção um segredo aleatório por instância invalidaria os logins
+        // de forma imprevisível. Melhor recusar a subir do que ficar instável.
+        throw new Error('AUTH_SECRET não definido. Configure uma chave aleatória longa e persistente nas variáveis de ambiente antes de subir em produção.');
+    }
+    console.warn('AUTH_SECRET não definido; sessões serão invalidadas quando o servidor reiniciar. Use apenas em desenvolvimento.');
 }
+const AUTH_SECRET = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
 const { prisma } = createDatabase();
 
 app.get('/api/health', (req, res) => {
@@ -70,25 +85,46 @@ app.get(['/sistema', '/index.html'], (req, res) => {
 app.get(['/privacidade.html', '/termos.html'], (req, res) => {
     res.sendFile(path.join(frontendRoot, req.path));
 });
-// Ícones da aba do navegador (só esses arquivos, para não expor a raiz e o .env)
-app.get(['/favicon.svg', '/favicon.ico', '/apple-touch-icon.png'], (req, res) => {
-    res.sendFile(path.join(frontendRoot, req.path));
+// Imagens do site (ícones, logo, imagem de compartilhamento) ficam em img/.
+// Navegadores pedem /favicon.ico na raiz; os endereços antigos redirecionam.
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(frontendRoot, 'img', 'favicon.ico'));
 });
+app.get(['/favicon.svg', '/apple-touch-icon.png', '/og-image.jpg', '/logo-512.png'], (req, res) => {
+    res.redirect(301, '/img' + req.path);
+});
+app.use('/img', express.static(path.join(frontendRoot, 'img'), { index: false }));
 app.use('/css', express.static(path.join(frontendRoot, 'css'), { index: false }));
 app.use('/js', express.static(path.join(frontendRoot, 'js'), { index: false }));
 app.use('/pages', express.static(path.join(frontendRoot, 'pages'), { index: false }));
+// Endereço que não existe aberto no navegador: mostra a página "não
+// encontrada" (sem isso, caía na checagem de login e voltava 401 em branco).
+// Os pedidos da API (fetch) não pedem HTML, então seguem o caminho normal;
+// a API só funciona com o token, que o navegador não manda ao abrir um link.
+app.use((req, res, next) => {
+    if ((req.method === 'GET' || req.method === 'HEAD') && req.accepts(['json', 'html']) === 'html') {
+        return res.status(404).type('html').send(PAGINA_404);
+    }
+    next();
+});
 registerLoginRoute(app, { prisma, authSecret: AUTH_SECRET });
 app.use(createAuthenticate(prisma, AUTH_SECRET));
 registerUserRoutes(app, { prisma });
-registerSectorRoutes(app, { prisma, requireSupervisor });
-registerMachineRoutes(app, { prisma, requireSupervisor });
+// Setores e máquinas: operador da linha e administrador
+registerSectorRoutes(app, { prisma, requireSupervisor: requireCoordenacao });
+registerMachineRoutes(app, { prisma, requireSupervisor: requireCoordenacao });
 registerOccurrenceRoutes(app, { prisma, requireSupervisor });
 registerInventoryRoutes(app, { prisma, requireSupervisor });
-registerRentalRoutes(app, { prisma, requireSupervisor });
+// Guindastes ficam com o operador da linha e o administrador
+registerRentalRoutes(app, { prisma, requireSupervisor: requireCoordenacao });
+// Previsão de falhas é do engenheiro de produção (e do administrador)
+app.use(['/previsao-falhas', '/ia/previsao'], requireManutencao);
+registerAiRoutes(app, { prisma, requireSupervisor });
 
 // ROTA 404 (Coringa)
 // ==========================================
 app.use((req, res) => {
+    if (req.accepts(['json', 'html']) === 'html') return res.status(404).type('html').send(PAGINA_404);
     res.status(404).json({ erro: `Rota não encontrada: ${req.method} ${req.originalUrl}` });
 });
 // Conecta ao banco e cria a conta inicial uma única vez por processo.
@@ -98,6 +134,7 @@ function ready() {
     if (!readyPromise) {
         readyPromise = (async () => {
             await prisma.$connect();
+            await migrateLegacyRoles(prisma);
             await createInitialAdmin(prisma, hashPassword);
             console.log('✅ Conectado ao banco de dados com sucesso!');
         })().catch((err) => {

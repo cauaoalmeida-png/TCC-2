@@ -4,6 +4,44 @@
 
 require('dotenv').config();
 const { createDatabase } = require('../src/database');
+const { normalizarCategoria, normalizarUnidade } = require('../src/categorias');
+
+// Categorias certas das peças de exemplo antigas, que usavam nomes fora da lista.
+// Formato: nome da peça -> [categoria antiga, categoria nova].
+const CATEGORIA_EXEMPLO = {
+    'Correia Esteira A': ['Peça de máquina', 'Mecânico'],
+    'Óleo Lubrificante': ['Insumo', 'Lubrificação'],
+    'Filtro de Ar Compressor': ['Manutenção', 'Pneumático']
+};
+
+// Coloca categoria e unidade de peças já cadastradas no padrão da lista
+// (ex.: "Peça de máquina" vira "Mecânico", "l" vira "L"; o que não se
+// encaixa vira "Outro"). Só atualiza esses dois campos; não apaga nada.
+async function padronizarPecas(prisma) {
+    const pecas = await prisma.peca.findMany({ select: { id: true, nome: true, categoria: true, unidade: true } });
+    let alteradas = 0;
+    for (const p of pecas) {
+        const exemplo = CATEGORIA_EXEMPLO[p.nome];
+        const categoria = exemplo && exemplo[0] === p.categoria ? exemplo[1] : normalizarCategoria(p.categoria);
+        const unidade = normalizarUnidade(p.unidade);
+        if (categoria !== p.categoria || unidade !== p.unidade) {
+            await prisma.peca.update({ where: { id: p.id }, data: { categoria, unidade } });
+            alteradas++;
+        }
+    }
+    if (alteradas) console.log(`Categoria/unidade padronizada em ${alteradas} peça(s).`);
+}
+
+// Peças antigas sem estoque mínimo (min 0) nunca geram alerta. Dá a elas o
+// mesmo mínimo que as peças novas da nota fiscal recebem: 20% da quantidade
+// atual, no mínimo 1. Só mexe em quem está sem mínimo; o resto fica como está.
+async function preencherMinimos(prisma) {
+    const semMinimo = await prisma.peca.findMany({ where: { min: { lt: 1 } }, select: { id: true, qtd: true } });
+    for (const p of semMinimo) {
+        await prisma.peca.update({ where: { id: p.id }, data: { min: Math.max(1, Math.ceil(Math.max(0, p.qtd) * 0.2)) } });
+    }
+    if (semMinimo.length) console.log(`Estoque mínimo preenchido em ${semMinimo.length} peça(s).`);
+}
 
 async function main() {
     const { prisma } = createDatabase();
@@ -37,13 +75,15 @@ async function main() {
             await prisma.peca.createMany({
                 data: [
                     { nome: 'Parafuso M6', categoria: 'Fixação', qtd: 500, min: 100, unidade: 'un' },
-                    { nome: 'Correia Esteira A', categoria: 'Peça de máquina', qtd: 3, min: 2, unidade: 'un' },
-                    { nome: 'Óleo Lubrificante', categoria: 'Insumo', qtd: 12, min: 5, unidade: 'l' },
-                    { nome: 'Filtro de Ar Compressor', categoria: 'Manutenção', qtd: 1, min: 2, unidade: 'un' }
+                    { nome: 'Correia Esteira A', categoria: 'Mecânico', qtd: 3, min: 2, unidade: 'un' },
+                    { nome: 'Óleo Lubrificante', categoria: 'Lubrificação', qtd: 12, min: 5, unidade: 'L' },
+                    { nome: 'Filtro de Ar Compressor', categoria: 'Pneumático', qtd: 1, min: 2, unidade: 'un' }
                 ]
             });
             console.log('Peças de exemplo criadas.');
         }
+        await padronizarPecas(prisma);
+        await preencherMinimos(prisma);
     } finally {
         await prisma.$disconnect();
     }

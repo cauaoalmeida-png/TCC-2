@@ -1,0 +1,105 @@
+/* ============================================
+   PREVISÃO DE FALHAS (Painel)
+   ============================================ */
+
+.prev-box {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border-top: 4px solid var(--primary);
+  padding: 1.3rem 1.4rem;
+  margin-bottom: 1.8rem;
+}
+.prev-box[hidden] { display: none; }
+.prev-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.prev-head h2 { font-size: 1.4rem; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+.prev-head h2 i { color: var(--danger); }
+.prev-sub { color: var(--text-muted); font-size: 0.92rem; margin: 0.3rem 0 0; }
+.prev-acoes { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.prev-acoes [hidden] { display: none; }
+
+.prev-resumo { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 1rem 0 0.4rem; }
+.prev-chip {
+  display: inline-flex; align-items: baseline; gap: 0.35rem;
+  padding: 0.35rem 0.8rem; border-radius: 999px;
+  font-size: 0.88rem; font-weight: 600; background: #f1f5f9; color: var(--text);
+}
+.prev-chip strong { font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; line-height: 1; }
+.prev-chip.red strong { color: #dc2626; }
+.prev-chip.yellow strong { color: #ca8a04; }
+.prev-chip.green strong { color: #16a34a; }
+
+.prev-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.prev-vazio { color: var(--text-muted); font-size: 0.95rem; margin: 0.6rem 0; }
+
+.prev-card {
+  border: 1px solid var(--border);
+  border-left: 5px solid #94a3b8;
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  display: flex; flex-direction: column; gap: 0.6rem;
+  background: #fff;
+}
+.prev-card.red { border-left-color: var(--danger); }
+.prev-card.yellow { border-left-color: var(--warning); }
+.prev-card.green { border-left-color: var(--success); }
+.prev-card-topo { display: flex; justify-content: space-between; gap: 0.8rem; align-items: flex-start; }
+.prev-card h3 { font-size: 1.12rem; color: var(--text); margin: 0; }
+.prev-setor { font-size: 0.85rem; color: var(--text-muted); margin: 0.1rem 0 0; }
+.prev-risco { text-align: right; flex-shrink: 0; }
+.prev-risco strong { display: block; font-family: 'Rajdhani', sans-serif; font-size: 2rem; line-height: 1; color: var(--primary); }
+.prev-nivel { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.prev-nivel.red { color: #dc2626; }
+.prev-nivel.yellow { color: #b45309; }
+.prev-nivel.green { color: #16a34a; }
+
+.prev-barra { height: 8px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+.prev-barra span { display: block; height: 100%; border-radius: 999px; background: #94a3b8; }
+.prev-barra span.red { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+.prev-barra span.yellow { background: #f59e0b; }
+.prev-barra span.green { background: #22c55e; }
+
+.prev-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.prev-tag { font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; background: #e2e8f0; color: var(--text); }
+.prev-tag.red { background: #fee2e2; color: #991b1b; }
+.prev-tag.yellow { background: #fef3c7; color: #92400e; }
+.prev-tag.green { background: #dcfce7; color: #166534; }
+
+.prev-motivos { margin: 0 0 0 1.1rem; font-size: 0.88rem; color: var(--text); }
+.prev-motivos li { margin: 0.15rem 0; }
+
+.prev-fatos { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 0.8rem; background: #f8fafc; border-radius: 8px; padding: 0.6rem 0.75rem; }
+.prev-fatos span { display: block; font-size: 0.72rem; color: var(--text-muted); }
+.prev-fatos strong { font-size: 0.9rem; color: var(--text); }
+
+.prev-ia { background: #fff7f1; border: 1px solid #fed7aa; border-radius: 8px; padding: 0.7rem 0.8rem; font-size: 0.88rem; }
+.prev-ia p { margin: 0.3rem 0; }
+.prev-ia-cab { display: flex; justify-content: space-between; align-items: center; }
+.prev-prazo { font-size: 0.75rem; font-weight: 700; }
+.prev-prazo.red { color: #dc2626; }
+.prev-prazo.yellow { color: #b45309; }
+.prev-prazo.green { color: #16a34a; }
+
+.prev-card-rodape { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: auto; }
+
+.prev-como { margin-top: 1rem; font-size: 0.88rem; color: var(--text-muted); }
+.prev-como summary { cursor: pointer; font-weight: 600; color: var(--primary); }
+.prev-como p { margin: 0.5rem 0 0; line-height: 1.5; }
+
+#prevVisaoIA h4 { display: flex; align-items: center; gap: 0.4rem; }
+
+/* Selo de risco nos cards de máquina */
+.prev-badge-slot { margin-left: auto; }
+.prev-badge { font-size: 0.75rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; }
+.prev-badge.red { background: #fee2e2; color: #991b1b; }
+.prev-badge.yellow { background: #fef3c7; color: #92400e; }
+
+@media (max-width: 600px) {
+  .prev-box { padding: 1rem; }
+  .prev-grid { grid-template-columns: 1fr; }
+}

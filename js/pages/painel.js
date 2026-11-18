@@ -6,6 +6,7 @@
     if (!requireAuth()) return;
     try { clearNextUrl && clearNextUrl(); } catch (e) {}
     renderPainel();
+    iniciarAssistenteIA();
   });
 
   // Recarrega quando o usuário volta para esta aba (ex: vindo de outra tela do sistema)
@@ -119,6 +120,7 @@
             <div class="painel-card-status ${st.cor}">
                 <span class="status-dot ${st.cor}"></span>
                 ${st.status}
+                <span class="prev-badge-slot" data-risco-maquina="${escapeHTML(maq.nome_maquina)}"></span>
             </div>
             <div class="painel-card-footer">
                 <a href="ocorrencia.html?setor=${encodeURIComponent(maq.setor_associado)}&maquina=${encodeURIComponent(maq.nome_maquina)}" class="btn btn-primary btn-sm">
@@ -138,4 +140,77 @@
     }
 
     grid.innerHTML = html;
+    // Previsão de falhas (js/pages/previsao.js): recalcula junto com o painel
+    if (typeof atualizarPrevisao === 'function') atualizarPrevisao();
   }
+
+  // ==========================================
+  // ASSISTENTE DA CHEFIA (IA)
+  // Perguntas livres sobre os dados e resumo da semana.
+  // ==========================================
+  async function iniciarAssistenteIA() {
+    if (isOperator() || !(await iaAtiva())) return;
+    document.getElementById('iaPainel').hidden = false;
+  }
+
+  async function perguntarIA(pergunta) {
+    const botao = document.getElementById('iaPerguntarBtn');
+    const caixaErro = document.getElementById('iaErro');
+    const resposta = document.getElementById('iaResposta');
+    iaMostrarErro(caixaErro, '');
+    if (pergunta.length < 3) {
+      iaMostrarErro(caixaErro, 'Escreva a sua pergunta.');
+      return;
+    }
+    iaCarregando(botao, true, 'Pensando...');
+    const { dados, erro } = await iaChamar('/ia/pergunta', { pergunta });
+    iaCarregando(botao, false);
+    if (erro) {
+      iaMostrarErro(caixaErro, erro);
+      return;
+    }
+    const titulo = document.createElement('h4');
+    titulo.textContent = pergunta;
+    const corpo = document.createElement('div');
+    iaRenderTexto(corpo, dados.resposta);
+    resposta.replaceChildren(titulo, corpo);
+    resposta.hidden = false;
+  }
+
+  document.getElementById('iaPerguntarBtn').addEventListener('click', () => {
+    perguntarIA(document.getElementById('iaPergunta').value.trim());
+  });
+  document.getElementById('iaPergunta').addEventListener('keydown', e => {
+    if (e.key === 'Enter') perguntarIA(e.target.value.trim());
+  });
+  document.querySelectorAll('.ia-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.getElementById('iaPergunta').value = chip.dataset.pergunta;
+      perguntarIA(chip.dataset.pergunta);
+    });
+  });
+
+  document.getElementById('iaResumoBtn').addEventListener('click', async function() {
+    const caixaErro = document.getElementById('iaErro');
+    const resposta = document.getElementById('iaResposta');
+    iaMostrarErro(caixaErro, '');
+    iaCarregando(this, true, 'Montando resumo...');
+    const { dados, erro } = await iaChamar('/ia/resumo', {});
+    iaCarregando(this, false);
+    if (erro) {
+      iaMostrarErro(caixaErro, erro);
+      return;
+    }
+    resposta.replaceChildren();
+    const titulo = document.createElement('h4');
+    titulo.textContent = 'Resumo da semana';
+    const visao = document.createElement('p');
+    visao.textContent = dados.visaoGeral;
+    resposta.append(titulo, visao);
+    iaRenderLista(resposta, 'Destaques', dados.destaques);
+    iaRenderLista(resposta, 'Falhas repetidas (últimos 30 dias)',
+      (dados.falhasRepetidas || []).map(f => `${f.maquina}: ${f.problema} (${f.vezes} vezes). ${f.recomendacao}`));
+    iaRenderLista(resposta, 'Estoque', dados.estoque);
+    iaRenderLista(resposta, 'Recomendações para a próxima semana', dados.recomendacoes);
+    resposta.hidden = false;
+  });

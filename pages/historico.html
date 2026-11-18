@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>Histórico - FactoryTrack</title>
-  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
-  <link rel="icon" href="../favicon.ico" sizes="any">
-  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="../img/favicon.svg">
+  <link rel="icon" href="../img/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -14,6 +15,7 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/header.css">
   <link rel="stylesheet" href="../css/footer.css">
+  <link rel="stylesheet" href="../css/ia.css">
   <style>
     .hist-card {
       background: white;
@@ -105,6 +107,44 @@
     .modal .export-option input { flex-shrink: 0; width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
     .export-option small { display: block; color: var(--text-muted); font-size: 0.9rem; }
     .summary-pill .num { font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; }
+    .summary-pill .num.aguardando { color: #ca8a04; }
+    .summary-pill .num.conserto { color: #2563eb; }
+
+    /* Fases da ocorrência: aviso → confirmação → conserto → resolvida */
+    .hist-card.fase-confirmada { border-left-color: #ca8a04; }
+    .hist-card.fase-em_conserto { border-left-color: #2563eb; }
+    .hist-fases { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.7rem 1.5rem; border-top: 1px solid var(--border); list-style: none; margin: 0; }
+    .hist-fase { display: flex; flex-direction: column; min-width: 130px; flex: 1 1 130px; padding: 0.45rem 0.7rem; border-radius: 8px; background: #f1f5f9; color: var(--text-muted); font-size: 0.85rem; }
+    .hist-fase strong { color: var(--text); font-size: 0.9rem; }
+    .hist-fase.feita { background: #f0fdf4; }
+    .hist-fase.feita strong::before { content: '✓ '; color: var(--success); }
+    .hist-fase.atual { background: #fff7ed; outline: 1.5px solid var(--accent); }
+    .hist-fase .dur { font-weight: 600; color: var(--primary); }
+    .hist-ordem { padding: 0.7rem 1.5rem; border-top: 1px solid var(--border); background: #eff6ff; font-size: 0.92rem; color: #1e3a8a; }
+    .hist-ordem p + p { margin-top: 0.25rem; }
+    .hist-checklist { padding: 0 1.5rem 1rem; }
+    .hist-checklist-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+    .hist-checklist-item { border: 1px solid var(--border); border-left: 4px solid #94a3b8; border-radius: 8px; padding: 0.55rem 0.8rem; background: #f8fafc; }
+    .hist-checklist-item.grav-media { border-left-color: #f59e0b; }
+    .hist-checklist-item.grav-alta { border-left-color: #ef4444; background: #fef2f2; }
+    .hist-checklist-item.grav-critica { border-left-color: #db2777; background: #fdf2f8; }
+    .hist-checklist-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+    .hist-checklist-topo strong { color: var(--text); }
+    .hist-checklist-cat { font-size: 0.8rem; color: var(--text-muted); }
+    .hist-grav { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 0.1rem 0.5rem; border-radius: 999px; background: #e2e8f0; color: #334155; }
+    .hist-grav.grav-media { background: #fef3c7; color: #92400e; }
+    .hist-grav.grav-alta { background: #fee2e2; color: #b91c1c; }
+    .hist-grav.grav-critica { background: #fce7f3; color: #9d174d; }
+    .hist-checklist-obs { margin-top: 0.3rem; font-size: 0.9rem; color: var(--text); }
+    .hist-checklist-obs i { color: var(--text-muted); margin-right: 0.3rem; }
+    .hist-pecas { padding: 0.6rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.9rem; color: var(--text-muted); }
+    .pecas-usadas { margin: 0.8rem 0 0.4rem; text-align: left; }
+    .pecas-usadas-add { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .pecas-usadas-add select { flex: 1 1 180px; min-width: 0; }
+    .pecas-usadas-add input { width: 90px; }
+    .pecas-usadas-lista { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+    .pecas-usadas-lista li { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.4rem 0.7rem; border-radius: 8px; background: #f8fafc; font-size: 0.92rem; }
+    .pecas-usadas-lista button { border: none; background: none; color: var(--danger); cursor: pointer; font-size: 1rem; }
   </style>
 </head>
 <body>
@@ -145,10 +185,10 @@
 
       <div class="filters">
         <label>Filtrar:</label>
-        <select id="filterSetor" onchange="renderHistorico()">
+        <select id="filterSetor" onchange="renderHistorico()" aria-label="Filtrar por setor">
           <option value="">Todos os Setores</option>
         </select>
-        <select id="filterTipo" onchange="renderHistorico()">
+        <select id="filterTipo" onchange="renderHistorico()" aria-label="Filtrar por tipo">
           <option value="">Todos os Tipos</option>
           <option value="Parada de máquina">Parada de máquina</option>
           <option value="Problema de qualidade">Problema de qualidade</option>
@@ -156,12 +196,15 @@
           <option value="Manutenção preventiva">Manutenção preventiva</option>
           <option value="Outro">Outro</option>
         </select>
-        <select id="filterStatus" onchange="renderHistorico()">
+        <select id="filterStatus" onchange="renderHistorico()" aria-label="Filtrar por status">
           <option value="">Todos os Status</option>
-          <option value="Pendente">Pendente</option>
+          <option value="Pendente">Pendente (todas)</option>
+          <option value="aberta">Aguardando confirmação</option>
+          <option value="confirmada">Aguardando conserto</option>
+          <option value="em_conserto">Em conserto</option>
           <option value="Resolvido">Resolvido</option>
         </select>
-        <select id="filterTurno" onchange="renderHistorico()">
+        <select id="filterTurno" onchange="renderHistorico()" aria-label="Filtrar por turno">
           <option value="">Todos os Turnos</option>
           <option value="Manhã">Manhã</option>
           <option value="Tarde">Tarde</option>
@@ -176,14 +219,54 @@
 </main>
 
 <!-- Modal Resolver -->
+<div class="modal-overlay" id="modalConfirmar">
+  <div class="modal">
+    <h3><i class="fas fa-clipboard-check"></i> Confirmar parada</h3>
+    <p class="modal-text" id="confirmarResumo"></p>
+    <div class="form-group">
+      <label for="confirmarEngenheiro">Engenheiro que vai consertar</label>
+      <select id="confirmarEngenheiro"></select>
+    </div>
+    <div class="form-group">
+      <label for="confirmarOrientacao">Orientação <span class="label-hint">(opcional: quem chamar, o que usar do estoque)</span></label>
+      <textarea id="confirmarOrientacao" maxlength="1000" placeholder="Ex: Usar a correia reserva do almoxarifado. Avisar a qualidade antes de religar."></textarea>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-primary" onclick="enviarConfirmacao()">
+        <i class="fas fa-paper-plane"></i> Confirmar e enviar
+      </button>
+      <button class="btn btn-cancel" onclick="fecharModalConfirmar()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <h3><i class="fas fa-check-circle text-success"></i> Marcar como Resolvido</h3>
+    <h3><i class="fas fa-check-circle text-success"></i> Concluir conserto</h3>
     <p class="modal-text">Descreva o que foi feito para resolver o problema:</p>
-    <textarea id="resolucaoInput" placeholder="Ex: Correia reposicionada e tensionada. Máquina retornou ao normal."></textarea>
+    <div class="ia-modal-sugestao" id="iaSolucaoBox" hidden>
+      <button type="button" class="btn btn-outline btn-sm" id="iaSolucaoBtn" onclick="sugerirSolucaoIA()">
+        <i class="fas fa-wand-magic-sparkles"></i> Sugerir com IA
+      </button>
+      <div class="ia-erro" id="iaSolucaoErro" role="alert" hidden></div>
+      <div class="ia-resultado" id="iaSolucaoResultado" hidden>
+        <p id="iaSolucaoBase"></p>
+        <div id="iaSolucaoPecas"></div>
+      </div>
+    </div>
+    <textarea id="resolucaoInput" aria-label="Descrição da solução" placeholder="Ex: Correia reposicionada e tensionada. Máquina retornou ao normal."></textarea>
+    <div class="pecas-usadas">
+      <label class="modal-text" for="pecaUsadaSelect">Peças usadas <span class="label-hint">(saem do estoque ao concluir)</span></label>
+      <div class="pecas-usadas-add">
+        <select id="pecaUsadaSelect" aria-label="Peça usada"></select>
+        <input type="number" id="pecaUsadaQtd" min="1" value="1" aria-label="Quantidade">
+        <button type="button" class="btn btn-outline btn-sm" onclick="adicionarPecaUsada()"><i class="fas fa-plus"></i> Adicionar</button>
+      </div>
+      <ul class="pecas-usadas-lista" id="pecasUsadasLista"></ul>
+    </div>
     <div class="modal-buttons">
       <button class="btn btn-success" onclick="confirmarResolucao()">
-        <i class="fas fa-check"></i> Confirmar Resolução
+        <i class="fas fa-check"></i> Concluir e fechar
       </button>
       <button class="btn btn-cancel" onclick="fecharModal()">Cancelar</button>
     </div>
@@ -227,6 +310,8 @@
 <script src="../js/config.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/avisos.js"></script>
 <script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
+<script src="../js/ia.js"></script>
 <script src="../js/pages/historico.js"></script>

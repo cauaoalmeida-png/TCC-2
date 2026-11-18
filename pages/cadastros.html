@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>Cadastros - FactoryTrack</title>
-  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
-  <link rel="icon" href="../favicon.ico" sizes="any">
-  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="../img/favicon.svg">
+  <link rel="icon" href="../img/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -98,11 +99,11 @@
           </div>
           <div class="cad-panel-form">
             <div class="form-group">
-              <label>Nome do Setor *</label>
+              <label for="setorNome">Nome do Setor *</label>
               <input type="text" id="setorNome" placeholder="Ex: Pintura">
             </div>
             <div class="form-group">
-              <label>Responsável *</label>
+              <label for="setorResp">Responsável *</label>
               <input type="text" id="setorResp" placeholder="Nome do responsável">
             </div>
             <button class="btn btn-primary" onclick="addSetor()">
@@ -120,17 +121,17 @@
           </div>
           <div class="cad-panel-form">
             <div class="form-group">
-              <label>Nome da Máquina *</label>
+              <label for="maqNome">Nome da Máquina *</label>
               <input type="text" id="maqNome" placeholder="Ex: Torno CNC">
             </div>
             <div class="form-group">
-              <label>Setor *</label>
+              <label for="maqSetor">Setor *</label>
               <select id="maqSetor">
                 <option value="">Selecione o setor</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Número de Série</label>
+              <label for="maqSerie">Número de Série</label>
               <input type="text" id="maqSerie" placeholder="Ex: TRN-008">
             </div>
             <button class="btn btn-primary" onclick="addMaquina()">
@@ -162,11 +163,7 @@
               </div>
               <div class="form-group">
                 <label for="usuarioCargo">Cargo *</label>
-                <select id="usuarioCargo" required>
-                  <option value="operador">Operador</option>
-                  <option value="gerente">Gerente</option>
-                  <option value="chefe_geral">Chefe Geral</option>
-                </select>
+                <select id="usuarioCargo" required></select>
               </div>
             </div>
             <button class="btn btn-primary" type="button" onclick="criarUsuario()">
@@ -174,6 +171,20 @@
             </button>
           </div>
           <div class="cad-list" id="usuarioList"></div>
+        </div>
+
+        <div class="cad-panel cad-panel-full" id="cargosPanel" style="display:none">
+          <div class="cad-panel-header">
+            <i class="fas fa-id-badge"></i>
+            <h2>Nomes dos Cargos</h2>
+          </div>
+          <div class="cad-panel-form">
+            <p class="cad-panel-note">Cada fábrica chama os cargos de um jeito. Troque o nome que aparece na tela; as permissões continuam as mesmas. Deixe em branco para usar o nome padrão.</p>
+            <div class="form-row" id="cargosNomes"></div>
+            <button class="btn btn-primary" type="button" onclick="salvarNomesCargos()">
+              <i class="fas fa-floppy-disk"></i> Salvar nomes
+            </button>
+          </div>
         </div>
 
       </div>
@@ -217,6 +228,7 @@
 <script src="../js/config.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/avisos.js"></script>
 <script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
 <script src="../js/pages/cadastros.js"></script>

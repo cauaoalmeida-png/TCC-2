@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>Estoque de Peças - FactoryTrack</title>
-  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
-  <link rel="icon" href="../favicon.ico" sizes="any">
-  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="../img/favicon.svg">
+  <link rel="icon" href="../img/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,6 +16,7 @@
   <link rel="stylesheet" href="../css/header.css">
   <link rel="stylesheet" href="../css/estoque.css">
   <link rel="stylesheet" href="../css/footer.css">
+  <link rel="stylesheet" href="../css/ia.css">
 </head>
 <body>
 
@@ -43,7 +45,7 @@
 <div class="modal-overlay" id="modalUsar">
   <div class="modal">
     <h3><i class="fas fa-minus-circle text-accent"></i> Usar Peça do Estoque</h3>
-    <p class="modal-text">Informe a quantidade que vai retirar:</p>
+    <label class="modal-text" for="qtdUsar">Informe a quantidade que vai retirar:</label>
     <input type="number" id="qtdUsar" placeholder="Quantidade" min="1">
     <div id="erroUsar" class="form-error"></div>
     <div class="modal-buttons">
@@ -53,11 +55,25 @@
   </div>
 </div>
 
+<!-- MODAL ESTOQUE MÍNIMO -->
+<div class="modal-overlay" id="modalMinimo">
+  <div class="modal">
+    <h3><i class="fas fa-bell text-accent"></i> Estoque mínimo</h3>
+    <label class="modal-text" for="qtdMinimo">Avisar quando a quantidade de <strong id="minimoNome"></strong> ficar neste valor ou abaixo:</label>
+    <input type="number" id="qtdMinimo" placeholder="Ex: 10" min="1">
+    <div id="erroMinimo" class="form-error"></div>
+    <div class="modal-buttons">
+      <button class="btn btn-primary" onclick="confirmarMinimo()"><i class="fas fa-check"></i> Salvar</button>
+      <button class="btn btn-cancel" onclick="document.getElementById('modalMinimo').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL REPOR PEÇA -->
 <div class="modal-overlay" id="modalRepor">
   <div class="modal">
     <h3><i class="fas fa-plus-circle text-success"></i> Repor Estoque</h3>
-    <p class="modal-text">Informe a quantidade a adicionar:</p>
+    <label class="modal-text" for="qtdRepor">Informe a quantidade a adicionar:</label>
     <input type="number" id="qtdRepor" placeholder="Quantidade" min="1">
     <div class="modal-buttons">
       <button class="btn btn-success" onclick="confirmarReposicao()"><i class="fas fa-check"></i> Confirmar</button>
@@ -84,29 +100,32 @@
       </div>
       <div class="nova-peca-form">
         <div class="form-group">
-          <label>Nome da Peça *</label>
+          <label for="pecaNome">Nome da Peça *</label>
           <input type="text" id="pecaNome" placeholder="Ex: Parafuso M6">
         </div>
         <div class="form-group">
-          <label>Categoria</label>
+          <label for="pecaCategoria">Categoria</label>
           <select id="pecaCategoria">
             <option value="Fixação">Fixação</option>
             <option value="Elétrico">Elétrico</option>
             <option value="Mecânico">Mecânico</option>
             <option value="Hidráulico">Hidráulico</option>
+            <option value="Pneumático">Pneumático</option>
+            <option value="Lubrificação">Lubrificação</option>
+            <option value="Insumo">Insumo</option>
             <option value="Outro">Outro</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Quantidade Atual *</label>
+          <label for="pecaQtd">Quantidade Atual *</label>
           <input type="number" id="pecaQtd" placeholder="Ex: 100" min="0">
         </div>
         <div class="form-group">
           <label for="pecaMin">Estoque Mínimo *</label>
-          <input type="number" id="pecaMin" placeholder="Ex: 20" min="0" title="O sistema avisa quando a quantidade ficar abaixo deste valor">
+          <input type="number" id="pecaMin" placeholder="Ex: 20" min="1" title="O sistema avisa quando a quantidade ficar abaixo deste valor">
         </div>
         <div class="form-group">
-          <label>Unidade</label>
+          <label for="pecaUnidade">Unidade</label>
           <select id="pecaUnidade">
             <option value="un">Unidade (un)</option>
             <option value="kg">Quilograma (kg)</option>
@@ -123,24 +142,64 @@
       </div>
     </div>
 
+    <!-- ENTRADA PELA NOTA FISCAL (IA) -->
+    <section class="ia-box" id="iaNotaBox" hidden>
+      <div class="ia-head">
+        <i class="fas fa-wand-magic-sparkles"></i>
+        <h2>Entrada pela nota fiscal</h2>
+        <span class="ia-badge">IA</span>
+      </div>
+      <p class="ia-intro">Envie a foto, o PDF ou o XML da nota fiscal de compra. A IA lista as peças, as quantidades e as unidades exatamente como estão na nota. Confira e confirme a entrada de tudo, ou cancele.</p>
+      <div class="ia-actions">
+        <input type="file" id="iaNotaArquivo" accept="image/*,application/pdf,.xml,text/xml,application/xml" hidden>
+        <label for="iaNotaArquivo" class="btn btn-outline ia-foto-btn"><i class="fas fa-file-invoice"></i> <span id="iaNotaNome">Escolher nota fiscal</span></label>
+        <button type="button" class="btn btn-primary" id="iaNotaBtn"><i class="fas fa-wand-magic-sparkles"></i> Ler nota com IA</button>
+      </div>
+      <div class="ia-erro" id="iaNotaErro" role="alert" hidden></div>
+      <div class="ia-resultado" id="iaNotaResultado" hidden>
+        <p id="iaNotaCabecalho"></p>
+        <div class="ia-tabela-wrap">
+          <table class="ia-tabela">
+            <thead><tr><th>Item da nota</th><th>Peça no estoque</th><th>Quantidade</th><th>Unidade</th><th>Estoque mínimo</th></tr></thead>
+            <tbody id="iaNotaItens"></tbody>
+          </table>
+        </div>
+        <div class="ia-actions">
+          <button type="button" class="btn btn-success" id="iaNotaAplicarBtn"><i class="fas fa-check"></i> Confirmar entrada de todos</button>
+          <button type="button" class="btn btn-cancel" id="iaNotaCancelarBtn"><i class="fas fa-xmark"></i> Cancelar</button>
+        </div>
+      </div>
+      <div class="ia-ok" id="iaNotaOk" hidden></div>
+    </section>
+
     <!-- FILTROS -->
     <div class="filters">
       <label>Filtrar:</label>
-      <select id="filterCategoria" onchange="renderEstoque()">
+      <select id="filterCategoria" onchange="renderEstoque()" aria-label="Filtrar por categoria">
         <option value="">Todas as Categorias</option>
         <option value="Fixação">Fixação</option>
         <option value="Elétrico">Elétrico</option>
         <option value="Mecânico">Mecânico</option>
         <option value="Hidráulico">Hidráulico</option>
+        <option value="Pneumático">Pneumático</option>
+        <option value="Lubrificação">Lubrificação</option>
+        <option value="Insumo">Insumo</option>
         <option value="Outro">Outro</option>
       </select>
-      <select id="filterStatus" onchange="renderEstoque()">
+      <select id="filterStatus" onchange="renderEstoque()" aria-label="Filtrar por status">
         <option value="">Todos os Status</option>
         <option value="ok">Estoque OK</option>
         <option value="baixo">Estoque Baixo</option>
         <option value="critico">Estoque Crítico</option>
+        <option value="sem-minimo">Sem mínimo definido</option>
       </select>
-      <input type="text" id="filterBusca" placeholder="Buscar peça..." oninput="renderEstoque()">
+      <input type="search" id="filterBusca" placeholder="Buscar peça..." oninput="renderEstoque()" aria-label="Buscar peça pelo nome">
+    </div>
+
+    <div class="selecao-bar" id="selecaoBar" hidden>
+      <label class="selecao-todos"><input type="checkbox" id="selecionarTodos"> Selecionar todas as peças da lista</label>
+      <span class="selecao-contagem" id="selecaoContagem">Nenhuma selecionada</span>
+      <button type="button" class="btn btn-danger btn-sm" id="excluirSelecionadosBtn" disabled><i class="fas fa-trash"></i> Excluir selecionadas</button>
     </div>
 
     <div class="grid-3" id="estoqueGrid"></div>
@@ -184,8 +243,10 @@
 <script src="../js/config.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/avisos.js"></script>
 <script src="../js/rbac.js"></script>
 <script src="../js/navigation.js"></script>
+<script src="../js/ia.js"></script>
 <script src="../js/pages/estoque.js"></script>
 </body>
 </html>
