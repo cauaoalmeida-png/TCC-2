@@ -1,4 +1,5 @@
-const { createDatabase, createInitialAdmin } = require('./database');
+const { createDatabase, createInitialAdmin, migrateLegacyRoles } = require('./database');
+const { requireCoordenacao, requireManutencao } = require('./cargos');
 const { hashPassword, createAuthenticate, requireSupervisor, registerLoginRoute, registerUserRoutes } = require('./auth');
 const registerSectorRoutes = require('./routes/sectors');
 const registerMachineRoutes = require('./routes/machines');
@@ -81,10 +82,15 @@ app.get(['/', '/apresentacao.html'], (req, res) => {
 app.get(['/sistema', '/index.html'], (req, res) => {
     res.sendFile(path.join(frontendRoot, 'index.html'));
 });
-// Ícones da aba do navegador (só esses arquivos, para não expor a raiz e o .env)
-app.get(['/favicon.svg', '/favicon.ico', '/apple-touch-icon.png'], (req, res) => {
-    res.sendFile(path.join(frontendRoot, req.path));
+// Imagens do site (ícones, logo, imagem de compartilhamento) ficam em img/.
+// Navegadores pedem /favicon.ico na raiz; os endereços antigos redirecionam.
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(frontendRoot, 'img', 'favicon.ico'));
 });
+app.get(['/favicon.svg', '/apple-touch-icon.png', '/og-image.jpg', '/logo-512.png'], (req, res) => {
+    res.redirect(301, '/img' + req.path);
+});
+app.use('/img', express.static(path.join(frontendRoot, 'img'), { index: false }));
 app.use('/css', express.static(path.join(frontendRoot, 'css'), { index: false }));
 app.use('/js', express.static(path.join(frontendRoot, 'js'), { index: false }));
 app.use('/pages', express.static(path.join(frontendRoot, 'pages'), { index: false }));
@@ -101,11 +107,15 @@ app.use((req, res, next) => {
 registerLoginRoute(app, { prisma, authSecret: AUTH_SECRET });
 app.use(createAuthenticate(prisma, AUTH_SECRET));
 registerUserRoutes(app, { prisma });
-registerSectorRoutes(app, { prisma, requireSupervisor });
-registerMachineRoutes(app, { prisma, requireSupervisor });
+// Setores e máquinas: operador da linha e administrador
+registerSectorRoutes(app, { prisma, requireSupervisor: requireCoordenacao });
+registerMachineRoutes(app, { prisma, requireSupervisor: requireCoordenacao });
 registerOccurrenceRoutes(app, { prisma, requireSupervisor });
 registerInventoryRoutes(app, { prisma, requireSupervisor });
-registerRentalRoutes(app, { prisma, requireSupervisor });
+// Guindastes ficam com o operador da linha e o administrador
+registerRentalRoutes(app, { prisma, requireSupervisor: requireCoordenacao });
+// Previsão de falhas é do engenheiro de produção (e do administrador)
+app.use(['/previsao-falhas', '/ia/previsao'], requireManutencao);
 registerAiRoutes(app, { prisma, requireSupervisor });
 
 // ROTA 404 (Coringa)
@@ -121,6 +131,7 @@ function ready() {
     if (!readyPromise) {
         readyPromise = (async () => {
             await prisma.$connect();
+            await migrateLegacyRoles(prisma);
             await createInitialAdmin(prisma, hashPassword);
             console.log('✅ Conectado ao banco de dados com sucesso!');
         })().catch((err) => {

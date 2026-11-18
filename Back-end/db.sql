@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   nome VARCHAR(100),
   usuario VARCHAR(100),
   senha VARCHAR(255) NOT NULL,
-  cargo VARCHAR(50),
+  cargo VARCHAR(50),            -- operario, operador_linha, engenheiro ou admin
   tipo VARCHAR(50),
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
   UNIQUE KEY uq_usuarios_usuario (usuario)
@@ -54,6 +54,15 @@ CREATE TABLE IF NOT EXISTS ocorrencias (
   resolucao TEXT,
   itensChecklist TEXT,          -- JSON serializado (itens marcados no checklist)
   dataResolucao DATETIME NULL,  -- preenchida quando a ocorrência é resolvida
+  fase VARCHAR(20) NULL,        -- aberta, confirmada, em_conserto, resolvida
+  dataConfirmacao DATETIME NULL,
+  confirmadoPor VARCHAR(100) NULL,
+  orientacao TEXT,              -- o que o operador orientou (quem chamar, o que usar)
+  responsavelId INT NULL,       -- engenheiro designado
+  responsavelNome VARCHAR(100) NULL,
+  dataInicioConserto DATETIME NULL,
+  concluidoPor VARCHAR(100) NULL,
+  pecasUsadas TEXT,             -- JSON com as peças baixadas do estoque
   CONSTRAINT fk_ocorrencia_usuario
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     ON DELETE SET NULL
@@ -67,6 +76,12 @@ CREATE TABLE IF NOT EXISTS pecas (
   qtd INT NOT NULL DEFAULT 0,
   min INT NOT NULL DEFAULT 0,
   unidade VARCHAR(20)
+);
+
+-- ---------- CONFIGURAÇÕES (ex.: nomes dos cargos) ----------
+CREATE TABLE IF NOT EXISTS configuracoes (
+  chave VARCHAR(50) PRIMARY KEY,
+  valor TEXT NOT NULL
 );
 
 -- ---------- GUINDASTES E ALUGUÉIS ----------

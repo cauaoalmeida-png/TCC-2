@@ -1,4 +1,4 @@
-  // Número do supervisor (WhatsApp geral para demo)
+  // Número do operador da linha (WhatsApp geral para demo)
   const SUPERVISOR_WPP = '5571981828080';
 
   let todosSetores = [];
@@ -8,9 +8,68 @@
     if (!requireAuth()) return;
     document.getElementById('operadorIdentificado').value = getSessao().usuario.nome;
     try { clearNextUrl && clearNextUrl(); } catch (e) {}
+    preencherTurnoPelaHora();
+    if (isOperario()) iniciarModoRapido();
     carregarFiltros();
     iniciarRelatoIA();
   });
+
+  // ==========================================
+  // MODO RÁPIDO DO OPERÁRIO
+  // Quem está na máquina só escolhe setor, máquina e toca no problema.
+  // ==========================================
+  const PROBLEMAS_RAPIDOS = [
+    { texto: 'Parou / não liga', icone: 'fa-power-off', tipo: 'Parada de máquina' },
+    { texto: 'Travou', icone: 'fa-lock', tipo: 'Parada de máquina' },
+    { texto: 'Barulho estranho', icone: 'fa-volume-high', tipo: 'Parada de máquina' },
+    { texto: 'Vazamento', icone: 'fa-droplet', tipo: 'Parada de máquina' },
+    { texto: 'Superaquecendo', icone: 'fa-temperature-high', tipo: 'Parada de máquina' },
+    { texto: 'Peça quebrada', icone: 'fa-gears', tipo: 'Parada de máquina' },
+    { texto: 'Falta de material', icone: 'fa-box-open', tipo: 'Falta de material' },
+    { texto: 'Peça saindo com defeito', icone: 'fa-triangle-exclamation', tipo: 'Problema de qualidade' }
+  ];
+
+  function preencherTurnoPelaHora() {
+    const turno = document.getElementById('turnoSelect');
+    if (turno.value) return;
+    const hora = new Date().getHours();
+    turno.value = hora >= 6 && hora < 14 ? 'Manhã' : hora >= 14 && hora < 22 ? 'Tarde' : 'Noite';
+  }
+
+  function iniciarModoRapido() {
+    const titulo = document.querySelector('.form-header h1');
+    if (titulo) titulo.innerHTML = '<i class="fas fa-exclamation-triangle"></i> A máquina parou?';
+    document.getElementById('ocorrenciaIntro').textContent =
+      'Escolha o setor, a máquina e toque no problema. O operador da linha recebe o alerta na hora.';
+    const tipo = document.getElementById('tipoSelect');
+    if (!tipo.value) tipo.value = 'Parada de máquina';
+
+    const caixa = document.getElementById('problemasRapidos');
+    const grade = caixa.querySelector('.problemas-rapidos');
+    PROBLEMAS_RAPIDOS.forEach(p => {
+      const botao = document.createElement('button');
+      botao.type = 'button';
+      botao.className = 'problema-chip';
+      botao.setAttribute('aria-pressed', 'false');
+      botao.innerHTML = `<i class="fas ${p.icone}" aria-hidden="true"></i>`;
+      botao.append(p.texto);
+      botao.addEventListener('click', () => {
+        grade.querySelectorAll('.problema-chip').forEach(b => b.setAttribute('aria-pressed', String(b === botao)));
+        tipo.value = p.tipo;
+        problemaEscolhido = p.texto;
+      });
+      grade.appendChild(botao);
+    });
+    caixa.hidden = false;
+
+    // Descrever com palavras fica opcional para o operário
+    const descricao = document.getElementById('descricaoInput');
+    descricao.required = false;
+    descricao.placeholder = 'Opcional: algum detalhe a mais?';
+    document.getElementById('descricaoLabel').textContent = 'Detalhes (opcional)';
+  }
+
+  let problemaEscolhido = '';
 
   // ==========================================
   // CARREGA SETORES DO BANCO E PREENCHE O SELECT
@@ -103,7 +162,14 @@
     const tipo = document.getElementById('tipoSelect').value;
     const turno = document.getElementById('turnoSelect').value;
     const operador = getSessao().usuario.nome;
-    const descricao = document.getElementById('descricaoInput').value;
+    const detalhes = document.getElementById('descricaoInput').value.trim();
+    if (isOperario() && !problemaEscolhido && !detalhes) {
+      avisar('Toque no problema ou escreva o que aconteceu.');
+      return;
+    }
+    const descricao = problemaEscolhido
+      ? (detalhes ? `${problemaEscolhido}. ${detalhes}` : problemaEscolhido)
+      : detalhes;
 
     const novaOcorrencia = {
       setor, maquina, tipo, turno, descricao,

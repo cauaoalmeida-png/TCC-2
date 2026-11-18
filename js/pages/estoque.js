@@ -410,7 +410,11 @@ document.getElementById('iaNotaBtn').addEventListener('click', async function() 
         }
         const descricao = celula(item.descricao);
         descricao.className = 'nf-descricao';
-        tr.append(descricao, tdPeca, celula(String(item.quantidade)), celula(item.unidade));
+        // Mínimo com que a peça vai ficar: o que ela já tem, ou o sugerido
+        // (20% do que chegou) para peça nova ou peça que ainda estava sem mínimo.
+        const atual = item.pecaId ? estoqueAtual.find(p => p.id === item.pecaId) : null;
+        const minimo = atual && atual.min > 0 ? atual.min : minimoSugerido(item.quantidade + (atual ? atual.qtd : 0));
+        tr.append(descricao, tdPeca, celula(String(item.quantidade)), celula(item.unidade), celula(`${minimo} ${item.unidade}`));
         corpoTabela.appendChild(tr);
     });
     document.getElementById('iaNotaResultado').hidden = false;
@@ -445,7 +449,10 @@ document.getElementById('iaNotaAplicarBtn').addEventListener('click', async func
                 ? await fetch(`${API_BASE_URL}/atualizar-peca/${atual.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ qtd: atual.qtd + item.qtd })
+                    // Peça antiga sem mínimo ganha o mínimo sugerido junto com a entrada
+                    body: JSON.stringify(atual.min > 0
+                        ? { qtd: atual.qtd + item.qtd }
+                        : { qtd: atual.qtd + item.qtd, min: minimoSugerido(atual.qtd + item.qtd) })
                 })
                     .then(resp => { if (resp.ok) atual.qtd += item.qtd; return resp; })
                 : await fetch(`${API_BASE_URL}/cadastrar-peca`, {
@@ -463,7 +470,7 @@ document.getElementById('iaNotaAplicarBtn').addEventListener('click', async func
     document.getElementById('iaNotaResultado').hidden = true;
     const ok = document.getElementById('iaNotaOk');
     ok.textContent = feitos === selecionados.length
-        ? `Entrada feita em ${feitos} peça(s). Peças novas ganharam estoque mínimo de 20% da quantidade da nota; ajuste pelo sino de cada peça se precisar.`
+        ? `Entrada feita em ${feitos} peça(s), todas com estoque mínimo definido (20% da quantidade, como mostrado na lista). Ajuste pelo sino de cada peça se precisar.`
         : `Entrada feita em ${feitos} de ${selecionados.length} peça(s). Confira o estoque abaixo.`;
     ok.hidden = false;
     renderEstoque();

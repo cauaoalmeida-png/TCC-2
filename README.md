@@ -24,7 +24,8 @@ Quando um problema acontece, o operador registra a ocorrência pelo site e o sup
 
 O mesmo servidor inicia a API e o site. Não é necessário abrir o front-end
 com o Live Server. Para detalhes da configuração do banco, consulte
-[`Back-end/README.md`](./Back-end/README.md).
+[`Back-end/README.md`](./Back-end/README.md). Para colocar no ar, veja
+[`docs/DEPLOY.md`](./docs/DEPLOY.md).
 
 Cada conta individual deve usar o e-mail corporativo fornecido ao trabalhador
 pela empresa. O Chefe Geral cadastra esse e-mail e define o cargo em
@@ -38,6 +39,17 @@ pela empresa. O Chefe Geral cadastra esse e-mail e define o cargo em
 factorytrack/
 ├── index.html              → Login do sistema (entrada do site)
 ├── apresentacao.html       → Página de apresentação do projeto (fora do sistema)
+├── README.md               → Este arquivo
+├── vercel.json             → Configuração do deploy na Vercel
+├── img/                    → Imagens do site: favicon, ícone do iPhone, logo e imagem de compartilhamento
+├── docs/
+│   └── DEPLOY.md           → Passo a passo do deploy (Vercel + TiDB Cloud)
+├── scripts/
+│   └── build-vercel.sh     → Build da Vercel (monta a pasta public/)
+├── seo/                    → robots.txt e sitemap.xml
+├── api/                    → Função da Vercel que repassa a API para o Express
+├── Back-end/               → API Node.js/Express + Prisma
+├── api-mocks/              → API de mentira para testes
 ├── css/
 │   ├── style.css           → Estilos globais e componentes reutilizáveis
 │   ├── header.css          → Estilos do cabeçalho e menu de navegação

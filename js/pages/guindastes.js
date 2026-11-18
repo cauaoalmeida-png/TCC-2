@@ -2,7 +2,7 @@ let guindastesAtuais = [];
 let guindasteSelecionadoId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!requireSupervisor()) return;
+    if (!requireRole(GRUPOS_CARGOS.coordenacao)) return;
     try { clearNextUrl && clearNextUrl(); } catch (e) {}
 
     renderGuindastes();
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function podeGerenciar() {
     const sess = getSessao();
-    return sess && (sess.usuario.cargo === 'gerente' || sess.usuario.cargo === 'chefe_geral');
+    return !!sess && temCargo('coordenacao');
 }
 
 // Escapa texto do usuário antes de injetar no HTML (evita XSS).
