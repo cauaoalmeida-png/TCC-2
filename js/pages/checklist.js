@@ -157,6 +157,18 @@ async function loadSetores() {
 }
 
 // ENVIAR O CHECKLIST PARA O BANCO DE DADOS
+// Texto da ocorrência: quantos itens, quantos críticos e quais foram marcados.
+// (O Histórico também mostra a lista completa com as observações.)
+function descreverChecklist(itens, criticos) {
+  if (!itens.length) return 'Checklist sem nenhum problema marcado.';
+  const total = `${itens.length} ${itens.length === 1 ? 'item marcado' : 'itens marcados'}`;
+  const crit = criticos.length
+    ? `${criticos.length} ${criticos.length === 1 ? 'crítico' : 'críticos'}`
+    : 'nenhum crítico';
+  const nomes = itens.map(i => i.item).join('; ');
+  return `Checklist com ${total} (${crit}): ${nomes}.`.slice(0, 1000);
+}
+
 async function enviarChecklist() {
   const inspetor = getSessao().usuario.nome;
   const setor = document.getElementById('setorSelect').value;
@@ -188,7 +200,7 @@ async function enviarChecklist() {
     setor, maquina,
     tipo: 'Checklist de Manutenção',
     turno,
-    descricao: `Checklist com ${itensMarcados.length} item(s) marcado(s). Críticos: ${criticos.length}`,
+    descricao: descreverChecklist(itensMarcados, criticos),
     itensChecklist: itensMarcados,
     data: new Date().toISOString(),
     status: criticos.length > 0 ? 'Pendente' : 'Resolvido',
