@@ -10,7 +10,7 @@ cd "$(dirname "$0")/.."
 
 rm -rf public
 mkdir public
-cp -r apresentacao.html css js pages img public/
+cp -r apresentacao.html privacidade.html termos.html css js pages img public/
 # Navegadores e o Google procuram /favicon.ico na raiz do site.
 cp img/favicon.ico public/favicon.ico
 cp seo/robots.txt seo/sitemap.xml public/

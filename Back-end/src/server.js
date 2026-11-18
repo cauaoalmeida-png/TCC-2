@@ -82,6 +82,9 @@ app.get(['/', '/apresentacao.html'], (req, res) => {
 app.get(['/sistema', '/index.html'], (req, res) => {
     res.sendFile(path.join(frontendRoot, 'index.html'));
 });
+app.get(['/privacidade.html', '/termos.html'], (req, res) => {
+    res.sendFile(path.join(frontendRoot, req.path));
+});
 // Imagens do site (ícones, logo, imagem de compartilhamento) ficam em img/.
 // Navegadores pedem /favicon.ico na raiz; os endereços antigos redirecionam.
 app.get('/favicon.ico', (req, res) => {
