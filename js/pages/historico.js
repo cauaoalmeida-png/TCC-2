@@ -159,7 +159,8 @@
           <span><i class="fas fa-user"></i> ${escapeHTML(o.usuario?.usuario && o.usuario.usuario !== o.operador ? `${o.operador} (${o.usuario.usuario})` : o.operador)}</span>
           <span><i class="fas fa-clock"></i> Turno: ${escapeHTML(o.turno)}</span>
         </div>
-        <div class="hist-card-desc">${escapeHTML(o.descricao)}</div>
+        <div class="hist-card-desc">${escapeHTML(resumoDoCard(o))}</div>
+        ${renderChecklistItens(o)}
         ${renderFases(o)}
         ${renderOrdem(o)}
         ${o.resolucao ? `<div class="hist-card-resolucao"><i class="fas fa-check-circle"></i> <strong>Resolução:</strong> ${escapeHTML(o.resolucao)}${o.concluidoPor ? ` <small>(por ${escapeHTML(o.concluidoPor)})</small>` : ''}</div>` : ''}
@@ -222,6 +223,47 @@
           </li>`).join('')}
         <li class="hist-fase${fim ? ' feita' : ''}"><strong>Tempo total</strong><span class="dur">${total}</span><span>${fim ? 'máquina liberada' : 'ainda parada'}</span></li>
       </ul>`;
+  }
+
+  // Itens marcados no checklist, com os críticos primeiro e a observação de cada um
+  const GRAVIDADE_CHECKLIST = {
+    critica: { texto: 'Crítica', ordem: 0 },
+    alta: { texto: 'Alta', ordem: 1 },
+    media: { texto: 'Média', ordem: 2 },
+    baixa: { texto: 'Baixa', ordem: 3 }
+  };
+
+  // No checklist o card já lista os itens; o texto de cima fica só com o resumo.
+  function resumoDoCard(o) {
+    const itens = Array.isArray(o.itensChecklist) ? o.itensChecklist : [];
+    if (!itens.length) return o.descricao;
+    const criticos = itens.filter(i => i.gravidade === 'critica' || i.gravidade === 'alta').length;
+    return `${itens.length} ${itens.length === 1 ? 'item marcado' : 'itens marcados'} no checklist` +
+      (criticos ? `, ${criticos} ${criticos === 1 ? 'crítico' : 'críticos'}:` : ', nenhum crítico:');
+  }
+
+  function renderChecklistItens(o) {
+    const itens = Array.isArray(o.itensChecklist) ? o.itensChecklist : [];
+    if (!itens.length) return '';
+    const ordenados = [...itens].sort((a, b) =>
+      (GRAVIDADE_CHECKLIST[a.gravidade]?.ordem ?? 9) - (GRAVIDADE_CHECKLIST[b.gravidade]?.ordem ?? 9));
+    return `
+      <div class="hist-checklist">
+        <ul class="hist-checklist-lista" aria-label="Itens marcados no checklist">
+          ${ordenados.map(i => {
+            const grav = GRAVIDADE_CHECKLIST[i.gravidade] ? i.gravidade : '';
+            return `
+            <li class="hist-checklist-item${grav ? ` grav-${grav}` : ''}">
+              <div class="hist-checklist-topo">
+                ${grav ? `<span class="hist-grav grav-${grav}">${GRAVIDADE_CHECKLIST[grav].texto}</span>` : ''}
+                <strong>${escapeHTML(i.item)}</strong>
+                ${i.categoria ? `<span class="hist-checklist-cat">${escapeHTML(i.categoria)}</span>` : ''}
+              </div>
+              ${String(i.obs || '').trim() ? `<div class="hist-checklist-obs"><i class="fas fa-comment"></i>${escapeHTML(String(i.obs).trim())}</div>` : ''}
+            </li>`;
+          }).join('')}
+        </ul>
+      </div>`;
   }
 
   function renderOrdem(o) {
